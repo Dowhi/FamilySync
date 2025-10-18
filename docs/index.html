@@ -1,12 +1,18 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <base href="/calendario-familiar/">
+  <base href="/">
   <meta charset="UTF-8">
   <meta content="IE=Edge" http-equiv="X-UA-Compatible">
-  <meta name="description" content="Calendario familiar - Versión mínima para test iOS">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="theme-color" content="#2196F3">
+  <meta name="description" content="Calendario familiar compartido con sincronización en tiempo real">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#1B5E20">
+  
+  <!-- Configuración específica para iOS Safari -->
+  <meta name="format-detection" content="telephone=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-touch-fullscreen" content="yes">
 
   <!-- iOS meta tags & icons -->
   <meta name="mobile-web-app-capable" content="yes">
@@ -18,8 +24,42 @@
   <!-- Favicon -->
   <link rel="icon" type="image/png" href="favicon.png"/>
 
-  <title>Calendario Familiar - Mínimo</title>
+  <title>Calendario Familiar</title>
   <link rel="manifest" href="manifest.json">
+  
+  <!-- Script para compatibilidad con iOS Safari -->
+  <script>
+    // Detectar iOS Safari y aplicar configuraciones específicas
+    (function() {
+      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+      const isSafari = /Safari/.test(navigator.userAgent) && !/Chrome/.test(navigator.userAgent);
+      
+      if (isIOS && isSafari) {
+        console.log('iOS Safari detectado - Aplicando configuraciones específicas');
+        
+        // Configurar viewport específico para iOS Safari
+        const viewport = document.querySelector('meta[name="viewport"]');
+        if (viewport) {
+          viewport.setAttribute('content', 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover');
+        }
+        
+        // Añadir clase CSS para iOS
+        document.documentElement.classList.add('ios-safari');
+        
+        // Configurar para evitar problemas de zoom
+        document.addEventListener('gesturestart', function (e) {
+          e.preventDefault();
+        });
+        
+        // Configurar para evitar problemas de scroll
+        document.addEventListener('touchmove', function (e) {
+          if (e.scale !== 1) {
+            e.preventDefault();
+          }
+        }, { passive: false });
+      }
+    })();
+  </script>
 </head>
 <body>
   <div id="loading">
@@ -34,7 +74,7 @@
         align-items: center;
         justify-content: center;
         height: 100vh;
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        background: linear-gradient(135deg, #1B5E20 0%, #2E7D32 100%);
         color: white;
         text-align: center;
       }
@@ -59,46 +99,73 @@
     <div class="loading-content">
       <div class="spinner"></div>
       <h2>Calendario Familiar</h2>
-      <p>Cargando versión mínima...</p>
+      <p>Cargando aplicación...</p>
     </div>
   </div>
 
-  <script>
-    // Detectar iOS y mostrar información
-    if (/iPad|iPhone|iPod/.test(navigator.userAgent)) {
-      console.log('iOS device detected');
-      document.body.classList.add('ios-device');
+  <!-- Firebase SDKs -->
+  <script type="module">
+    // Import the functions you need from the SDKs you need
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+    import { getFirestore } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+    import { getAuth } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+
+    // Your web app's Firebase configuration
+    const firebaseConfig = {
+      apiKey: "AIzaSyB5vvp7IQOZLO7LlsUY_Wq-H8M_5PH3ZQE",
+      authDomain: "apptaxi-f2190.firebaseapp.com",
+      projectId: "apptaxi-f2190",
+      storageBucket: "apptaxi-f2190.firebasestorage.app",
+      messagingSenderId: "804273724178",
+      appId: "1:804273724178:web:c5955a1f657884c0e7f1cb",
+      measurementId: "G-3D8R30TYTM"
+    };
+
+    // Initialize Firebase
+    try {
+      const app = initializeApp(firebaseConfig);
+      const auth = getAuth(app);
+      const db = getFirestore(app);
+      console.log('✅ Firebase inicializado correctamente');
+    } catch (error) {
+      console.error('❌ Error inicializando Firebase:', error);
     }
 
-    // Timeout para mostrar mensaje si no carga
-    setTimeout(function() {
+    // Detectar cuando Flutter se ha cargado completamente
+    function hideLoading() {
       const loading = document.getElementById('loading');
       if (loading) {
-        loading.innerHTML = `
-          <div class="loading-content">
-            <h2>⚠️ Problema de carga</h2>
-            <p>Si la app no carga en iPhone, intenta:</p>
-            <ul style="text-align: left; font-size: 14px;">
-              <li>Recargar la página</li>
-              <li>Usar Safari en lugar de Chrome</li>
-              <li>Verificar conexión a internet</li>
-            </ul>
-            <button onclick="window.location.reload()" style="
-              margin-top: 20px; 
-              padding: 10px 20px; 
-              background: white; 
-              color: #667eea; 
-              border: none; 
-              border-radius: 5px; 
-              font-size: 14px;
-              cursor: pointer;
-            ">
-              Recargar
-            </button>
-          </div>
-        `;
+        loading.style.display = 'none';
+        console.log('✅ Flutter cargado - Loading ocultado');
       }
-    }, 10000);
+    }
+
+    // Intentar detectar cuando Flutter está listo
+    window.addEventListener('flutter-first-frame', hideLoading);
+    
+    // Fallback: detectar cuando el DOM de Flutter está presente
+    const checkFlutterReady = setInterval(() => {
+      if (document.querySelector('flt-glass-pane') || 
+          document.querySelector('[data-flutter-view]') ||
+          document.querySelector('canvas')) {
+        clearInterval(checkFlutterReady);
+        hideLoading();
+      }
+    }, 1000);
+
+    // Timeout para ocultar loading después de 10 segundos
+    setTimeout(hideLoading, 10000);
+  </script>
+  
+  <script>
+    // Deshabilitar service worker para evitar errores de caché
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.getRegistrations().then(function(registrations) {
+        for(let registration of registrations) {
+          registration.unregister();
+        }
+      });
+    }
   </script>
   
   <script src="flutter_bootstrap.js" async></script>

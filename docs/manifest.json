@@ -11,10 +11,6 @@
     "scope": "./",
     "lang": "es",
     "categories": ["productivity", "family"],
-    "display_override": ["window-controls-overlay"],
-    "edge_side_panel": {
-        "preferred_width": 400
-    },
     "icons": [
         {
             "src": "icons/Icon-192.png",
