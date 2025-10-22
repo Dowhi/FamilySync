@@ -754,21 +754,28 @@ class CalendarDataService extends ChangeNotifier {
       
       // Procesar plantillas iniciales
       _shiftTemplates.clear();
-      for (final doc in templatesQuery.docs) {
-        try {
-          final data = doc.data();
-          final template = ShiftTemplate.fromJson(data);
-          _shiftTemplates.add(template);
-          print('✅ Plantilla cargada: ${template.name}');
-        } catch (e) {
-          print('❌ Error procesando plantilla ${doc.id}: $e');
+      
+      if (templatesQuery.docs.isEmpty) {
+        print('⚠️ No hay plantillas en Firebase, creando plantillas por defecto...');
+        _createDefaultShiftTemplates();
+      } else {
+        for (final doc in templatesQuery.docs) {
+          try {
+            final data = doc.data();
+            final template = ShiftTemplate.fromJson(data);
+            _shiftTemplates.add(template);
+            print('✅ Plantilla cargada: ${template.name}');
+          } catch (e) {
+            print('❌ Error procesando plantilla ${doc.id}: $e');
+            print('🔧 Datos problemáticos: ${doc.data()}');
+          }
         }
+        
+        _shiftTemplates.sort((a, b) => a.name.compareTo(b.name));
+        _notifyChangesOptimized();
+        
+        print('✅ DATOS INICIALES CARGADOS: ${_shiftTemplates.length} plantillas');
       }
-      
-      _shiftTemplates.sort((a, b) => a.name.compareTo(b.name));
-      _notifyChangesOptimized();
-      
-      print('✅ DATOS INICIALES CARGADOS: ${_shiftTemplates.length} plantillas');
       
       // También cargar eventos, turnos y notas
       await _loadInitialEvents();
@@ -777,6 +784,8 @@ class CalendarDataService extends ChangeNotifier {
       
     } catch (e) {
       print('❌ Error cargando datos iniciales: $e');
+      print('🔧 Creando plantillas por defecto como fallback...');
+      _createDefaultShiftTemplates();
     }
   }
 
@@ -1091,11 +1100,18 @@ class CalendarDataService extends ChangeNotifier {
     _shiftTemplates.clear();
     print('🔧 Lista local limpiada, agregando ${snapshot.docs.length} plantillas...');
     
+    // Si no hay plantillas en Firebase, crear plantillas por defecto
+    if (snapshot.docs.isEmpty) {
+      print('⚠️ No hay plantillas en Firebase, creando plantillas por defecto...');
+      _createDefaultShiftTemplates();
+      return;
+    }
+    
     // Procesar cada documento
     for (final doc in snapshot.docs) {
       try {
         final data = doc.data() as Map<String, dynamic>;
-        print('🔧 Procesando documento ${doc.id}: ${data['name']}');
+        print('🔧 Procesando documento ${doc.id}: ${data['name'] ?? 'Sin nombre'}');
         
         // Cargar todas las plantillas independientemente del familyId (sin autenticación)
         final docFamilyId = data['familyId']?.toString();
@@ -1108,7 +1124,15 @@ class CalendarDataService extends ChangeNotifier {
       } catch (e) {
         print('❌ Error cargando plantilla: $e');
         print('🔧 Documento problemático: ${doc.data()}');
+        print('🔧 Stack trace: ${StackTrace.current}');
       }
+    }
+    
+    // Si no se cargó ninguna plantilla, crear plantillas por defecto
+    if (_shiftTemplates.isEmpty) {
+      print('⚠️ No se pudieron cargar plantillas desde Firebase, creando plantillas por defecto...');
+      _createDefaultShiftTemplates();
+      return;
     }
     
     // Ordenar plantillas por nombre para consistencia
@@ -2199,6 +2223,126 @@ class CalendarDataService extends ChangeNotifier {
       print('✅ Usuarios inicializados correctamente');
     } catch (e) {
       print('❌ Error inicializando usuarios: $e');
+    }
+  }
+
+  /// 🔹 Crear plantillas de turnos por defecto
+  void _createDefaultShiftTemplates() {
+    print('🔧 Creando plantillas de turnos por defecto...');
+    
+    _shiftTemplates.clear();
+    
+    // Plantillas básicas de turnos
+    final defaultTemplates = [
+      ShiftTemplate(
+        id: 'default-d1',
+        name: 'D1',
+        abbreviation: 'D1',
+        colorHex: '#FF5722',
+        textColorHex: '#FFFFFF',
+        startTime: '08:00',
+        endTime: '16:00',
+        description: 'Turno de día 1',
+        createdAt: DateTime.now(),
+        updatedAt: DateTime.now(),
+      ),
+      ShiftTemplate(
+        id: 'default-d2',
+        name: 'D2',
+        abbreviation: 'D2',
+        colorHex: '#4CAF50',
+        textColorHex: '#FFFFFF',
+        startTime: '16:00',
+        endTime: '00:00',
+        description: 'Turno de día 2',
+        createdAt: DateTime.now(),
+        updatedAt: DateTime.now(),
+      ),
+      ShiftTemplate(
+        id: 'default-n1',
+        name: 'N1',
+        abbreviation: 'N1',
+        colorHex: '#9C27B0',
+        textColorHex: '#FFFFFF',
+        startTime: '00:00',
+        endTime: '08:00',
+        description: 'Turno de noche 1',
+        createdAt: DateTime.now(),
+        updatedAt: DateTime.now(),
+      ),
+      ShiftTemplate(
+        id: 'default-libre',
+        name: 'Libre',
+        abbreviation: 'Lib',
+        colorHex: '#607D8B',
+        textColorHex: '#FFFFFF',
+        startTime: '00:00',
+        endTime: '00:00',
+        description: 'Día libre',
+        createdAt: DateTime.now(),
+        updatedAt: DateTime.now(),
+      ),
+      ShiftTemplate(
+        id: 'default-tarde',
+        name: 'Tarde',
+        abbreviation: 'T',
+        colorHex: '#FF9800',
+        textColorHex: '#FFFFFF',
+        startTime: '14:00',
+        endTime: '22:00',
+        description: 'Turno de tarde',
+        createdAt: DateTime.now(),
+        updatedAt: DateTime.now(),
+      ),
+      ShiftTemplate(
+        id: 'default-manana',
+        name: 'Mañana',
+        abbreviation: 'M',
+        colorHex: '#2196F3',
+        textColorHex: '#FFFFFF',
+        startTime: '06:00',
+        endTime: '14:00',
+        description: 'Turno de mañana',
+        createdAt: DateTime.now(),
+        updatedAt: DateTime.now(),
+      ),
+    ];
+    
+    _shiftTemplates.addAll(defaultTemplates);
+    
+    // Intentar guardar en Firebase
+    _saveDefaultTemplatesToFirebase(defaultTemplates);
+    
+    // Notificar cambios
+    _notifyChangesOptimized();
+    
+    print('✅ Plantillas por defecto creadas: ${_shiftTemplates.length} plantillas');
+    print('🔧 Plantillas: ${_shiftTemplates.map((t) => t.name).join(', ')}');
+  }
+
+  /// 🔹 Guardar plantillas por defecto en Firebase
+  Future<void> _saveDefaultTemplatesToFirebase(List<ShiftTemplate> templates) async {
+    try {
+      print('🔄 Guardando plantillas por defecto en Firebase...');
+      
+      final batch = _firestore.batch();
+      
+      for (final template in templates) {
+        final docRef = _firestore.collection('shift_templates').doc(template.id);
+        final templateData = {
+          ...template.toJson(),
+          'familyId': 'default_family',
+          'createdAt': FieldValue.serverTimestamp(),
+          'updatedAt': FieldValue.serverTimestamp(),
+        };
+        batch.set(docRef, templateData);
+      }
+      
+      await batch.commit();
+      print('✅ Plantillas por defecto guardadas en Firebase');
+    } catch (e) {
+      print('❌ Error guardando plantillas por defecto en Firebase: $e');
+      // No es crítico, las plantillas funcionan localmente
     }
   }
 }
