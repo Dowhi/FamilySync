@@ -97,3 +97,6 @@ Para cualquier problema:
 
 **🎉 ¡Optimización completada exitosamente!**
 **📱 La app está lista para iPhone con Firebase Hosting**
+
+
+

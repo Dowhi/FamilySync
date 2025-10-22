@@ -33,3 +33,6 @@ firebase deploy --only hosting
 
 echo "✅ Despliegue completado exitosamente!"
 echo "📱 La app está optimizada para iPhone y disponible en Firebase Hosting"
+
+
+

@@ -82,17 +82,21 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
       return _buildCalendarContent(context, calendarService);
     } catch (e) {
       print('❌ Error en build de CalendarScreen: $e');
+      print('❌ Stack trace: ${StackTrace.current}');
       return _buildErrorScreen(context, e.toString());
     }
   }
 
   Widget _buildErrorScreen(BuildContext context, String error) {
     // Detectar si es el error específico de iOS Safari
-    bool isIOSCompatibilityError = error.contains('minified:JG') || error.contains('minified:k');
+    bool isIOSCompatibilityError = error.contains('minified:JG') || 
+                                   error.contains('minified:k') ||
+                                   error.contains('TypeError') ||
+                                   error.contains('Instance of');
     
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Calendario Familiar'),
+        title: const Text('FamilySync'),
         backgroundColor: const Color(0xFF1B5E20),
         foregroundColor: Colors.white,
       ),
@@ -109,7 +113,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
               ),
               const SizedBox(height: 16),
               Text(
-                isIOSCompatibilityError ? 'Error de Compatibilidad' : 'Error de Conexión',
+                isIOSCompatibilityError ? 'Error de Compatibilidad iOS' : 'Error de Conexión',
                 style: const TextStyle(
                   fontSize: 24,
                   fontWeight: FontWeight.bold,
@@ -130,6 +134,32 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                   Navigator.of(context).pushReplacementNamed('/');
                 },
                 child: const Text('Reintentar'),
+              ),
+              const SizedBox(height: 8),
+              ElevatedButton(
+                onPressed: () {
+                  // Abrir en Chrome si es posible
+                  if (isIOSCompatibilityError) {
+                    // En iOS, sugerir abrir en Chrome
+                    showDialog(
+                      context: context,
+                      builder: (context) => AlertDialog(
+                        title: const Text('Solución Recomendada'),
+                        content: const Text(
+                          'Para mejor compatibilidad, abre esta URL en Chrome:\n\n'
+                          'https://dowhi.github.io/FamilySync'
+                        ),
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.pop(context),
+                            child: const Text('Entendido'),
+                          ),
+                        ],
+                      ),
+                    );
+                  }
+                },
+                child: const Text('Solución'),
               ),
               const SizedBox(height: 8),
               Text(

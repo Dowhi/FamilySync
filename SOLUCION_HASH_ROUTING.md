@@ -105,3 +105,6 @@ El problema era que Flutter Web estaba usando **hash routing** por defecto, lo q
 
 **🎉 ¡Problema de hash routing resuelto!**
 **📱 Ahora puedes navegar correctamente por la app**
+
+
+

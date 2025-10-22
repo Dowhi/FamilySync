@@ -108,3 +108,6 @@ Si encuentras problemas:
 2. Asegúrate de que Firebase esté configurado correctamente
 3. Revisa los logs de Firebase Hosting
 4. Verifica la configuración de iOS en `ios/Runner/Info.plist`
+
+
+

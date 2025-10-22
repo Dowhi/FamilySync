@@ -26,3 +26,6 @@ netlify deploy --prod --dir=build/web
 echo ✅ Desplegado a Netlify!
 echo 🌐 Tu app estará disponible en la URL que te proporcione Netlify
 pause
+
+
+

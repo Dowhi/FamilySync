@@ -127,3 +127,6 @@ firebase deploy --only hosting
 
 **🎉 ¡Problema de pantalla en blanco resuelto!**
 **📱 La app ahora funciona perfectamente en iPhone**
+
+
+

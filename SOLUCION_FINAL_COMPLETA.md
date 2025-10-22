@@ -130,3 +130,6 @@ firebase deploy --only hosting
 **📱 ¡La app está lista para usar en iPhone!**
 **🎯 ¡Todos los problemas han sido solucionados!**
 **🚀 ¡Experiencia de usuario perfecta!**
+
+
+

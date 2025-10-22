@@ -35,29 +35,30 @@
       const isSafari = /Safari/.test(navigator.userAgent) && !/Chrome/.test(navigator.userAgent);
       
       if (isIOS && isSafari) {
-        console.log('iOS Safari detectado - Aplicando configuraciones específicas');
+        console.log('iOS Safari detectado - Redirigiendo a versión optimizada');
         
-        // Configurar viewport específico para iOS Safari
-        const viewport = document.querySelector('meta[name="viewport"]');
-        if (viewport) {
-          viewport.setAttribute('content', 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover');
-        }
-        
-        // Añadir clase CSS para iOS
-        document.documentElement.classList.add('ios-safari');
-        
-        // Configurar para evitar problemas de zoom
-        document.addEventListener('gesturestart', function (e) {
-          e.preventDefault();
-        });
-        
-        // Configurar para evitar problemas de scroll
-        document.addEventListener('touchmove', function (e) {
-          if (e.scale !== 1) {
-            e.preventDefault();
-          }
-        }, { passive: false });
+        // Redirigir a la versión optimizada para iOS
+        window.location.href = './index-ios.html';
+        return;
       }
+      
+      // Configurar para otros navegadores
+      const viewport = document.querySelector('meta[name="viewport"]');
+      if (viewport) {
+        viewport.setAttribute('content', 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover');
+      }
+      
+      // Configurar para evitar problemas de zoom
+      document.addEventListener('gesturestart', function (e) {
+        e.preventDefault();
+      });
+      
+      // Configurar para evitar problemas de scroll
+      document.addEventListener('touchmove', function (e) {
+        if (e.scale !== 1) {
+          e.preventDefault();
+        }
+      }, { passive: false });
     })();
   </script>
 </head>

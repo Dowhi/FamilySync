@@ -96,3 +96,6 @@ Desde la pantalla de diagnóstico, toca cada botón:
 
 **🔍 ¡Ahora puedes diagnosticar exactamente dónde está el problema!**
 **📱 Prueba la app y reporta qué pantallas funcionan**
+
+
+
