@@ -1,0 +1,19 @@
+{
+  "name": "CalendarioSync - Calendario Compartido",
+  "short_name": "CalendarioSync",
+  "description": "Aplicación de calendario compartido para gestión de turnos y eventos",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#3B82F6",
+  "orientation": "portrait",
+  "scope": "/",
+  "icons": [
+    {
+      "src": "/vite.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
