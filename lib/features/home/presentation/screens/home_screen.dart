@@ -60,7 +60,7 @@ class HomeScreen extends ConsumerWidget {
                       
                       // Título principal más pequeño
                       const Text(
-                        'Calendario Familiar',
+                        'FamilySync',
                         style: TextStyle(
                           fontSize: 24,
                           fontWeight: FontWeight.bold,
