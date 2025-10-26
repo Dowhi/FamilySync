@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/material.dart';
 import 'package:calendario_familiar/core/models/local_user.dart';
 
 class UserFirebaseService {
@@ -158,7 +159,4 @@ class UserFirebaseService {
     return Color(int.parse('FF$hexCode', radix: 16));
   }
 }
-
-// Importar Color
-import 'package:flutter/material.dart';
 
