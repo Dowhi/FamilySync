@@ -1,3 +1,6 @@
+# Ignore stray local workspace copies
+Mis Aplicaciones/
+Mis Aplicaciones/**
 # Miscellaneous
 *.class
 *.log
