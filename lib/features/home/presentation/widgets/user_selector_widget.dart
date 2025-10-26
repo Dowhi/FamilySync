@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:calendario_familiar/core/providers/current_user_provider.dart';
+import 'package:calendario_familiar/core/providers/firebase_users_provider.dart';
 import 'package:calendario_familiar/core/models/local_user.dart';
 
 class UserSelectorWidget extends ConsumerWidget {
@@ -11,49 +12,51 @@ class UserSelectorWidget extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final currentUserId = ref.watch(currentUserIdProvider);
     final currentUser = ref.watch(currentUserProvider);
+    final usersAsync = ref.watch(firebaseUsersStreamProvider);
     
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.15),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: Colors.white.withOpacity(0.2),
-          width: 1,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 20,
-            offset: const Offset(0, 10),
+    return usersAsync.when(
+      data: (users) => Container(
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: Colors.white.withOpacity(0.15),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: Colors.white.withOpacity(0.2),
+            width: 1,
           ),
-        ],
-      ),
-      child: Column(
-        children: [
-          // Grid de usuarios
-          GridView.builder(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 2,
-              childAspectRatio: 2.5,
-              crossAxisSpacing: 12,
-              mainAxisSpacing: 12,
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.1),
+              blurRadius: 20,
+              offset: const Offset(0, 10),
             ),
-            itemCount: 5,
-            itemBuilder: (context, index) {
-              final user = getUserById(index + 1);
-              final isSelected = currentUserId == user.id;
-              
-              return _buildUserCard(
-                context: context,
-                ref: ref,
-                user: user,
-                isSelected: isSelected,
-              );
-            },
-          ),
+          ],
+        ),
+        child: Column(
+          children: [
+            // Grid de usuarios desde Firebase
+            GridView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 2,
+                childAspectRatio: 2.5,
+                crossAxisSpacing: 12,
+                mainAxisSpacing: 12,
+              ),
+              itemCount: users.length,
+              itemBuilder: (context, index) {
+                final user = users[index];
+                final isSelected = currentUserId == user.id;
+                
+                return _buildUserCard(
+                  context: context,
+                  ref: ref,
+                  user: user,
+                  isSelected: isSelected,
+                );
+              },
+            ),
           
           const SizedBox(height: 20),
           
@@ -242,6 +245,47 @@ class UserSelectorWidget extends ConsumerWidget {
                   size: 12,
                 ),
               ),
+          ],
+        ),
+      ),
+      loading: () => Container(
+        padding: const EdgeInsets.all(40),
+        child: const Center(
+          child: CircularProgressIndicator(
+            color: Colors.white,
+          ),
+        ),
+      ),
+      error: (error, stack) => Container(
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: Colors.white.withOpacity(0.15),
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Column(
+          children: [
+            const Icon(
+              Icons.error_outline,
+              color: Colors.white,
+              size: 48,
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'Error al cargar usuarios',
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 16,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              error.toString(),
+              style: TextStyle(
+                color: Colors.white.withOpacity(0.7),
+                fontSize: 12,
+              ),
+              textAlign: TextAlign.center,
+            ),
           ],
         ),
       ),

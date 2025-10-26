@@ -35,49 +35,37 @@ class HomeScreen extends ConsumerWidget {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      // Logo/Icono
+                      // Logo/Icono más pequeño
                       Container(
-                        width: 120,
-                        height: 120,
+                        width: 80,
+                        height: 80,
                         decoration: BoxDecoration(
                           color: Colors.white.withOpacity(0.2),
-                          borderRadius: BorderRadius.circular(30),
+                          borderRadius: BorderRadius.circular(20),
                           boxShadow: [
                             BoxShadow(
                               color: Colors.black.withOpacity(0.1),
-                              blurRadius: 20,
-                              offset: const Offset(0, 10),
+                              blurRadius: 15,
+                              offset: const Offset(0, 5),
                             ),
                           ],
                         ),
                         child: const Icon(
                           Icons.calendar_today,
-                          size: 60,
+                          size: 40,
                           color: Colors.white,
                         ),
                       ),
-                      const SizedBox(height: 24),
+                      const SizedBox(height: 16),
                       
-                      // Título principal
+                      // Título principal más pequeño
                       const Text(
                         'Calendario Familiar',
                         style: TextStyle(
-                          fontSize: 32,
+                          fontSize: 24,
                           fontWeight: FontWeight.bold,
                           color: Colors.white,
-                          letterSpacing: 1.2,
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
-                      const SizedBox(height: 12),
-                      
-                      // Subtítulo
-                      Text(
-                        'Organiza tu vida familiar',
-                        style: TextStyle(
-                          fontSize: 18,
-                          color: Colors.white.withOpacity(0.9),
-                          fontWeight: FontWeight.w300,
+                          letterSpacing: 1.0,
                         ),
                         textAlign: TextAlign.center,
                       ),

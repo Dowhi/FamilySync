@@ -44,11 +44,7 @@ class _AvailableShiftsScreenState extends ConsumerState<AvailableShiftsScreen> {
             .toList();
       }
       
-      // Si no hay turnos en Firebase, usar los de ejemplo
-      if (firebaseShifts.isEmpty) {
-        firebaseShifts = _getExampleShiftTemplates();
-      }
-      
+      // Ya no usar turnos de ejemplo, solo Firebase
       if (mounted) {
         setState(() {
           _shiftTemplates = firebaseShifts;
@@ -59,7 +55,7 @@ class _AvailableShiftsScreenState extends ConsumerState<AvailableShiftsScreen> {
       print('❌ Error cargando turnos de Firebase: $e');
       if (mounted) {
         setState(() {
-          _shiftTemplates = _getExampleShiftTemplates();
+          _shiftTemplates = []; // Lista vacía en caso de error
           _isLoading = false;
         });
         ScaffoldMessenger.of(context).showSnackBar(
@@ -70,88 +66,6 @@ class _AvailableShiftsScreenState extends ConsumerState<AvailableShiftsScreen> {
         );
       }
     }
-  }
-
-  List<ShiftTemplate> _getExampleShiftTemplates() {
-    return [
-      const ShiftTemplate(
-        id: '1',
-        name: 'Nuevo',
-        abbreviation: 'F.A.',
-        colorHex: '#B71C1C',
-        textColorHex: '#FFFFFF',
-        textSize: 16.0,
-        startTime: '08:00',
-        endTime: '16:00',
-        description: 'Turno nuevo para implementar',
-      ),
-      const ShiftTemplate(
-        id: '2',
-        name: 'S. Santa',
-        abbreviation: 'S.Santa',
-        colorHex: '#1976D2',
-        textColorHex: '#FFFFFF',
-        textSize: 16.0,
-        startTime: '06:00',
-        endTime: '14:00',
-        description: 'Turno de Semana Santa',
-      ),
-      const ShiftTemplate(
-        id: '3',
-        name: 'Feria',
-        abbreviation: 'Feria',
-        colorHex: '#2196F3',
-        textColorHex: '#FFFFFF',
-        textSize: 16.0,
-        startTime: '10:00',
-        endTime: '18:00',
-        description: 'Turno de feria',
-      ),
-      const ShiftTemplate(
-        id: '4',
-        name: 'Descanso',
-        abbreviation: 'Descanso',
-        colorHex: '#388E3C',
-        textColorHex: '#FFFFFF',
-        textSize: 16.0,
-        startTime: '00:00',
-        endTime: '00:00',
-        description: 'Día de descanso',
-      ),
-      const ShiftTemplate(
-        id: '5',
-        name: 'D1',
-        abbreviation: 'D1',
-        colorHex: '#1976D2',
-        textColorHex: '#FFFFFF',
-        textSize: 16.0,
-        startTime: '08:00',
-        endTime: '20:00',
-        description: 'Día 1 - Turno diurno',
-      ),
-      const ShiftTemplate(
-        id: '6',
-        name: 'D2',
-        abbreviation: 'D2',
-        colorHex: '#D32F2F',
-        textColorHex: '#FFFFFF',
-        textSize: 16.0,
-        startTime: '20:00',
-        endTime: '08:00',
-        description: 'Día 2 - Turno nocturno',
-      ),
-      const ShiftTemplate(
-        id: '7',
-        name: 'Tarde',
-        abbreviation: 'T',
-        colorHex: '#FF9800',
-        textColorHex: '#FFFFFF',
-        textSize: 16.0,
-        startTime: '14:00',
-        endTime: '22:00',
-        description: 'Turno de tarde',
-      ),
-    ];
   }
 
   @override
@@ -358,20 +272,9 @@ class _AvailableShiftsScreenState extends ConsumerState<AvailableShiftsScreen> {
       return template.abbreviation;
     }
     
-    // Fallback: generar abreviatura basada en el nombre
-    final name = template.name.toLowerCase();
-    if (name.contains('d1') || name.contains('día 1')) return 'D1';
-    if (name.contains('d2') || name.contains('día 2')) return 'D2';
-    if (name.contains('libre')) return 'L';
-    if (name.contains('feria')) return 'Feria';
-    if (name.contains('santa')) return 'S.Santa';
-    if (name.contains('descanso')) return 'Descanso';
-    if (name.contains('tarde')) return 'T';
-    if (name.contains('nuevo')) return 'F.A.';
-    
-    // Abreviación por defecto (primeras letras)
-    return template.name.length > 8 
-        ? template.name.substring(0, 8).toUpperCase()
+    // Abreviación por defecto: primeras 2-3 letras del nombre
+    return template.name.length > 3 
+        ? template.name.substring(0, 3).toUpperCase()
         : template.name.toUpperCase();
   }
 
