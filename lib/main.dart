@@ -15,6 +15,10 @@ import 'package:go_router/go_router.dart';
 void main(List<String> args) async {
   WidgetsFlutterBinding.ensureInitialized();
   
+  // Forzar nuevo despliegue - versión sin login
+  
+  // Forzar recompilación para eliminar pantalla de login
+  
   // Inicializar Firebase INMEDIATAMENTE para web
   try {
     if (Firebase.apps.isEmpty) {
