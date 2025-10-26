@@ -27,20 +27,20 @@
   <title>Calendario Familiar</title>
   <link rel="manifest" href="manifest.json">
   
-  <!-- Script para compatibilidad con iOS Safari -->
-  <script>
-    // Detectar iOS Safari y aplicar configuraciones específicas
-    (function() {
-      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-      const isSafari = /Safari/.test(navigator.userAgent) && !/Chrome/.test(navigator.userAgent);
-      
-      if (isIOS && isSafari) {
-        console.log('iOS Safari detectado - Redirigiendo a versión optimizada');
-        
-        // Redirigir a la versión optimizada para iOS
-        window.location.href = './index-ios.html';
-        return;
-      }
+         <!-- Script para compatibilidad con iOS Safari -->
+         <script>
+           // Detectar iOS Safari y aplicar configuraciones específicas
+           (function() {
+             const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+             const isSafari = /Safari/.test(navigator.userAgent) && !/Chrome/.test(navigator.userAgent);
+             
+             if (isIOS && isSafari) {
+               console.log('iOS Safari detectado - Redirigiendo a versión HTML pura');
+               
+               // Redirigir a la versión HTML pura para iOS Safari
+               window.location.href = './index-ios-simple.html';
+               return;
+             }
       
       // Configurar para otros navegadores
       const viewport = document.querySelector('meta[name="viewport"]');
