@@ -55,7 +55,7 @@ dev_dependencies:
   mockito: ^5.4.4
   integration_test:
     sdk: flutter
-  patrol: ^3.19.0
+  # patrol: ^3.19.0  # Comentado temporalmente para GitHub Actions
   flutter_launcher_icons: ^0.14.4
 
 flutter:
