@@ -138,51 +138,8 @@ class UserSelectorWidget extends ConsumerWidget {
           ),
         );
       },
-      loading: () {
-        return Container(
-          padding: const EdgeInsets.all(40),
-          child: const Center(
-            child: CircularProgressIndicator(
-              color: Colors.white,
-            ),
-          ),
-        );
-      },
-      error: (error, stack) {
-        return Container(
-          padding: const EdgeInsets.all(20),
-          decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.15),
-            borderRadius: BorderRadius.circular(20),
-          ),
-          child: Column(
-            children: [
-              const Icon(
-                Icons.error_outline,
-                color: Colors.white,
-                size: 48,
-              ),
-              const SizedBox(height: 16),
-              const Text(
-                'Error al cargar usuarios',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 16,
-                ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                error.toString(),
-                style: TextStyle(
-                  color: Colors.white.withOpacity(0.7),
-                  fontSize: 12,
-                ),
-                textAlign: TextAlign.center,
-              ),
-            ],
-          ),
-        );
-      },
+      loading: () => const SizedBox.shrink(),
+      error: (_, __) => const SizedBox.shrink(),
     );
   }
 
@@ -292,47 +249,6 @@ class UserSelectorWidget extends ConsumerWidget {
                   size: 12,
                 ),
               ),
-          ],
-        ),
-      ),
-      loading: () => Container(
-        padding: const EdgeInsets.all(40),
-        child: const Center(
-          child: CircularProgressIndicator(
-            color: Colors.white,
-          ),
-        ),
-      ),
-      error: (error, stack) => Container(
-        padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(
-          color: Colors.white.withOpacity(0.15),
-          borderRadius: BorderRadius.circular(20),
-        ),
-        child: Column(
-          children: [
-            const Icon(
-              Icons.error_outline,
-              color: Colors.white,
-              size: 48,
-            ),
-            const SizedBox(height: 16),
-            Text(
-              'Error al cargar usuarios',
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 16,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              error.toString(),
-              style: TextStyle(
-                color: Colors.white.withOpacity(0.7),
-                fontSize: 12,
-              ),
-              textAlign: TextAlign.center,
-            ),
           ],
         ),
       ),
