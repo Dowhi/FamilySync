@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 
 class SplashScreenAlternative extends StatefulWidget {
   const SplashScreenAlternative({Key? key}) : super(key: key);
@@ -90,16 +89,8 @@ class _SplashScreenAlternativeState extends State<SplashScreenAlternative>
     if (_hasNavigated) return;
     _hasNavigated = true;
 
-    // Verificar si el usuario está autenticado
-    final user = FirebaseAuth.instance.currentUser;
-    
-    if (user != null) {
-      // Usuario autenticado, ir al calendario
-      context.go('/calendar');
-    } else {
-      // Usuario no autenticado, ir al login
-      context.go('/login');
-    }
+    // Navegar directamente al calendario (sin autenticación)
+    context.go('/calendar');
   }
 
   @override
