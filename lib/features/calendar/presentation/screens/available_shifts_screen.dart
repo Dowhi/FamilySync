@@ -476,9 +476,7 @@ class _AvailableShiftsScreenState extends ConsumerState<AvailableShiftsScreen> {
         }
       }
       
-      setState(() {
-        _shiftTemplates.removeWhere((t) => t.id == template.id);
-      });
+      // No actualizamos estado manualmente; el Stream reflejará el cambio
       
     } catch (e) {
       print('❌ Error eliminando turno de Firebase: $e');
