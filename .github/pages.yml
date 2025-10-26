@@ -1,0 +1,10 @@
+# Configuración para GitHub Pages
+# Este archivo fuerza el uso de GitHub Actions en lugar de deployment desde rama
+
+# Configuración de GitHub Pages
+# Source: GitHub Actions
+# Branch: main (usado por GitHub Actions)
+# Path: / (raíz del repositorio)
+
+# Esta configuración asegura que GitHub Pages use el workflow de GitHub Actions
+# en lugar de hacer deployment directo desde una rama
