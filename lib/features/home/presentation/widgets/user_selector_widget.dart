@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:calendario_familiar/core/providers/current_user_provider.dart';
 import 'package:calendario_familiar/core/models/local_user.dart';
 
@@ -142,9 +143,14 @@ class UserSelectorWidget extends ConsumerWidget {
     required bool isSelected,
   }) {
     return GestureDetector(
-      onTap: () {
+      onTap: () async {
         // Cambiar usuario actual
-        ref.read(currentUserIdProvider.notifier).setCurrentUser(user.id);
+        await ref.read(currentUserIdProvider.notifier).setCurrentUser(user.id);
+        
+        // Navegar al calendario automáticamente
+        if (context.mounted) {
+          context.go('/calendar');
+        }
       },
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),

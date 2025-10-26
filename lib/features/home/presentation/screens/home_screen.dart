@@ -105,55 +105,17 @@ class HomeScreen extends ConsumerWidget {
                       // Widget de selector de usuario
                       const UserSelectorWidget(),
                       
-                      const SizedBox(height: 40),
+                      const SizedBox(height: 20),
                       
-                      // Botón para continuar al calendario
-                      Container(
-                        width: double.infinity,
-                        height: 56,
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(28),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withOpacity(0.1),
-                              blurRadius: 15,
-                              offset: const Offset(0, 5),
-                            ),
-                          ],
+                      // Instrucción para el usuario
+                      Text(
+                        'Toca un usuario para continuar',
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Colors.white.withOpacity(0.7),
+                          fontStyle: FontStyle.italic,
                         ),
-                        child: ElevatedButton(
-                          onPressed: () {
-                            // Navegar al calendario
-                            context.go('/calendar');
-                          },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.white,
-                            foregroundColor: const Color(0xFF1B5E20),
-                            elevation: 0,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(28),
-                            ),
-                          ),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              const Icon(
-                                Icons.arrow_forward,
-                                size: 24,
-                              ),
-                              const SizedBox(width: 12),
-                              Text(
-                                'Continuar al Calendario',
-                                style: TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.w600,
-                                  color: const Color(0xFF1B5E20),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
+                        textAlign: TextAlign.center,
                       ),
                     ],
                   ),
