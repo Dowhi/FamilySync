@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:calendario_familiar/core/models/shift_template.dart';
+import 'package:calendario_familiar/core/providers/firebase_shift_templates_provider.dart';
 import 'package:calendario_familiar/core/services/firestore_service.dart';
-// Eliminado: import auth_controller (ya no se utiliza)
 
 class AvailableShiftsScreen extends ConsumerStatefulWidget {
   const AvailableShiftsScreen({super.key});
@@ -13,63 +13,16 @@ class AvailableShiftsScreen extends ConsumerStatefulWidget {
 }
 
 class _AvailableShiftsScreenState extends ConsumerState<AvailableShiftsScreen> {
-  List<ShiftTemplate> _shiftTemplates = [];
-  bool _isLoading = false;
-
   @override
   void initState() {
     super.initState();
-    _loadShiftTemplates();
-  }
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    // Recargar turnos cuando se regrese de otra pantalla
-    _loadShiftTemplates();
-  }
-
-  Future<void> _loadShiftTemplates() async {
-    try {
-      final firestoreService = ref.read(firestoreServiceProvider);
-      // Eliminado: obtención de familyId desde authController (ya no se utiliza)
-      final familyId = 'default_family'; // FamilyId fijo sin autenticación
-
-      final shiftsData = await firestoreService.getShiftTemplates(familyId: familyId);
-      
-      List<ShiftTemplate> firebaseShifts = [];
-      if (shiftsData.isNotEmpty) {
-        firebaseShifts = shiftsData
-            .map((data) => ShiftTemplate.fromJson(data))
-            .toList();
-      }
-      
-      // Ya no usar turnos de ejemplo, solo Firebase
-      if (mounted) {
-        setState(() {
-          _shiftTemplates = firebaseShifts;
-          _isLoading = false;
-        });
-      }
-    } catch (e) {
-      print('❌ Error cargando turnos de Firebase: $e');
-      if (mounted) {
-        setState(() {
-          _shiftTemplates = []; // Lista vacía en caso de error
-          _isLoading = false;
-        });
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error cargando turnos de Firebase: $e'),
-            backgroundColor: Colors.orange,
-          ),
-        );
-      }
-    }
+    // Ya no necesitamos cargar manualmente, el Stream lo hace automáticamente
   }
 
   @override
   Widget build(BuildContext context) {
+    final templatesAsync = ref.watch(firebaseShiftTemplatesStreamProvider);
+    
     return Scaffold(
       backgroundColor: Colors.grey[900],
       appBar: AppBar(
@@ -89,82 +42,134 @@ class _AvailableShiftsScreenState extends ConsumerState<AvailableShiftsScreen> {
         ),
         centerTitle: true,
       ),
-      body: Column(
-        children: [
-          // Botones de acción
-          Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Row(
-              children: [
-                Expanded(
-                  child: _buildActionButton(
-                    'CREAR TURNO NUEVO',
-                    Icons.add,
-                    () {
-                      context.push('/shift-configuration');
-                    },
+      body: templatesAsync.when(
+        data: (templates) => Column(
+          children: [
+            // Botones de acción
+            Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: _buildActionButton(
+                      'CREAR TURNO NUEVO',
+                      Icons.add,
+                      () {
+                        context.push('/shift-configuration');
+                      },
+                    ),
                   ),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: _buildActionButton(
-                    'IMPORTAR TURNOS...',
-                    Icons.upload,
-                    () {
-                      // TODO: Implementar importación de turnos
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Función en desarrollo')),
-                      );
-                    },
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: _buildActionButton(
+                      'SINCRONIZAR',
+                      Icons.sync,
+                      () async {
+                        try {
+                          final service = ref.read(shiftTemplateFirebaseServiceProvider);
+                          await service.syncLocalTemplatesToFirebase();
+                          if (mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('✅ Plantillas sincronizadas con Firebase'),
+                                backgroundColor: Colors.green,
+                              ),
+                            );
+                          }
+                        } catch (e) {
+                          if (mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text('❌ Error: $e'),
+                                backgroundColor: Colors.red,
+                              ),
+                            );
+                          }
+                        }
+                      },
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
-          
-          // Lista de turnos
-          Expanded(
-            child: _isLoading
-                ? const Center(child: CircularProgressIndicator(color: Colors.white))
-                : _shiftTemplates.isEmpty
-                    ? Center(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(
-                              Icons.work_off,
-                              size: 64,
+            
+            // Lista de turnos
+            Expanded(
+              child: templates.isEmpty
+                  ? Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.work_off,
+                            size: 64,
+                            color: Colors.grey[400],
+                          ),
+                          const SizedBox(height: 16),
+                          Text(
+                            'No hay turnos disponibles',
+                            style: TextStyle(
                               color: Colors.grey[400],
+                              fontSize: 18,
                             ),
-                            const SizedBox(height: 16),
-                            Text(
-                              'No hay turnos disponibles',
-                              style: TextStyle(
-                                color: Colors.grey[400],
-                                fontSize: 18,
-                              ),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            'Crea tu primer turno o sincroniza',
+                            style: TextStyle(
+                              color: Colors.grey[500],
+                              fontSize: 14,
                             ),
-                            const SizedBox(height: 8),
-                            Text(
-                              'Crea tu primer turno',
-                              style: TextStyle(
-                                color: Colors.grey[500],
-                                fontSize: 14,
-                              ),
-                            ),
-                          ],
-                        ),
-                      )
-                    : ListView.builder(
-                        padding: const EdgeInsets.symmetric(horizontal: 16),
-                        itemCount: _shiftTemplates.length,
-                        itemBuilder: (context, index) {
-                          final template = _shiftTemplates[index];
-                          return _buildShiftItem(template);
-                        },
+                          ),
+                        ],
                       ),
+                    )
+                  : ListView.builder(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      itemCount: templates.length,
+                      itemBuilder: (context, index) {
+                        final template = templates[index];
+                        return _buildShiftItem(template);
+                      },
+                    ),
+            ),
+          ],
+        ),
+        loading: () => const Center(
+          child: CircularProgressIndicator(color: Colors.white),
+        ),
+        error: (error, stack) => Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                Icons.error_outline,
+                size: 64,
+                color: Colors.grey[400],
+              ),
+              const SizedBox(height: 16),
+              Text(
+                'Error al cargar turnos',
+                style: TextStyle(
+                  color: Colors.grey[400],
+                  fontSize: 18,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 32),
+                child: Text(
+                  error.toString(),
+                  style: TextStyle(
+                    color: Colors.grey[500],
+                    fontSize: 14,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }

@@ -66,11 +66,12 @@ class UserFirebaseService {
     }
   }
 
-  /// Inicializar usuarios por defecto en Firebase
+  /// Inicializar usuarios por defecto en Firebase desde localUsers
   Future<void> _initializeDefaultUsers() async {
     try {
       final batch = _firestore.batch();
 
+      // Sincronizar los usuarios locales predefinidos con Firebase
       for (final user in localUsers) {
         final docRef = _firestore
             .collection(_usersCollection)
@@ -87,9 +88,37 @@ class UserFirebaseService {
       }
 
       await batch.commit();
-      print('✅ Usuarios por defecto inicializados en Firebase');
+      print('✅ Usuarios locales sincronizados con Firebase: ${localUsers.length} usuarios');
     } catch (e) {
-      print('❌ Error inicializando usuarios: $e');
+      print('❌ Error sincronizando usuarios locales con Firebase: $e');
+    }
+  }
+  
+  /// Sincronizar usuarios locales con Firebase (forzar actualización)
+  Future<void> syncLocalUsersToFirebase() async {
+    try {
+      final batch = _firestore.batch();
+
+      for (final user in localUsers) {
+        final docRef = _firestore
+            .collection(_usersCollection)
+            .doc('${_familyId}_user_${user.id}');
+
+        batch.set(docRef, {
+          'id': user.id,
+          'name': user.name,
+          'color': _colorToHex(user.color),
+          'familyId': _familyId,
+          'createdAt': FieldValue.serverTimestamp(),
+          'updatedAt': FieldValue.serverTimestamp(),
+        }, SetOptions(merge: true));
+      }
+
+      await batch.commit();
+      print('✅ Sincronización forzada completada: ${localUsers.length} usuarios');
+    } catch (e) {
+      print('❌ Error en sincronización forzada: $e');
+      rethrow;
     }
   }
 
