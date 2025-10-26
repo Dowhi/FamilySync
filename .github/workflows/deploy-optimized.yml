@@ -62,7 +62,8 @@ jobs:
           flutter build web \
             --release \
             --base-href="/FamilySync/" \
-            --dart-define=FLUTTER_WEB_USE_SKIA=false
+            --dart-define=FLUTTER_WEB_USE_SKIA=false \
+            --no-wasm-dry-run
         
       # 8. Optimizar archivos generados
       - name: ⚡ Optimizar archivos
