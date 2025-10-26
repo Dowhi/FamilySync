@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/foundation.dart';
 import 'package:go_router/go_router.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:calendario_familiar/features/calendar/presentation/screens/calendar_screen.dart';
 import 'package:calendario_familiar/features/calendar/presentation/screens/day_detail_screen.dart';
 import 'package:calendario_familiar/features/calendar/presentation/screens/year_summary_screen.dart';
@@ -19,7 +17,7 @@ import 'package:calendario_familiar/features/calendar/presentation/screens/setti
 // Eliminado: import auth_controller (ya no se utiliza)
 import 'package:calendario_familiar/core/models/shift_template.dart'; // Importar ShiftTemplate
 import 'package:calendario_familiar/features/splash/presentation/screens/splash_screen.dart';
-import 'package:calendario_familiar/features/splash/presentation/screens/splash_screen_alternative.dart';
+import 'package:calendario_familiar/features/home/presentation/screens/home_screen.dart';
 // Eliminadas las pantallas de diagnóstico y prueba
 
 // Variable global para el navigatorKey
@@ -30,7 +28,7 @@ Map<String, dynamic>? initialAlarmData;
 
 final appRouter = GoRouter(
   navigatorKey: navigatorKey,
-  initialLocation: '/calendar', // Restaurar calendario original
+  initialLocation: '/', // Pantalla de inicio con selector de usuario
   routerNeglect: false, // Asegurar que las rutas se manejen correctamente
   redirect: (context, state) async {
     // Ya no necesitamos redirect porque initialLocation lo maneja
@@ -43,18 +41,16 @@ final appRouter = GoRouter(
       builder: (context, state) => const SplashScreen(),
     ),
     
-    // Eliminadas todas las rutas de prueba y diagnóstico
+    // Ruta raíz - Pantalla de inicio con selector de usuario
+    GoRoute(
+      path: '/',
+      builder: (context, state) => const HomeScreen(),
+    ),
     
     // Ruta principal del calendario
     GoRoute(
       path: '/calendar',
       builder: (context, state) => const CalendarScreen(),
-    ),
-    
-    // Ruta raíz que redirige al calendario
-    GoRoute(
-      path: '/',
-      redirect: (context, state) => '/calendar',
     ),
     
     // Ruta de detalle del día

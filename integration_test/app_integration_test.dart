@@ -20,23 +20,12 @@ void main() {
       await $.native.disableCellular();
     });
     
-    testWidgets('Flujo completo de autenticación', (tester) async {
-      // Verificar que la app inicia correctamente
-      expect(find.text('Iniciar Sesión'), findsOneWidget);
+    testWidgets('Flujo de selección de usuario', (tester) async {
+      // Verificar que la app inicia correctamente en la pantalla de inicio
+      expect(find.text('Selecciona tu usuario'), findsOneWidget);
       
-      // Navegar a registro
-      await tester.tap(find.text('Registrarse'));
-      await tester.pumpAndSettle();
-      
-      expect(find.text('Crear Cuenta'), findsOneWidget);
-      
-      // Completar formulario de registro
-      await tester.enterText(find.byType(TextField).first, 'Usuario Prueba');
-      await tester.enterText(find.byType(TextField).at(1), 'prueba@example.com');
-      await tester.enterText(find.byType(TextField).last, 'contraseña123');
-      
-      // Registrarse
-      await tester.tap(find.text('Registrarse'));
+      // Seleccionar un usuario (Juan - primer usuario)
+      await tester.tap(find.text('Juan'));
       await tester.pumpAndSettle();
       
       // Verificar navegación al calendario

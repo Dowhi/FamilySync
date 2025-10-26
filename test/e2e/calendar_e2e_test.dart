@@ -15,24 +15,14 @@ void main() {
       // Paso 1: Iniciar la aplicación
       await $.pumpWidgetAndSettle(app.CalendarioFamiliarApp());
       
-      // Verificar pantalla inicial de login
-      expect(find.text('Iniciar Sesión'), findsOneWidget);
+      // Verificar pantalla inicial de selección de usuario
+      expect(find.text('Selecciona tu usuario'), findsOneWidget);
       
-      // Paso 2: Registrarse como nuevo usuario
-      await $(#Registrarse).tap();
+      // Paso 2: Seleccionar usuario (Juan)
+      await $(#Juan).tap();
       await $.pumpAndSettle();
       
-      expect(find.text('Crear Cuenta'), findsOneWidget);
-      
-      // Completar formulario de registro
-      await $(#CampoNombre).enterText('Usuario E2E Test');
-      await $(#CampoEmail).enterText('e2e@test.com');
-      await $(#CampoContraseña).enterText('contraseña123');
-      
-      await $(#BotonRegistrarse).tap();
-      await $.pumpAndSettle();
-      
-      // Verificar que se completó el registro y se navegó al calendario
+      // Verificar que se navegó al calendario
       expect(find.byType(TableCalendar), findsOneWidget);
       
       // Paso 3: Crear un evento en el calendario
@@ -166,21 +156,19 @@ void main() {
       await $(#BotonConfirmarCerrarSesion).tap();
       await $.pumpAndSettle();
       
-      // Verificar que se cerró la sesión
-      expect(find.text('Iniciar Sesión'), findsOneWidget);
+      // Verificar que se cerró la sesión y volvió a la pantalla de selección
+      expect(find.text('Selecciona tu usuario'), findsOneWidget);
     });
     
     patrolTest('Gestión de familia y permisos', ($) async {
       // Iniciar aplicación
       await $.pumpWidgetAndSettle(app.CalendarioFamiliarApp());
       
-      // Login con usuario existente
-      await $(#CampoEmail).enterText('admin@familia.com');
-      await $(#CampoContraseña).enterText('admin123');
-      await $(#BotonIniciarSesion).tap();
+      // Seleccionar usuario (María)
+      await $(#María).tap();
       await $.pumpAndSettle();
       
-      // Verificar que se logueó correctamente
+      // Verificar que se navegó al calendario
       expect(find.byType(TableCalendar), findsOneWidget);
       
       // Abrir configuración de familia
@@ -230,14 +218,12 @@ void main() {
       // Iniciar aplicación
       await $.pumpWidgetAndSettle(app.CalendarioFamiliarApp());
       
-      // Login
-      await $(#CampoEmail).enterText('sync@test.com');
-      await $(#CampoContraseña).enterText('sync123');
-      await $(#BotonIniciarSesion).tap();
+      // Seleccionar usuario (Pedro)
+      await $(#Pedro).tap();
       await $.pumpAndSettle();
       
-      // Verificar estado de sincronización
-      expect(find.text('Sincronizado'), findsOneWidget);
+      // Verificar que se navegó al calendario
+      expect(find.byType(TableCalendar), findsOneWidget);
       
       // Crear evento
       await $(#BotonAgregarEvento).tap();

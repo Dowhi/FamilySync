@@ -1,13 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:calendario_familiar/features/calendar/presentation/screens/day_detail_screen.dart';
 import 'package:calendario_familiar/core/services/calendar_data_service.dart';
 import 'package:calendario_familiar/core/providers/text_size_provider.dart';
 import 'package:calendario_familiar/core/models/local_user.dart';
 import 'package:calendario_familiar/core/providers/current_user_provider.dart';
 import 'package:calendario_familiar/core/services/event_user_service.dart';
-import 'package:calendario_familiar/features/calendar/presentation/widgets/user_selector_widget.dart';
 
 class CalendarScreen extends ConsumerStatefulWidget {
   const CalendarScreen({super.key});

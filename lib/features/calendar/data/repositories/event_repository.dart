@@ -6,7 +6,6 @@ import 'package:calendario_familiar/core/utils/recurrence_utils.dart';
 import 'package:calendario_familiar/core/services/notification_service.dart';
 import 'package:calendario_familiar/core/utils/date_time_ext.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:calendario_familiar/core/providers/current_user_provider.dart';
 
 // Provider para EventRepository
 final eventRepositoryProvider = Provider<EventRepository>((ref) {
