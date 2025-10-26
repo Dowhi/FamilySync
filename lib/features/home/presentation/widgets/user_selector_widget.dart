@@ -13,129 +13,176 @@ class UserSelectorWidget extends ConsumerWidget {
     final currentUserId = ref.watch(currentUserIdProvider);
     final currentUser = ref.watch(currentUserProvider);
     final usersAsync = ref.watch(firebaseUsersStreamProvider);
-    
+
     return usersAsync.when(
-      data: (users) => Container(
-        padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(
-          color: Colors.white.withOpacity(0.15),
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(
-            color: Colors.white.withOpacity(0.2),
-            width: 1,
+      data: (users) {
+        return Container(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: Colors.white.withOpacity(0.15),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(
+              color: Colors.white.withOpacity(0.2),
+              width: 1,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.1),
+                blurRadius: 20,
+                offset: const Offset(0, 10),
+              ),
+            ],
           ),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.1),
-              blurRadius: 20,
-              offset: const Offset(0, 10),
-            ),
-          ],
-        ),
-        child: Column(
-          children: [
-            // Grid de usuarios desde Firebase
-            GridView.builder(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 2,
-                childAspectRatio: 2.5,
-                crossAxisSpacing: 12,
-                mainAxisSpacing: 12,
+          child: Column(
+            children: [
+              // Grid de usuarios desde Firebase
+              GridView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 2,
+                  childAspectRatio: 2.5,
+                  crossAxisSpacing: 12,
+                  mainAxisSpacing: 12,
+                ),
+                itemCount: users.length,
+                itemBuilder: (context, index) {
+                  final user = users[index];
+                  final isSelected = currentUserId == user.id;
+
+                  return _buildUserCard(
+                    context: context,
+                    ref: ref,
+                    user: user,
+                    isSelected: isSelected,
+                  );
+                },
               ),
-              itemCount: users.length,
-              itemBuilder: (context, index) {
-                final user = users[index];
-                final isSelected = currentUserId == user.id;
-                
-                return _buildUserCard(
-                  context: context,
-                  ref: ref,
-                  user: user,
-                  isSelected: isSelected,
-                );
-              },
-            ),
-          
-          const SizedBox(height: 20),
-          
-          // Información del usuario seleccionado
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                color: currentUser.color.withOpacity(0.5),
-                width: 2,
-              ),
-            ),
-            child: Row(
-              children: [
-                // Avatar del usuario
-                Container(
-                  width: 40,
-                  height: 40,
-                  decoration: BoxDecoration(
-                    color: currentUser.color,
-                    borderRadius: BorderRadius.circular(20),
-                    boxShadow: [
-                      BoxShadow(
-                        color: currentUser.color.withOpacity(0.3),
-                        blurRadius: 8,
-                        offset: const Offset(0, 2),
-                      ),
-                    ],
+              const SizedBox(height: 20),
+
+              // Información del usuario seleccionado
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: currentUser.color.withOpacity(0.5),
+                    width: 2,
                   ),
-                  child: Center(
-                    child: Text(
-                      currentUser.name[0],
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
+                ),
+                child: Row(
+                  children: [
+                    // Avatar del usuario
+                    Container(
+                      width: 40,
+                      height: 40,
+                      decoration: BoxDecoration(
+                        color: currentUser.color,
+                        borderRadius: BorderRadius.circular(20),
+                        boxShadow: [
+                          BoxShadow(
+                            color: currentUser.color.withOpacity(0.3),
+                            blurRadius: 8,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      child: Center(
+                        child: Text(
+                          currentUser.name[0],
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
                       ),
                     ),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                
-                // Información del usuario
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        currentUser.name,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                        ),
+                    const SizedBox(width: 12),
+
+                    // Información del usuario
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            currentUser.name,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          Text(
+                            'Usuario ${currentUser.id}',
+                            style: TextStyle(
+                              color: Colors.white.withOpacity(0.8),
+                              fontSize: 12,
+                            ),
+                          ),
+                        ],
                       ),
-                      Text(
-                        'Usuario ${currentUser.id}',
-                        style: TextStyle(
-                          color: Colors.white.withOpacity(0.8),
-                          fontSize: 12,
-                        ),
-                      ),
-                    ],
-                  ),
+                    ),
+
+                    // Indicador de selección
+                    Icon(
+                      Icons.check_circle,
+                      color: currentUser.color,
+                      size: 24,
+                    ),
+                  ],
                 ),
-                
-                // Indicador de selección
-                Icon(
-                  Icons.check_circle,
-                  color: currentUser.color,
-                  size: 24,
-                ),
-              ],
+              ),
+            ],
+          ),
+        );
+      },
+      loading: () {
+        return Container(
+          padding: const EdgeInsets.all(40),
+          child: const Center(
+            child: CircularProgressIndicator(
+              color: Colors.white,
             ),
           ),
-        ],
-      ),
+        );
+      },
+      error: (error, stack) {
+        return Container(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: Colors.white.withOpacity(0.15),
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: Column(
+            children: [
+              const Icon(
+                Icons.error_outline,
+                color: Colors.white,
+                size: 48,
+              ),
+              const SizedBox(height: 16),
+              const Text(
+                'Error al cargar usuarios',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 16,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                error.toString(),
+                style: TextStyle(
+                  color: Colors.white.withOpacity(0.7),
+                  fontSize: 12,
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 
