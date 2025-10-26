@@ -6,8 +6,8 @@
     <meta name="description" content="FamilySync - Calendario familiar" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
 
-    <!-- IMPORTANT: base href for GitHub Pages subpath -->
-    <base href="/FamilySync/" />
+    <!-- Flutter requires this exact placeholder if --base-href is provided -->
+    <base href="$FLUTTER_BASE_HREF$" />
 
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
     <meta http-equiv="Pragma" content="no-cache" />
@@ -32,9 +32,11 @@
 
     <script>
       window.addEventListener('load', function () {
-        // Load Flutter entrypoint WITHOUT service worker registration to avoid stale caches
+        // Load Flutter entrypoint and explicitly disable Service Worker
         _flutter.loader
-          .loadEntrypoint({})
+          .loadEntrypoint({
+            serviceWorker: { enabled: false }
+          })
           .then(function (engineInitializer) {
             return engineInitializer.initializeEngine();
           })
