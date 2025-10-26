@@ -57,9 +57,9 @@ jobs:
         run: flutter analyze --no-fatal-infos || true
         
       # 7. Build optimizado para web
-      - name: 🏗️ Build web optimizado
+      - name: 🏗️ Build web (verbose)
         run: |
-          flutter build web \
+          flutter build web -v \
             --release \
             --base-href="/FamilySync/" \
             --dart-define=FLUTTER_WEB_USE_SKIA=false \
