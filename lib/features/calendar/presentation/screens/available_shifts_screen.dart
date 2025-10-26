@@ -60,35 +60,7 @@ class _AvailableShiftsScreenState extends ConsumerState<AvailableShiftsScreen> {
                     ),
                   ),
                   const SizedBox(width: 8),
-                  Expanded(
-                    child: _buildActionButton(
-                      'SINCRONIZAR',
-                      Icons.sync,
-                      () async {
-                        try {
-                          final service = ref.read(shiftTemplateFirebaseServiceProvider);
-                          await service.syncLocalTemplatesToFirebase();
-                          if (mounted) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text('✅ Plantillas sincronizadas con Firebase'),
-                                backgroundColor: Colors.green,
-                              ),
-                            );
-                          }
-                        } catch (e) {
-                          if (mounted) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text('❌ Error: $e'),
-                                backgroundColor: Colors.red,
-                              ),
-                            );
-                          }
-                        }
-                      },
-                    ),
-                  ),
+                  // Eliminado botón de sincronizar para forzar uso solo de Firebase
                 ],
               ),
             ),

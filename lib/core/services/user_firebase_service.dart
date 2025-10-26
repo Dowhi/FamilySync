@@ -21,10 +21,14 @@ class UserFirebaseService {
       
       final users = snapshot.docs.map((doc) {
         final data = doc.data();
+        final Object? colorValue = data['colorValue'];
+        final String? colorHex = data['color'] as String?;
         return LocalUser(
-          id: data['id'] as int,
+          id: (data['id'] as num).toInt(),
           name: data['name'] as String,
-          color: _colorFromHex(data['color'] as String),
+          color: colorValue is num
+              ? Color((colorValue as num).toInt())
+              : _colorFromHex(colorHex ?? '#2196F3'),
         );
       }).toList();
       
@@ -50,10 +54,14 @@ class UserFirebaseService {
 
       final users = snapshot.docs.map((doc) {
         final data = doc.data();
+        final Object? colorValue = data['colorValue'];
+        final String? colorHex = data['color'] as String?;
         return LocalUser(
-          id: data['id'] as int,
+          id: (data['id'] as num).toInt(),
           name: data['name'] as String,
-          color: _colorFromHex(data['color'] as String),
+          color: colorValue is num
+              ? Color((colorValue as num).toInt())
+              : _colorFromHex(colorHex ?? '#2196F3'),
         );
       }).toList();
       
@@ -81,6 +89,7 @@ class UserFirebaseService {
           'id': user.id,
           'name': user.name,
           'color': _colorToHex(user.color),
+          'colorValue': user.color.value,
           'familyId': _familyId,
           'createdAt': FieldValue.serverTimestamp(),
           'updatedAt': FieldValue.serverTimestamp(),
@@ -136,6 +145,7 @@ class UserFirebaseService {
         'id': id,
         'name': name,
         'color': colorHex,
+        'colorValue': _colorFromHex(colorHex).value,
         'familyId': _familyId,
         'createdAt': FieldValue.serverTimestamp(),
         'updatedAt': FieldValue.serverTimestamp(),
@@ -160,6 +170,7 @@ class UserFirebaseService {
           .update({
         'name': name,
         'color': colorHex,
+        'colorValue': _colorFromHex(colorHex).value,
         'updatedAt': FieldValue.serverTimestamp(),
       });
       print('✅ Usuario actualizado: $name');
