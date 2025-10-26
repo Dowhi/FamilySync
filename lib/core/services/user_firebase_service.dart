@@ -12,7 +12,6 @@ class UserFirebaseService {
     return _firestore
         .collection(_usersCollection)
         .where('familyId', isEqualTo: _familyId)
-        .orderBy('id')
         .snapshots()
         .map((snapshot) {
       if (snapshot.docs.isEmpty) {
@@ -20,7 +19,7 @@ class UserFirebaseService {
         return localUsers;
       }
       
-      return snapshot.docs.map((doc) {
+      final users = snapshot.docs.map((doc) {
         final data = doc.data();
         return LocalUser(
           id: data['id'] as int,
@@ -28,6 +27,10 @@ class UserFirebaseService {
           color: _colorFromHex(data['color'] as String),
         );
       }).toList();
+      
+      // Ordenar por ID después de obtener los datos
+      users.sort((a, b) => a.id.compareTo(b.id));
+      return users;
     });
   }
 
@@ -37,7 +40,6 @@ class UserFirebaseService {
       final snapshot = await _firestore
           .collection(_usersCollection)
           .where('familyId', isEqualTo: _familyId)
-          .orderBy('id')
           .get();
 
       if (snapshot.docs.isEmpty) {
@@ -46,7 +48,7 @@ class UserFirebaseService {
         return localUsers;
       }
 
-      return snapshot.docs.map((doc) {
+      final users = snapshot.docs.map((doc) {
         final data = doc.data();
         return LocalUser(
           id: data['id'] as int,
@@ -54,6 +56,10 @@ class UserFirebaseService {
           color: _colorFromHex(data['color'] as String),
         );
       }).toList();
+      
+      // Ordenar por ID después de obtener los datos
+      users.sort((a, b) => a.id.compareTo(b.id));
+      return users;
     } catch (e) {
       print('Error obteniendo usuarios: $e');
       return localUsers;
