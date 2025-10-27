@@ -85,6 +85,12 @@
       console.log('🔍 Detector:', { isIOS, isSafari, isIOSSafari });
       console.log('📱 User Agent:', navigator.userAgent);
 
+      // REDIRECCIÓN INMEDIATA para iOS Safari
+      if (isIOSSafari) {
+        console.log('🔄 iOS Safari detectado - Redirigiendo a versión compatible...');
+        window.location.href = 'iphone.html';
+      }
+
       if (isIOSSafari) {
         console.log('📱 iOS Safari detectado - Aplicando configuración optimizada');
       }

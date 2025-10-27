@@ -13,31 +13,37 @@
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            -webkit-tap-highlight-color: transparent;
+            -webkit-tap-highlight-color: rgba(255, 255, 255, 0.2);
         }
 
-        html, body {
+        html {
             height: 100%;
             width: 100%;
-            overflow: hidden;
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
         }
 
         body {
+            min-height: 100%;
+            width: 100%;
             background: linear-gradient(135deg, #1B5E20, #2E7D32, #388E3C);
             color: white;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+            padding: 20px;
+            padding-bottom: 40px;
+        }
+
+        .container {
+            max-width: 500px;
+            margin: 0 auto;
             display: flex;
             flex-direction: column;
-            justify-content: space-between;
-            padding: 20px;
+            gap: 30px;
         }
 
         .header {
-            flex: 2;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
+            text-align: center;
+            padding: 20px 0;
         }
 
         .logo {
@@ -49,7 +55,7 @@
             align-items: center;
             justify-content: center;
             font-size: 40px;
-            margin-bottom: 16px;
+            margin: 0 auto 16px;
             box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
         }
 
@@ -60,23 +66,19 @@
         }
 
         .main {
-            flex: 3;
             display: flex;
             flex-direction: column;
-            align-items: center;
-            justify-content: center;
+            gap: 20px;
         }
 
         .title {
             font-size: 24px;
             font-weight: 600;
-            margin-bottom: 32px;
             text-align: center;
         }
 
         .users-container {
             width: 100%;
-            max-width: 400px;
             padding: 20px;
             background: rgba(255, 255, 255, 0.15);
             border-radius: 20px;
@@ -103,10 +105,12 @@
             cursor: pointer;
             transition: all 0.2s ease;
             min-height: 80px;
+            touch-action: manipulation;
         }
 
         .user-card:active {
             transform: scale(0.95);
+            background: rgba(255, 255, 255, 0.2);
         }
 
         .user-card.selected {
@@ -187,27 +191,6 @@
             opacity: 0.7;
             font-style: italic;
             text-align: center;
-            margin: 20px 0;
-        }
-
-        .footer {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: flex-end;
-            gap: 8px;
-        }
-
-        .footer-text {
-            font-size: 14px;
-            opacity: 0.8;
-        }
-
-        .footer-note {
-            font-size: 12px;
-            opacity: 0.6;
-            text-align: center;
         }
 
         .go-button {
@@ -221,71 +204,93 @@
             font-size: 18px;
             font-weight: bold;
             cursor: pointer;
-            margin-top: 20px;
+            margin: 0 auto;
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
             transition: all 0.2s ease;
+            touch-action: manipulation;
+            display: block;
         }
 
         .go-button:active {
             transform: scale(0.98);
+            background: #f5f5f5;
         }
 
-        .loading {
-            display: none;
+        .footer {
             text-align: center;
-            padding: 20px;
+            padding: 20px 0;
         }
 
-        .spinner {
-            width: 40px;
-            height: 40px;
-            border: 4px solid rgba(255, 255, 255, 0.3);
-            border-top-color: white;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-            margin: 0 auto 16px;
+        .footer-text {
+            font-size: 14px;
+            opacity: 0.8;
+            margin-bottom: 8px;
         }
 
-        @keyframes spin {
-            to { transform: rotate(360deg); }
+        .footer-note {
+            font-size: 12px;
+            opacity: 0.6;
+        }
+
+        .debug {
+            position: fixed;
+            bottom: 10px;
+            left: 10px;
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 10px;
+            border-radius: 5px;
+            font-size: 10px;
+            z-index: 9999;
+            display: none;
         }
     </style>
 </head>
 <body>
-    <div class="header">
-        <div class="logo">📅</div>
-        <h1>Calendario Familiar</h1>
-    </div>
-
-    <div class="main">
-        <div class="title">Selecciona tu usuario</div>
-
-        <div class="users-container">
-            <div class="users-grid" id="usersGrid">
-                <!-- Los usuarios se cargarán aquí -->
-            </div>
-
-            <div class="current-user" id="currentUserInfo">
-                <!-- Info del usuario actual -->
-            </div>
+    <div id="debug" class="debug"></div>
+    
+    <div class="container">
+        <div class="header">
+            <div class="logo">📅</div>
+            <h1>Calendario Familiar</h1>
         </div>
 
-        <div class="instruction">Toca un usuario para continuar</div>
+        <div class="main">
+            <div class="title">Selecciona tu usuario</div>
 
-        <button class="go-button" id="goButton">Ir al Calendario →</button>
-    </div>
+            <div class="users-container">
+                <div class="users-grid" id="usersGrid">
+                    <!-- Los usuarios se cargarán aquí -->
+                </div>
 
-    <div class="footer">
-        <div class="footer-text" id="footerText">Usuario actual: Usuario 1</div>
-        <div class="footer-note">Todos los eventos son compartidos entre usuarios</div>
-    </div>
+                <div class="current-user" id="currentUserInfo">
+                    <!-- Info del usuario actual -->
+                </div>
+            </div>
 
-    <div class="loading" id="loading">
-        <div class="spinner"></div>
-        <div>Cargando calendario...</div>
+            <div class="instruction">Toca un usuario para continuar</div>
+
+            <button class="go-button" id="goButton">Ir al Calendario →</button>
+        </div>
+
+        <div class="footer">
+            <div class="footer-text" id="footerText">Usuario actual: Usuario 1</div>
+            <div class="footer-note">Todos los eventos son compartidos entre usuarios</div>
+        </div>
     </div>
 
     <script>
+        // Debug helper
+        function debug(msg) {
+            const debugDiv = document.getElementById('debug');
+            debugDiv.style.display = 'block';
+            debugDiv.textContent += msg + '\n';
+            console.log(msg);
+        }
+
+        debug('✅ Script cargado');
+        debug('User Agent: ' + navigator.userAgent.substring(0, 50));
+
         // Usuarios predefinidos
         const users = [
             { id: 1, name: 'Usuario 1', color: '#2196F3' },
@@ -297,20 +302,37 @@
         let currentUserId = 1;
 
         // Cargar usuario guardado
-        const savedUserId = localStorage.getItem('current_user_id');
-        if (savedUserId) {
-            currentUserId = parseInt(savedUserId);
+        try {
+            const savedUserId = localStorage.getItem('current_user_id');
+            if (savedUserId) {
+                currentUserId = parseInt(savedUserId);
+                debug('✅ Usuario cargado: ' + currentUserId);
+            }
+        } catch (e) {
+            debug('⚠️ Error localStorage: ' + e.message);
         }
 
         // Renderizar usuarios
         function renderUsers() {
+            debug('🎨 Renderizando usuarios...');
             const grid = document.getElementById('usersGrid');
+            if (!grid) {
+                debug('❌ No se encontró usersGrid');
+                return;
+            }
+            
             grid.innerHTML = '';
 
-            users.forEach(user => {
+            users.forEach(function(user) {
                 const card = document.createElement('div');
-                card.className = `user-card ${user.id === currentUserId ? 'selected' : ''}`;
-                card.onclick = () => selectUser(user.id);
+                card.className = 'user-card' + (user.id === currentUserId ? ' selected' : '');
+                
+                // Usar addEventListener en lugar de onclick
+                card.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    debug('👆 Click en ' + user.name);
+                    selectUser(user.id);
+                });
 
                 const avatar = document.createElement('div');
                 avatar.className = 'user-avatar';
@@ -335,62 +357,80 @@
                 grid.appendChild(card);
             });
 
+            debug('✅ ' + users.length + ' usuarios renderizados');
             updateCurrentUserInfo();
         }
 
         // Actualizar info del usuario actual
         function updateCurrentUserInfo() {
-            const user = users.find(u => u.id === currentUserId);
-            const info = document.getElementById('currentUserInfo');
+            const user = users.find(function(u) { return u.id === currentUserId; });
+            if (!user) return;
             
-            info.innerHTML = `
-                <div class="current-user-avatar" style="background-color: ${user.color}">
-                    ${user.name[0]}
-                </div>
-                <div class="current-user-info">
-                    <div class="current-user-name">${user.name}</div>
-                    <div class="current-user-id">Usuario ${user.id}</div>
-                </div>
-                <div style="font-size: 24px;">✓</div>
-            `;
+            const info = document.getElementById('currentUserInfo');
+            if (!info) return;
+            
+            info.innerHTML = '<div class="current-user-avatar" style="background-color: ' + user.color + '">' +
+                user.name[0] +
+                '</div>' +
+                '<div class="current-user-info">' +
+                '<div class="current-user-name">' + user.name + '</div>' +
+                '<div class="current-user-id">Usuario ' + user.id + '</div>' +
+                '</div>' +
+                '<div style="font-size: 24px;">✓</div>';
 
-            document.getElementById('footerText').textContent = `Usuario actual: ${user.name}`;
+            const footerText = document.getElementById('footerText');
+            if (footerText) {
+                footerText.textContent = 'Usuario actual: ' + user.name;
+            }
         }
 
         // Seleccionar usuario
         function selectUser(userId) {
+            debug('✅ Seleccionando usuario ' + userId);
             currentUserId = userId;
-            localStorage.setItem('current_user_id', userId);
+            
+            try {
+                localStorage.setItem('current_user_id', userId);
+                debug('✅ Usuario guardado');
+            } catch (e) {
+                debug('⚠️ Error guardando: ' + e.message);
+            }
+            
             renderUsers();
         }
 
-        // Ir al calendario
-        document.getElementById('goButton').onclick = function() {
-            // Mostrar loading
-            document.querySelector('.main').style.display = 'none';
-            document.querySelector('.loading').style.display = 'block';
-
-            // Intentar cargar Flutter
-            setTimeout(() => {
-                window.location.href = '#/calendar';
+        // Configurar botón
+        const goButton = document.getElementById('goButton');
+        if (goButton) {
+            debug('✅ Botón encontrado');
+            goButton.addEventListener('click', function(e) {
+                e.preventDefault();
+                debug('👆 Click en botón Ir al Calendario');
                 
-                // Si Flutter está disponible, usarlo
-                if (window._flutter && window._flutter.loader) {
-                    console.log('✅ Cargando Flutter...');
-                } else {
-                    // Fallback: mostrar mensaje
-                    alert('Redirigiendo al calendario...\n\nSi no carga, intenta actualizar la página.');
-                    window.location.href = 'index.html#/calendar';
-                }
-            }, 500);
-        };
+                // Intentar redirigir al index principal
+                const currentUrl = window.location.href;
+                const baseUrl = currentUrl.replace('/iphone.html', '');
+                
+                debug('🔄 Redirigiendo a: ' + baseUrl + '#/calendar');
+                window.location.href = baseUrl + '#/calendar';
+            });
+        } else {
+            debug('❌ Botón no encontrado');
+        }
 
         // Renderizar al cargar
+        debug('🚀 Iniciando renderizado...');
         renderUsers();
 
-        console.log('✅ FamilySync iPhone - Versión simplificada cargada');
-        console.log('📱 User Agent:', navigator.userAgent);
+        // Ocultar debug después de 3 segundos
+        setTimeout(function() {
+            const debugDiv = document.getElementById('debug');
+            if (debugDiv) {
+                debugDiv.style.display = 'none';
+            }
+        }, 3000);
+
+        debug('✅ Todo inicializado');
     </script>
 </body>
 </html>
-
