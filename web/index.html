@@ -135,13 +135,24 @@
             config.renderer = 'canvaskit'; // Usar CanvasKit para mejor compatibilidad
           }
 
+          // Verificar que _flutter esté disponible
+          if (!window._flutter || !window._flutter.loader) {
+            throw new Error('Flutter loader no está disponible');
+          }
+
           // Load Flutter entrypoint
           _flutter.loader
             .loadEntrypoint(config)
             .then(function (engineInitializer) {
               console.log('✅ Flutter entrypoint cargado');
+              
+              // Verificar que engineInitializer sea válido
+              if (!engineInitializer || !engineInitializer.initializeEngine) {
+                throw new Error('Engine initializer no es válido');
+              }
+              
               return engineInitializer.initializeEngine({
-                renderer: isIOSSafari ? 'canvaskit' : 'auto'
+                renderer: isIOSSafari ? 'html' : 'auto'  // Cambiar a html para iOS
               });
             })
             .then(function (appRunner) {
@@ -149,13 +160,18 @@
               flutterLoaded = true;
               clearTimeout(loadingTimeout);
               
+              // Verificar que appRunner sea válido
+              if (!appRunner || !appRunner.runApp) {
+                throw new Error('App runner no es válido');
+              }
+              
               // Remover loading con delay para iOS
               setTimeout(function() {
                 const loadingDiv = document.getElementById('loading');
                 if (loadingDiv) {
                   loadingDiv.remove();
                 }
-              }, isIOSSafari ? 500 : 100);
+              }, isIOSSafari ? 1000 : 100);  // Más tiempo para iOS
               
               return appRunner.runApp();
             })
@@ -167,6 +183,13 @@
               flutterLoaded = true;
               clearTimeout(loadingTimeout);
               
+              // Para iOS Safari, redirigir automáticamente a la versión simplificada
+              if (isIOSSafari) {
+                console.log('🔄 Redirigiendo a versión iOS simplificada...');
+                window.location.href = 'iphone.html';
+                return;
+              }
+              
               const loadingDiv = document.getElementById('loading');
               if (loadingDiv) {
                 loadingDiv.innerHTML = `
@@ -177,8 +200,19 @@
                       ${error.message || 'Error desconocido'}
                     </div>
                     <div style="font-size: 12px; opacity: 0.6; margin-bottom: 20px;">
-                      Por favor, intenta actualizar Safari o usar Chrome
+                      ${isIOS ? 'Redirigiendo a versión compatible...' : 'Por favor, intenta actualizar tu navegador'}
                     </div>
+                    <button onclick="location.href='iphone.html'" style="
+                      background: white;
+                      color: #1B5E20;
+                      border: none;
+                      padding: 12px 24px;
+                      border-radius: 8px;
+                      font-size: 16px;
+                      font-weight: bold;
+                      cursor: pointer;
+                      margin: 5px;
+                    ">Versión iOS</button>
                     <button onclick="location.reload()" style="
                       background: white;
                       color: #1B5E20;
@@ -188,9 +222,17 @@
                       font-size: 16px;
                       font-weight: bold;
                       cursor: pointer;
+                      margin: 5px;
                     ">Reintentar</button>
                   </div>
                 `;
+                
+                // Auto-redirect para iOS después de 2 segundos
+                if (isIOS) {
+                  setTimeout(function() {
+                    window.location.href = 'iphone.html';
+                  }, 2000);
+                }
               }
             });
         } catch (error) {
