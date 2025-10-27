@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="FamilySync">
+    <title>FamilySync - Calendario Familiar</title>
+    <link rel="apple-touch-icon" href="icons/Icon-192.png">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        html, body {
+            height: 100%;
+            width: 100%;
+            overflow: hidden;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #1B5E20, #2E7D32, #388E3C);
+            color: white;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 20px;
+        }
+
+        .header {
+            flex: 2;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .logo {
+            width: 80px;
+            height: 80px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 40px;
+            margin-bottom: 16px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            font-size: 22px;
+            font-weight: bold;
+            letter-spacing: 1px;
+        }
+
+        .main {
+            flex: 3;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .title {
+            font-size: 24px;
+            font-weight: 600;
+            margin-bottom: 32px;
+            text-align: center;
+        }
+
+        .users-container {
+            width: 100%;
+            max-width: 400px;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .users-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .user-card {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 16px;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            min-height: 80px;
+        }
+
+        .user-card:active {
+            transform: scale(0.95);
+        }
+
+        .user-card.selected {
+            background: rgba(255, 255, 255, 0.25);
+            border: 2px solid white;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
+
+        .user-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            font-weight: bold;
+            margin-bottom: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .user-card.selected .user-avatar {
+            background: white !important;
+        }
+
+        .user-name {
+            font-size: 12px;
+            font-weight: 400;
+            text-align: center;
+        }
+
+        .user-card.selected .user-name {
+            font-weight: 600;
+        }
+
+        .check-icon {
+            margin-top: 4px;
+            font-size: 12px;
+        }
+
+        .current-user {
+            padding: 16px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .current-user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            font-weight: bold;
+        }
+
+        .current-user-info {
+            flex: 1;
+        }
+
+        .current-user-name {
+            font-size: 16px;
+            font-weight: 600;
+        }
+
+        .current-user-id {
+            font-size: 12px;
+            opacity: 0.8;
+        }
+
+        .instruction {
+            font-size: 14px;
+            opacity: 0.7;
+            font-style: italic;
+            text-align: center;
+            margin: 20px 0;
+        }
+
+        .footer {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 8px;
+        }
+
+        .footer-text {
+            font-size: 14px;
+            opacity: 0.8;
+        }
+
+        .footer-note {
+            font-size: 12px;
+            opacity: 0.6;
+            text-align: center;
+        }
+
+        .go-button {
+            width: 100%;
+            max-width: 300px;
+            padding: 16px;
+            background: white;
+            color: #1B5E20;
+            border: none;
+            border-radius: 12px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 20px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            transition: all 0.2s ease;
+        }
+
+        .go-button:active {
+            transform: scale(0.98);
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 16px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="logo">📅</div>
+        <h1>Calendario Familiar</h1>
+    </div>
+
+    <div class="main">
+        <div class="title">Selecciona tu usuario</div>
+
+        <div class="users-container">
+            <div class="users-grid" id="usersGrid">
+                <!-- Los usuarios se cargarán aquí -->
+            </div>
+
+            <div class="current-user" id="currentUserInfo">
+                <!-- Info del usuario actual -->
+            </div>
+        </div>
+
+        <div class="instruction">Toca un usuario para continuar</div>
+
+        <button class="go-button" id="goButton">Ir al Calendario →</button>
+    </div>
+
+    <div class="footer">
+        <div class="footer-text" id="footerText">Usuario actual: Usuario 1</div>
+        <div class="footer-note">Todos los eventos son compartidos entre usuarios</div>
+    </div>
+
+    <div class="loading" id="loading">
+        <div class="spinner"></div>
+        <div>Cargando calendario...</div>
+    </div>
+
+    <script>
+        // Usuarios predefinidos
+        const users = [
+            { id: 1, name: 'Usuario 1', color: '#2196F3' },
+            { id: 2, name: 'Usuario 2', color: '#4CAF50' },
+            { id: 3, name: 'Usuario 3', color: '#FF9800' },
+            { id: 4, name: 'Usuario 4', color: '#9C27B0' }
+        ];
+
+        let currentUserId = 1;
+
+        // Cargar usuario guardado
+        const savedUserId = localStorage.getItem('current_user_id');
+        if (savedUserId) {
+            currentUserId = parseInt(savedUserId);
+        }
+
+        // Renderizar usuarios
+        function renderUsers() {
+            const grid = document.getElementById('usersGrid');
+            grid.innerHTML = '';
+
+            users.forEach(user => {
+                const card = document.createElement('div');
+                card.className = `user-card ${user.id === currentUserId ? 'selected' : ''}`;
+                card.onclick = () => selectUser(user.id);
+
+                const avatar = document.createElement('div');
+                avatar.className = 'user-avatar';
+                avatar.style.backgroundColor = user.id === currentUserId ? 'white' : user.color;
+                avatar.style.color = user.id === currentUserId ? user.color : 'white';
+                avatar.textContent = user.name[0];
+
+                const name = document.createElement('div');
+                name.className = 'user-name';
+                name.textContent = user.name;
+
+                card.appendChild(avatar);
+                card.appendChild(name);
+
+                if (user.id === currentUserId) {
+                    const check = document.createElement('div');
+                    check.className = 'check-icon';
+                    check.textContent = '✓';
+                    card.appendChild(check);
+                }
+
+                grid.appendChild(card);
+            });
+
+            updateCurrentUserInfo();
+        }
+
+        // Actualizar info del usuario actual
+        function updateCurrentUserInfo() {
+            const user = users.find(u => u.id === currentUserId);
+            const info = document.getElementById('currentUserInfo');
+            
+            info.innerHTML = `
+                <div class="current-user-avatar" style="background-color: ${user.color}">
+                    ${user.name[0]}
+                </div>
+                <div class="current-user-info">
+                    <div class="current-user-name">${user.name}</div>
+                    <div class="current-user-id">Usuario ${user.id}</div>
+                </div>
+                <div style="font-size: 24px;">✓</div>
+            `;
+
+            document.getElementById('footerText').textContent = `Usuario actual: ${user.name}`;
+        }
+
+        // Seleccionar usuario
+        function selectUser(userId) {
+            currentUserId = userId;
+            localStorage.setItem('current_user_id', userId);
+            renderUsers();
+        }
+
+        // Ir al calendario
+        document.getElementById('goButton').onclick = function() {
+            // Mostrar loading
+            document.querySelector('.main').style.display = 'none';
+            document.querySelector('.loading').style.display = 'block';
+
+            // Intentar cargar Flutter
+            setTimeout(() => {
+                window.location.href = '#/calendar';
+                
+                // Si Flutter está disponible, usarlo
+                if (window._flutter && window._flutter.loader) {
+                    console.log('✅ Cargando Flutter...');
+                } else {
+                    // Fallback: mostrar mensaje
+                    alert('Redirigiendo al calendario...\n\nSi no carga, intenta actualizar la página.');
+                    window.location.href = 'index.html#/calendar';
+                }
+            }, 500);
+        };
+
+        // Renderizar al cargar
+        renderUsers();
+
+        console.log('✅ FamilySync iPhone - Versión simplificada cargada');
+        console.log('📱 User Agent:', navigator.userAgent);
+    </script>
+</body>
+</html>
+
