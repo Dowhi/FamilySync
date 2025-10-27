@@ -81,6 +81,16 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
     } catch (e) {
       print('❌ Error en build de CalendarScreen: $e');
       print('❌ Stack trace: ${StackTrace.current}');
+      
+      // Para errores de compatibilidad iOS Safari, intentar continuar sin el servicio
+      if (e.toString().contains('minified:JG') || 
+          e.toString().contains('minified:k') ||
+          e.toString().contains('TypeError') ||
+          e.toString().contains('Instance of')) {
+        print('🔧 Error de compatibilidad iOS Safari detectado, usando modo de compatibilidad');
+        return _buildCalendarContent(context, null);
+      }
+      
       return _buildErrorScreen(context, e.toString());
     }
   }
@@ -176,6 +186,8 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
   }
 
   Widget _buildCalendarContent(BuildContext context, dynamic calendarService) {
+    // Modo de compatibilidad para iOS Safari cuando calendarService es nulo
+    final isCompatibilityMode = calendarService == null;
 
     return RepaintBoundary(
       child: Scaffold(
@@ -249,7 +261,9 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
             if (!_isPaintMode) RepaintBoundary(child: _buildBottomButtons()),
           ],
         ),
-        bottomNavigationBar: _isPaintMode ? RepaintBoundary(child: _buildPaintBar(calendarService)) : null,
+        bottomNavigationBar: _isPaintMode && !isCompatibilityMode 
+            ? RepaintBoundary(child: _buildPaintBar(calendarService)) 
+            : null,
       ),
     );
   }

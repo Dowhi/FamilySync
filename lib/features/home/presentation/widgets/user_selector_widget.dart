@@ -281,12 +281,40 @@ class UserSelectorWidget extends ConsumerWidget {
   }) {
     return GestureDetector(
       onTap: () async {
-        // Cambiar usuario actual
-        await ref.read(currentUserIdProvider.notifier).setCurrentUser(user.id);
-        
-        // Navegar al calendario automáticamente
-        if (context.mounted) {
-          context.go('/calendar');
+        try {
+          // Cambiar usuario actual
+          await ref.read(currentUserIdProvider.notifier).setCurrentUser(user.id);
+          
+          // Navegar al calendario con manejo de errores para iOS Safari
+          if (context.mounted) {
+            // Usar un delay para asegurar que el estado se actualice correctamente
+            await Future.delayed(const Duration(milliseconds: 100));
+            
+            if (context.mounted) {
+              // Intentar navegación normal primero
+              try {
+                context.go('/calendar');
+              } catch (e) {
+                print('⚠️ Error en navegación normal, usando fallback: $e');
+                // Fallback para iOS Safari: usar push en lugar de go
+                if (context.mounted) {
+                  context.push('/calendar');
+                }
+              }
+            }
+          }
+        } catch (e) {
+          print('❌ Error en selección de usuario: $e');
+          // Mostrar mensaje de error al usuario
+          if (context.mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Error seleccionando usuario: ${e.toString()}'),
+                backgroundColor: Colors.red,
+                duration: const Duration(seconds: 3),
+              ),
+            );
+          }
         }
       },
       child: AnimatedContainer(
