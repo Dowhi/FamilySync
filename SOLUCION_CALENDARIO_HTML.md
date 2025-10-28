@@ -242,41 +242,48 @@ La integración con el selector de usuarios funciona correctamente.
 
 ### 4. **Botones de Acción Inferiores**
    - ✅ **Agregado**: Tres botones en la parte inferior del calendario
-   - 🎨 **PINTAR**: Para pintar días con colores y destacar fechas
-   - ✏️ **EDITAR**: Para editar múltiples eventos
-   - 🔄 **TURNOS**: Para gestionar turnos de trabajo
-   - 📏 **Diseño**: Compactos (10px padding), ocupan todo el ancho, diferentes tonos de verde
+   - 🎨 **PINTAR** (Naranja): Para pintar días con colores y destacar fechas
+   - ✏️ **EDITAR** (Azul): Para editar múltiples eventos
+   - 🔄 **TURNOS** (Verde): Para gestionar turnos de trabajo
+   - 📏 **Diseño**: Sin bordes redondeados, sin gaps, ocupan todo el ancho
    - ✨ **Beneficio**: Más espacio para visualizar las celdas de los días
+
+### 5. **Navegación por Pestañas**
+   - ✅ **Agregado**: Tres pestañas en barra azul
+   - 📅 **Calendario**: Vista principal del calendario mensual (activa por defecto)
+   - 📆 **2025**: Vista anual completa (próximamente)
+   - 📊 **RESUMEN**: Estadísticas y análisis (próximamente)
+   - 🎨 **Color**: Azul (#1976D2) con indicador de pestaña activa
+
+### 6. **Navegación de Meses Rediseñada**
+   - 🔵 **Fondo azul** (#2196F3) en lugar de blanco
+   - 🎨 **Texto blanco** para contraste
+   - ↔️ **Flechas** simples sin fondo circular
+   - 📏 **Diseño limpio** y moderno
 
 ### Cambios Visuales:
 ```
-ANTES:
+DISEÑO ACTUAL (Estilo imagen adjunta):
 ┌──────────────────────────────────────┐
-│ 📅 My Calendar    [← Usuarios]       │
+│   My Calendar          [👤] [⚙️]     │ ← Verde oscuro
 ├──────────────────────────────────────┤
-│ [Usuario 1] [Usuario 2] [Usuario 3]  │ ← Eliminado
+│ [Calendario] [2025] [RESUMEN]        │ ← Tabs azul
 ├──────────────────────────────────────┤
-│ [← Anterior] Oct 2025 [Siguiente →]  │ ← Reducido
+│    [‹]   Octubre 2025   [›]          │ ← Azul claro
 │                                      │
-│           (Calendario)               │
+│           📅 Calendario              │
+│        (Vista mensual)               │
+│         Más espacio                  │
 │                                      │
 ├──────────────────────────────────────┤
-│   Usuario actual: Usuario 1          │
-│ Eventos compartidos entre usuarios   │
+│     Usuario actual: Usuario 1        │
+├──────────────────────────────────────┤
+│[PINTAR] │ [EDITAR] │ [TURNOS]        │ ← 🟠🔵🟢
 └──────────────────────────────────────┘
 
-AHORA:
-┌──────────────────────────────────────┐
-│ 📅 My Calendar [← Usuarios] [☰]      │ ← Menú añadido
-├──────────────────────────────────────┤
-│    [‹]     Octubre 2025     [›]      │ ← Compacto
-│                                      │
-│           (Calendario)               │ ← Más espacio
-│                                      │
-├──────────────────────────────────────┤
-│     Usuario actual: Usuario 1        │ ← Compacto
-├──────────────────────────────────────┤
-│ [PINTAR] [EDITAR] [TURNOS]           │ ← NUEVO
-└──────────────────────────────────────┘
+Colores de botones inferiores:
+- PINTAR: Naranja (#FF9800)
+- EDITAR: Azul (#2196F3)
+- TURNOS: Verde (#4CAF50)
 ```
 
