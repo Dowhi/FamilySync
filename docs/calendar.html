@@ -1,0 +1,776 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="FamilySync">
+    <title>Calendario - FamilySync</title>
+    <link rel="apple-touch-icon" href="icons/Icon-192.png">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: rgba(255, 255, 255, 0.2);
+        }
+
+        html, body {
+            height: 100%;
+            width: 100%;
+            overflow: hidden;
+        }
+
+        body {
+            background: #f5f5f5;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Header */
+        .header {
+            background: #1B5E20;
+            color: white;
+            padding: 12px 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            flex-shrink: 0;
+        }
+
+        .header-title {
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .header-btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            border-radius: 8px;
+            padding: 8px 12px;
+            color: white;
+            font-size: 14px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .header-btn:active {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        /* User Selector */
+        .user-selector {
+            background: white;
+            padding: 8px;
+            display: flex;
+            gap: 4px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+            flex-shrink: 0;
+        }
+
+        .user-btn {
+            flex: 1;
+            padding: 8px 4px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            background: #f9f9f9;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 10px;
+        }
+
+        .user-btn.selected {
+            border: 2px solid;
+            background: rgba(33, 150, 243, 0.1);
+            font-weight: bold;
+        }
+
+        .user-avatar {
+            width: 20px;
+            height: 20px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 10px;
+            font-weight: bold;
+        }
+
+        /* Month Navigation */
+        .month-nav {
+            background: white;
+            padding: 12px 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+            flex-shrink: 0;
+        }
+
+        .month-nav button {
+            background: #1B5E20;
+            border: none;
+            border-radius: 8px;
+            padding: 8px 16px;
+            color: white;
+            font-size: 14px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .month-nav button:active {
+            background: #2E7D32;
+        }
+
+        .month-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #1B5E20;
+        }
+
+        /* Calendar */
+        .calendar-container {
+            flex: 1;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+            padding: 16px;
+        }
+
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 4px;
+            margin-bottom: 20px;
+        }
+
+        .weekday-header {
+            text-align: center;
+            padding: 8px;
+            font-size: 12px;
+            font-weight: 600;
+            color: #666;
+        }
+
+        .calendar-day {
+            aspect-ratio: 1;
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 4px;
+            display: flex;
+            flex-direction: column;
+            cursor: pointer;
+            transition: all 0.2s;
+            min-height: 60px;
+            overflow: hidden;
+        }
+
+        .calendar-day:active {
+            transform: scale(0.95);
+            background: #f9f9f9;
+        }
+
+        .calendar-day.other-month {
+            opacity: 0.3;
+        }
+
+        .calendar-day.today {
+            border: 2px solid #1B5E20;
+            background: #f1f8e9;
+        }
+
+        .day-number {
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 2px;
+        }
+
+        .day-events {
+            flex: 1;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .event-badge {
+            font-size: 8px;
+            padding: 2px 4px;
+            border-radius: 3px;
+            background: #e3f2fd;
+            color: #1976d2;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .event-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 3px;
+            background: #1976d2;
+        }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .modal.show {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 16px;
+            padding: 24px;
+            width: 100%;
+            max-width: 400px;
+            max-height: 80vh;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .modal-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: #1B5E20;
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: #666;
+        }
+
+        .modal-section {
+            margin-bottom: 20px;
+        }
+
+        .section-title {
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #666;
+        }
+
+        .event-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .event-item {
+            padding: 12px;
+            background: #f5f5f5;
+            border-radius: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .event-text {
+            flex: 1;
+            font-size: 14px;
+        }
+
+        .event-user {
+            font-size: 10px;
+            color: #666;
+            margin-top: 4px;
+        }
+
+        .delete-btn {
+            background: #f44336;
+            border: none;
+            border-radius: 6px;
+            padding: 6px 12px;
+            color: white;
+            font-size: 12px;
+            cursor: pointer;
+        }
+
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .input-field {
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 14px;
+            font-family: inherit;
+        }
+
+        .btn-primary {
+            background: #1B5E20;
+            border: none;
+            border-radius: 8px;
+            padding: 12px;
+            color: white;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .btn-primary:active {
+            background: #2E7D32;
+        }
+
+        .empty-message {
+            text-align: center;
+            color: #999;
+            font-style: italic;
+            padding: 20px;
+        }
+
+        /* Bottom Info */
+        .bottom-info {
+            background: white;
+            padding: 12px 16px;
+            text-align: center;
+            border-top: 1px solid #ddd;
+            flex-shrink: 0;
+        }
+
+        .current-user-info {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 4px;
+        }
+
+        .sync-info {
+            font-size: 12px;
+            color: #999;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <div class="header">
+        <div class="header-title">📅 My Calendar</div>
+        <div class="header-actions">
+            <button class="header-btn" onclick="goBack()">← Usuarios</button>
+        </div>
+    </div>
+
+    <!-- User Selector -->
+    <div class="user-selector" id="userSelector">
+        <!-- Se carga dinámicamente -->
+    </div>
+
+    <!-- Month Navigation -->
+    <div class="month-nav">
+        <button onclick="changeMonth(-1)">← Anterior</button>
+        <div class="month-title" id="monthTitle"></div>
+        <button onclick="changeMonth(1)">Siguiente →</button>
+    </div>
+
+    <!-- Calendar -->
+    <div class="calendar-container">
+        <div class="calendar-grid" id="calendarGrid">
+            <!-- Se carga dinámicamente -->
+        </div>
+    </div>
+
+    <!-- Bottom Info -->
+    <div class="bottom-info">
+        <div class="current-user-info" id="currentUserInfo"></div>
+        <div class="sync-info">Todos los eventos son compartidos entre usuarios</div>
+    </div>
+
+    <!-- Modal for Day Details -->
+    <div class="modal" id="dayModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title" id="modalTitle"></div>
+                <button class="close-btn" onclick="closeModal()">×</button>
+            </div>
+
+            <div class="modal-section">
+                <div class="section-title">Eventos del día</div>
+                <div class="event-list" id="eventList">
+                    <div class="empty-message">No hay eventos para este día</div>
+                </div>
+            </div>
+
+            <div class="modal-section">
+                <div class="section-title">Agregar evento</div>
+                <div class="input-group">
+                    <input 
+                        type="text" 
+                        id="eventInput" 
+                        class="input-field" 
+                        placeholder="Escribe un evento..."
+                        onkeypress="if(event.key==='Enter') addEvent()"
+                    >
+                    <button class="btn-primary" onclick="addEvent()">Agregar Evento</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Estado global
+        let currentDate = new Date();
+        let currentUserId = 1;
+        let selectedDate = null;
+        
+        const users = [
+            { id: 1, name: 'Usuario 1', color: '#2196F3' },
+            { id: 2, name: 'Usuario 2', color: '#4CAF50' },
+            { id: 3, name: 'Usuario 3', color: '#FF9800' },
+            { id: 4, name: 'Usuario 4', color: '#9C27B0' }
+        ];
+
+        const monthNames = [
+            'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+            'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
+        ];
+
+        const weekDays = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
+
+        // Inicializar
+        function init() {
+            console.log('📅 Inicializando calendario...');
+            
+            // Cargar usuario guardado
+            const savedUserId = localStorage.getItem('current_user_id');
+            if (savedUserId) {
+                currentUserId = parseInt(savedUserId);
+            }
+
+            renderUserSelector();
+            renderCalendar();
+            updateCurrentUserInfo();
+        }
+
+        // Renderizar selector de usuarios
+        function renderUserSelector() {
+            const container = document.getElementById('userSelector');
+            container.innerHTML = '';
+
+            users.forEach(user => {
+                const btn = document.createElement('div');
+                btn.className = 'user-btn' + (user.id === currentUserId ? ' selected' : '');
+                if (user.id === currentUserId) {
+                    btn.style.borderColor = user.color;
+                    btn.style.color = user.color;
+                }
+
+                const avatar = document.createElement('div');
+                avatar.className = 'user-avatar';
+                avatar.style.backgroundColor = user.color;
+                avatar.textContent = user.name[0];
+
+                const name = document.createElement('div');
+                name.textContent = user.name;
+
+                btn.appendChild(avatar);
+                btn.appendChild(name);
+
+                btn.addEventListener('click', () => selectUser(user.id));
+
+                container.appendChild(btn);
+            });
+        }
+
+        // Seleccionar usuario
+        function selectUser(userId) {
+            console.log('👤 Seleccionando usuario:', userId);
+            currentUserId = userId;
+            localStorage.setItem('current_user_id', userId);
+            renderUserSelector();
+            renderCalendar();
+            updateCurrentUserInfo();
+        }
+
+        // Actualizar info del usuario actual
+        function updateCurrentUserInfo() {
+            const user = users.find(u => u.id === currentUserId);
+            document.getElementById('currentUserInfo').textContent = 
+                `Usuario actual: ${user.name}`;
+        }
+
+        // Renderizar calendario
+        function renderCalendar() {
+            const container = document.getElementById('calendarGrid');
+            container.innerHTML = '';
+
+            // Título del mes
+            document.getElementById('monthTitle').textContent = 
+                `${monthNames[currentDate.getMonth()]} ${currentDate.getFullYear()}`;
+
+            // Headers de días de la semana
+            weekDays.forEach(day => {
+                const header = document.createElement('div');
+                header.className = 'weekday-header';
+                header.textContent = day;
+                container.appendChild(header);
+            });
+
+            // Calcular días del mes
+            const year = currentDate.getFullYear();
+            const month = currentDate.getMonth();
+            const firstDay = new Date(year, month, 1);
+            const lastDay = new Date(year, month + 1, 0);
+            const daysInMonth = lastDay.getDate();
+            const startDayOfWeek = firstDay.getDay();
+
+            // Días del mes anterior
+            const prevMonthLastDay = new Date(year, month, 0).getDate();
+            for (let i = startDayOfWeek - 1; i >= 0; i--) {
+                const day = prevMonthLastDay - i;
+                const date = new Date(year, month - 1, day);
+                renderDay(container, date, true);
+            }
+
+            // Días del mes actual
+            for (let day = 1; day <= daysInMonth; day++) {
+                const date = new Date(year, month, day);
+                renderDay(container, date, false);
+            }
+
+            // Días del mes siguiente
+            const totalCells = startDayOfWeek + daysInMonth;
+            const remainingCells = 42 - totalCells; // 6 semanas * 7 días
+            for (let day = 1; day <= remainingCells; day++) {
+                const date = new Date(year, month + 1, day);
+                renderDay(container, date, true);
+            }
+        }
+
+        // Renderizar un día
+        function renderDay(container, date, isOtherMonth) {
+            const dayEl = document.createElement('div');
+            dayEl.className = 'calendar-day';
+            
+            if (isOtherMonth) {
+                dayEl.classList.add('other-month');
+            }
+
+            // Marcar día actual
+            const today = new Date();
+            if (date.toDateString() === today.toDateString()) {
+                dayEl.classList.add('today');
+            }
+
+            // Número del día
+            const numberEl = document.createElement('div');
+            numberEl.className = 'day-number';
+            numberEl.textContent = date.getDate();
+            dayEl.appendChild(numberEl);
+
+            // Eventos del día
+            const eventsEl = document.createElement('div');
+            eventsEl.className = 'day-events';
+            
+            const events = getEventsForDate(date);
+            if (events.length > 0) {
+                events.slice(0, 3).forEach(event => {
+                    const eventEl = document.createElement('div');
+                    eventEl.className = 'event-badge';
+                    eventEl.style.backgroundColor = getUserColor(event.userId) + '20';
+                    eventEl.style.borderLeft = `3px solid ${getUserColor(event.userId)}`;
+                    eventEl.textContent = event.text;
+                    eventsEl.appendChild(eventEl);
+                });
+
+                if (events.length > 3) {
+                    const moreEl = document.createElement('div');
+                    moreEl.className = 'event-badge';
+                    moreEl.textContent = `+${events.length - 3} más`;
+                    eventsEl.appendChild(moreEl);
+                }
+            }
+
+            dayEl.appendChild(eventsEl);
+
+            // Click para abrir modal
+            dayEl.addEventListener('click', () => openDayModal(date));
+
+            container.appendChild(dayEl);
+        }
+
+        // Obtener eventos para una fecha
+        function getEventsForDate(date) {
+            const dateKey = formatDateKey(date);
+            const eventsJson = localStorage.getItem('calendar_events');
+            const allEvents = eventsJson ? JSON.parse(eventsJson) : {};
+            return allEvents[dateKey] || [];
+        }
+
+        // Guardar eventos
+        function saveEvents(date, events) {
+            const dateKey = formatDateKey(date);
+            const eventsJson = localStorage.getItem('calendar_events');
+            const allEvents = eventsJson ? JSON.parse(eventsJson) : {};
+            allEvents[dateKey] = events;
+            localStorage.setItem('calendar_events', JSON.stringify(allEvents));
+        }
+
+        // Formatear fecha como clave
+        function formatDateKey(date) {
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        }
+
+        // Formatear fecha para mostrar
+        function formatDateDisplay(date) {
+            const day = date.getDate();
+            const month = monthNames[date.getMonth()];
+            const year = date.getFullYear();
+            return `${day} de ${month} de ${year}`;
+        }
+
+        // Obtener color de usuario
+        function getUserColor(userId) {
+            const user = users.find(u => u.id === userId);
+            return user ? user.color : '#999';
+        }
+
+        // Obtener nombre de usuario
+        function getUserName(userId) {
+            const user = users.find(u => u.id === userId);
+            return user ? user.name : 'Usuario';
+        }
+
+        // Cambiar mes
+        function changeMonth(delta) {
+            currentDate.setMonth(currentDate.getMonth() + delta);
+            renderCalendar();
+        }
+
+        // Abrir modal de día
+        function openDayModal(date) {
+            selectedDate = date;
+            document.getElementById('modalTitle').textContent = formatDateDisplay(date);
+            
+            // Renderizar eventos existentes
+            const events = getEventsForDate(date);
+            const eventList = document.getElementById('eventList');
+            eventList.innerHTML = '';
+
+            if (events.length === 0) {
+                eventList.innerHTML = '<div class="empty-message">No hay eventos para este día</div>';
+            } else {
+                events.forEach((event, index) => {
+                    const eventItem = document.createElement('div');
+                    eventItem.className = 'event-item';
+                    eventItem.style.borderLeft = `4px solid ${getUserColor(event.userId)}`;
+
+                    const textDiv = document.createElement('div');
+                    const eventText = document.createElement('div');
+                    eventText.className = 'event-text';
+                    eventText.textContent = event.text;
+                    
+                    const userText = document.createElement('div');
+                    userText.className = 'event-user';
+                    userText.textContent = `Por ${getUserName(event.userId)}`;
+                    
+                    textDiv.appendChild(eventText);
+                    textDiv.appendChild(userText);
+
+                    const deleteBtn = document.createElement('button');
+                    deleteBtn.className = 'delete-btn';
+                    deleteBtn.textContent = 'Eliminar';
+                    deleteBtn.onclick = () => deleteEvent(index);
+
+                    eventItem.appendChild(textDiv);
+                    eventItem.appendChild(deleteBtn);
+                    eventList.appendChild(eventItem);
+                });
+            }
+
+            document.getElementById('eventInput').value = '';
+            document.getElementById('dayModal').classList.add('show');
+        }
+
+        // Cerrar modal
+        function closeModal() {
+            document.getElementById('dayModal').classList.remove('show');
+            renderCalendar(); // Refrescar calendario
+        }
+
+        // Agregar evento
+        function addEvent() {
+            const input = document.getElementById('eventInput');
+            const text = input.value.trim();
+
+            if (!text) {
+                alert('Por favor escribe un evento');
+                return;
+            }
+
+            const events = getEventsForDate(selectedDate);
+            events.push({
+                text: text,
+                userId: currentUserId,
+                createdAt: new Date().toISOString()
+            });
+
+            saveEvents(selectedDate, events);
+            openDayModal(selectedDate); // Refrescar modal
+            input.value = '';
+        }
+
+        // Eliminar evento
+        function deleteEvent(index) {
+            const events = getEventsForDate(selectedDate);
+            events.splice(index, 1);
+            saveEvents(selectedDate, events);
+            openDayModal(selectedDate); // Refrescar modal
+        }
+
+        // Volver a selector de usuarios
+        function goBack() {
+            window.location.href = 'iphone.html';
+        }
+
+        // Cerrar modal al hacer clic fuera
+        document.getElementById('dayModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeModal();
+            }
+        });
+
+        // Inicializar cuando cargue la página
+        window.addEventListener('load', init);
+    </script>
+</body>
+</html>
+
