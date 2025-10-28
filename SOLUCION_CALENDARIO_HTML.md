@@ -16,12 +16,12 @@ Réplica HTML completa del calendario con las siguientes características:
 #### ✨ Funcionalidades Implementadas:
 
 **Interfaz de Usuario:**
-- ✅ Barra superior con título y botón de retorno
-- ✅ Selector de usuarios (4 usuarios con colores distintivos)
-- ✅ Navegación entre meses (anterior/siguiente)
+- ✅ Barra superior con título, botón de retorno y botón de menú
+- ✅ Navegación entre meses compacta (flechas ‹ › sin texto)
 - ✅ Vista de calendario mensual con grid de 7x6
 - ✅ Marcado del día actual
 - ✅ Vista de eventos en cada día del calendario
+- ✅ Interfaz limpia sin selector de usuarios visible
 
 **Gestión de Eventos:**
 - ✅ Modal para ver detalles de cada día
@@ -219,4 +219,43 @@ El calendario HTML está completamente funcional y accesible desde:
 https://dowhi.github.io/FamilySync/calendar.html
 
 La integración con el selector de usuarios funciona correctamente.
+
+---
+
+## 🆕 Últimas Mejoras (28 Oct 2025)
+
+### 1. **Eliminación del Selector de Usuarios en Vista de Calendario**
+   - ❌ **Removido**: Box de usuarios en la pantalla de calendario
+   - ✅ **Beneficio**: Interfaz más limpia y espacio para el calendario
+   - ℹ️ El usuario se selecciona solo en `iphone.html` y se mantiene en toda la sesión
+
+### 2. **Navegación de Meses Compacta**
+   - ❌ **Removido**: Textos "Anterior" y "Siguiente"
+   - ✅ **Agregado**: Botones circulares con flechas (‹ ›)
+   - 📏 **Reducido**: Altura del selector de meses de 12px a 8px de padding
+   - ✅ **Beneficio**: Más espacio para el calendario, diseño más moderno
+
+### 3. **Botón de Menú en Header**
+   - ✅ **Agregado**: Icono de menú hamburguesa (☰) en la esquina superior derecha
+   - 📍 **Ubicación**: A la derecha del botón "← Usuarios"
+   - 💡 **Función**: Placeholder para futuras funcionalidades (configuración, estadísticas, etc.)
+
+### Cambios Visuales:
+```
+ANTES:
+┌─────────────────────────────────────┐
+│ 📅 My Calendar    [← Usuarios]      │
+├─────────────────────────────────────┤
+│ [U1] [U2] [U3] [U4]                 │ ← Eliminado
+├─────────────────────────────────────┤
+│ [← Anterior] Oct 2025 [Siguiente →] │ ← Reducido
+└─────────────────────────────────────┘
+
+AHORA:
+┌─────────────────────────────────────┐
+│ 📅 My Calendar [← Usuarios] [☰]     │ ← Menú añadido
+├─────────────────────────────────────┤
+│    [‹]     Octubre 2025     [›]     │ ← Compacto
+└─────────────────────────────────────┘
+```
 
