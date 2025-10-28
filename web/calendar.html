@@ -342,21 +342,53 @@
         /* Bottom Info */
         .bottom-info {
             background: white;
-            padding: 12px 16px;
+            padding: 6px 16px;
             text-align: center;
             border-top: 1px solid #ddd;
             flex-shrink: 0;
         }
 
         .current-user-info {
-            font-size: 14px;
+            font-size: 11px;
             color: #666;
-            margin-bottom: 4px;
         }
 
-        .sync-info {
-            font-size: 12px;
-            color: #999;
+        /* Bottom Action Buttons */
+        .bottom-actions {
+            background: white;
+            padding: 8px;
+            display: flex;
+            gap: 8px;
+            border-top: 1px solid #ddd;
+            flex-shrink: 0;
+        }
+
+        .action-btn {
+            flex: 1;
+            background: #1B5E20;
+            border: none;
+            border-radius: 8px;
+            padding: 10px 8px;
+            color: white;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .action-btn:active {
+            background: #2E7D32;
+            transform: scale(0.98);
+        }
+
+        .action-btn.secondary {
+            background: #388E3C;
+        }
+
+        .action-btn.tertiary {
+            background: #4CAF50;
         }
     </style>
 </head>
@@ -387,7 +419,13 @@
     <!-- Bottom Info -->
     <div class="bottom-info">
         <div class="current-user-info" id="currentUserInfo"></div>
-        <div class="sync-info">Todos los eventos son compartidos entre usuarios</div>
+    </div>
+
+    <!-- Bottom Action Buttons -->
+    <div class="bottom-actions">
+        <button class="action-btn" onclick="activatePaintMode()">Pintar</button>
+        <button class="action-btn secondary" onclick="activateEditMode()">Editar</button>
+        <button class="action-btn tertiary" onclick="showShifts()">Turnos</button>
     </div>
 
     <!-- Modal for Day Details -->
@@ -458,6 +496,21 @@
         // Abrir menú (función placeholder)
         function openMenu() {
             alert('Funcionalidad de menú próximamente...\n\nPuedes agregar aquí:\n- Configuración\n- Estadísticas\n- Exportar calendario\n- Etc.');
+        }
+
+        // Activar modo pintar
+        function activatePaintMode() {
+            alert('🎨 Modo PINTAR\n\nPróximamente podrás:\n- Pintar días con colores\n- Marcar períodos especiales\n- Destacar fechas importantes');
+        }
+
+        // Activar modo editar
+        function activateEditMode() {
+            alert('✏️ Modo EDITAR\n\nPróximamente podrás:\n- Editar múltiples eventos\n- Copiar/pegar eventos\n- Mover eventos entre días');
+        }
+
+        // Mostrar turnos
+        function showShifts() {
+            alert('🔄 TURNOS\n\nPróximamente podrás:\n- Ver configuración de turnos\n- Asignar turnos a días\n- Gestionar patrones de turnos');
         }
 
         // Actualizar info del usuario actual
