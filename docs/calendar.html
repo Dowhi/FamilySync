@@ -191,7 +191,7 @@
             cursor: pointer;
             transition: all 0.2s;
             overflow: hidden;
-            min-height: calc((100vh - 200px) / 6);
+            min-height: calc((100vh - 160px) / 6);
         }
 
         .calendar-day:active {
@@ -463,7 +463,7 @@
     </div>
 
     <!-- Bottom Info -->
-    <div class="bottom-info">
+    <div class="bottom-info" style="display: none;">
         <div class="current-user-info" id="currentUserInfo"></div>
     </div>
 
@@ -577,11 +577,12 @@
             alert('🔄 TURNOS\n\nPróximamente podrás:\n- Ver configuración de turnos\n- Asignar turnos a días\n- Gestionar patrones de turnos');
         }
 
-        // Actualizar info del usuario actual
+        // Actualizar info del usuario actual (oculto)
         function updateCurrentUserInfo() {
             const user = users.find(u => u.id === currentUserId);
-            document.getElementById('currentUserInfo').textContent = 
-                `Usuario actual: ${user.name}`;
+            // Info del usuario oculta para maximizar espacio del calendario
+            // document.getElementById('currentUserInfo').textContent = 
+            //     `Usuario actual: ${user.name}`;
         }
 
         // Renderizar calendario
