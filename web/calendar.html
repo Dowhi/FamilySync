@@ -194,6 +194,7 @@
             transition: all 0.2s;
             overflow: hidden;
             min-height: calc((100vh - 160px) / 6);
+            position: relative;
         }
 
         .calendar-day:active {
@@ -212,10 +213,13 @@
         }
 
         .day-number {
-            font-size: 12px;
+            position: absolute;
+            top: 2px;
+            right: 4px;
+            font-size: 11px;
             font-weight: 600;
-            margin-bottom: 1px;
             line-height: 1;
+            color: #333;
         }
 
         .day-events {
@@ -224,6 +228,8 @@
             display: flex;
             flex-direction: column;
             gap: 1px;
+            margin-top: 16px;
+            padding: 2px;
         }
 
         .event-badge {
@@ -526,7 +532,7 @@
             'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
         ];
 
-        const weekDays = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
+        const weekDays = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
 
         // Inicializar
         function init() {
@@ -613,9 +619,10 @@
             const daysInMonth = lastDay.getDate();
             const startDayOfWeek = firstDay.getDay();
 
-            // Días del mes anterior
+            // Días del mes anterior (ajustado para empezar en lunes)
             const prevMonthLastDay = new Date(year, month, 0).getDate();
-            for (let i = startDayOfWeek - 1; i >= 0; i--) {
+            const adjustedStartDay = startDayOfWeek === 0 ? 6 : startDayOfWeek - 1; // Domingo = 6, Lunes = 0
+            for (let i = adjustedStartDay - 1; i >= 0; i--) {
                 const day = prevMonthLastDay - i;
                 const date = new Date(year, month - 1, day);
                 renderDay(container, date, true);
@@ -627,8 +634,8 @@
                 renderDay(container, date, false);
             }
 
-            // Días del mes siguiente
-            const totalCells = startDayOfWeek + daysInMonth;
+            // Días del mes siguiente (ajustado para empezar en lunes)
+            const totalCells = adjustedStartDay + daysInMonth;
             const remainingCells = 42 - totalCells; // 6 semanas * 7 días
             for (let day = 1; day <= remainingCells; day++) {
                 const date = new Date(year, month + 1, day);
