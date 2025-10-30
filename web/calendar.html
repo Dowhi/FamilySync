@@ -8,6 +8,11 @@
     <meta name="apple-mobile-web-app-title" content="FamilySync">
     <title>Calendario - FamilySync</title>
     <link rel="apple-touch-icon" href="icons/Icon-192.png">
+    
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
     <style>
         * {
             margin: 0;
@@ -222,6 +227,29 @@
             color: #333;
         }
 
+        /* Iconos de categorías en las celdas */
+        .category-icons {
+            position: absolute;
+            bottom: 2px;
+            left: 2px;
+            display: flex;
+            gap: 2px;
+            flex-wrap: wrap;
+            max-width: calc(100% - 20px);
+        }
+
+        .category-icon {
+            font-size: 11px;
+            line-height: 1;
+            opacity: 1;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 3px;
+            padding: 2px 4px;
+            border: 2px solid;
+            font-weight: 600;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.2);
+        }
+
         .day-events {
             flex: 1;
             overflow: hidden;
@@ -258,13 +286,375 @@
             inset: 0;
             background: rgba(0, 0, 0, 0.5);
             z-index: 1000;
-            align-items: center;
+            align-items: flex-start;
             justify-content: center;
-            padding: 20px;
+            padding: 10px;
+            overflow-y: auto;
         }
 
         .modal.show {
             display: flex;
+        }
+
+        /* Estilos para el modal - Réplica exacta de las fotos */
+        .modal-content-exact {
+            background: white;
+            width: 100%;
+            max-width: 500px;
+            min-height: 100vh;
+            border-radius: 0;
+            overflow: hidden;
+            box-shadow: none;
+            margin: 0 auto;
+            padding: 0;
+        }
+
+        /* Top Blue Header */
+        .modal-header-blue {
+            background: #2196F3;
+            color: white;
+            padding: 16px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .back-arrow {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 24px;
+            cursor: pointer;
+            padding: 0;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .header-date {
+            font-size: 18px;
+            font-weight: bold;
+            flex: 1;
+            text-align: center;
+        }
+
+        .header-spacer {
+            width: 30px;
+        }
+
+        /* Main Content Card */
+        .main-content-card {
+            background: white;
+            margin: 0;
+            padding: 20px;
+            border-radius: 0;
+            box-shadow: none;
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .document-icon {
+            font-size: 20px;
+            color: #666;
+            margin-top: 4px;
+        }
+
+        .main-textarea {
+            flex: 1;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 12px;
+            font-size: 16px;
+            font-family: inherit;
+            resize: none;
+            min-height: 80px;
+            outline: none;
+        }
+
+        .main-textarea::placeholder {
+            color: #999;
+        }
+
+        /* Alarm Section */
+        .alarm-section {
+            background: white;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .alarm-icon {
+            font-size: 24px;
+            color: #f44336;
+        }
+
+        .alarm-text {
+            flex: 1;
+            font-size: 16px;
+            font-weight: bold;
+            color: #f44336;
+        }
+
+        .alarm-number {
+            background: #FF9800;
+            color: white;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 14px;
+        }
+
+        /* Day Shifts Section */
+        .shifts-card {
+            background: white;
+            margin: 0;
+            padding: 20px;
+            border-radius: 0;
+            box-shadow: none;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .shifts-title {
+            font-size: 16px;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 16px;
+        }
+
+        .shifts-content {
+            display: flex;
+            flex-direction: column;
+            align-items: stretch;
+            gap: 8px;
+            width: 100%;
+        }
+
+        .clock-icon {
+            font-size: 48px;
+            color: #ccc;
+        }
+
+        .no-shifts-text {
+            color: #999;
+            font-size: 14px;
+        }
+
+        /* Shift Display Styles */
+        .shift-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 16px;
+            background: #E8F5E8;
+            border: 1px solid #4CAF50;
+            border-radius: 6px;
+            margin: 4px 0;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        .shift-circle {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #4CAF50;
+        }
+
+        .shift-name {
+            font-size: 14px;
+            color: #2E7D32;
+            font-weight: 500;
+        }
+
+        /* Categories Section */
+        .categories-card {
+            background: white;
+            margin: 0;
+            padding: 20px;
+            border-radius: 0;
+            box-shadow: none;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .categories-title {
+            font-size: 16px;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 16px;
+        }
+
+        .categories-dropdowns {
+            display: flex;
+            gap: 8px;
+            width: 100%;
+        }
+
+        .category-dropdown {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            padding: 8px 6px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background: white;
+            cursor: pointer;
+            min-width: 0;
+            position: relative;
+        }
+
+        .no-icon {
+            font-size: 12px;
+            color: #999;
+        }
+
+        .dropdown-text {
+            flex: 1;
+            font-size: 11px;
+            color: #666;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .dropdown-arrow {
+            font-size: 10px;
+            color: #999;
+        }
+
+        /* Dropdown Options */
+        .dropdown-options {
+            position: absolute;
+            bottom: 100%;
+            left: 0;
+            right: 0;
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.15);
+            z-index: 10000;
+            max-height: none;
+            overflow-y: visible;
+            display: none;
+            min-width: 120px;
+            margin-bottom: 4px;
+        }
+
+        .dropdown-options.show {
+            display: block;
+        }
+
+        .dropdown-option {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 10px;
+            cursor: pointer;
+            font-size: 11px;
+            border-bottom: 1px solid #f0f0f0;
+            transition: background-color 0.2s;
+        }
+
+        .dropdown-option:hover {
+            background-color: #f5f5f5;
+        }
+
+        .dropdown-option:last-child {
+            border-bottom: none;
+        }
+
+        .dropdown-option-icon {
+            font-size: 10px;
+            width: 14px;
+            text-align: center;
+        }
+
+        .dropdown-option-text {
+            font-size: 10px;
+            color: #333;
+            white-space: nowrap;
+        }
+
+        /* Action Buttons */
+        .action-buttons {
+            background: #f5f5f5;
+            padding: 20px;
+            display: flex;
+            gap: 12px;
+            margin-top: auto;
+        }
+
+        .btn-cancel, .btn-accept {
+            flex: 1;
+            padding: 14px 20px;
+            border: 2px solid;
+            border-radius: 4px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-cancel {
+            background: white;
+            border-color: #f44336;
+            color: #f44336;
+        }
+
+        .btn-cancel:hover {
+            background: #f44336;
+            color: white;
+        }
+
+        .btn-accept {
+            background: white;
+            border-color: #4CAF50;
+            color: #4CAF50;
+        }
+
+        .btn-accept:hover {
+            background: #4CAF50;
+            color: white;
+        }
+
+        /* Media queries para pantallas pequeñas */
+        @media (max-width: 480px) {
+            .modal-content-exact {
+                max-width: 100%;
+                margin: 0;
+            }
+            
+            .categories-dropdowns {
+                gap: 4px;
+            }
+            
+            .category-dropdown {
+                padding: 6px 4px;
+                gap: 2px;
+            }
+            
+            .dropdown-text {
+                font-size: 10px;
+            }
+            
+            .no-icon {
+                font-size: 10px;
+            }
+            
+            .dropdown-arrow {
+                font-size: 8px;
+            }
         }
 
         .modal-content {
@@ -402,10 +792,14 @@
         .bottom-actions {
             background: white;
             padding: 0;
-            display: flex;
+            display: flex !important;
             gap: 0;
             flex-shrink: 0;
             min-height: 40px;
+            position: relative;
+            z-index: 2000 !important;
+            visibility: visible !important;
+            opacity: 1 !important;
         }
 
         .action-btn {
@@ -438,9 +832,172 @@
         .action-btn.turnos {
             background: #4CAF50;
         }
+
+        .connection-status {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 10px;
+            font-weight: 600;
+            z-index: 1000;
+            transition: all 0.3s;
+        }
+
+        .connection-status.connected {
+            background: #4CAF50;
+            color: white;
+        }
+
+        .connection-status.disconnected {
+            background: #FF9800;
+            color: white;
+        }
+
+        .connection-status.error {
+            background: #F44336;
+            color: white;
+        }
+
+        /* Pop-up de Selección de Turnos */
+        .shifts-popup {
+            position: fixed;
+            bottom: 0 !important;
+            left: 0;
+            right: 0;
+            background: white;
+            border-top-left-radius: 20px;
+            border-top-right-radius: 20px;
+            box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.15);
+            z-index: 1900 !important;
+            transform: translateY(100%);
+            transition: transform 0.3s ease-out;
+            display: none !important;
+            flex-direction: row;
+            align-items: center;
+            padding: 4px 8px;
+            min-height: 52px;
+        }
+
+        .shifts-popup.show {
+            display: flex !important;
+            transform: translateY(0);
+            z-index: 2100 !important;
+        }
+
+        /* Ocultar barra de botones cuando el pop-up está abierto */
+        .shifts-popup.show ~ .bottom-actions {
+            display: none !important;
+        }
+
+        .shifts-popup-header {
+            display: none;
+        }
+
+        .shifts-popup-close {
+            background: none;
+            border: none;
+            font-size: 18px;
+            color: #666;
+            cursor: pointer;
+            padding: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            transition: background 0.2s;
+            flex-shrink: 0;
+        }
+
+        .shifts-popup-close:active {
+            background: #f0f0f0;
+        }
+
+        .shifts-scroll {
+            overflow-x: auto;
+            overflow-y: hidden;
+            display: flex;
+            flex-direction: row;
+            gap: 8px;
+            flex-wrap: nowrap;
+            flex: 1;
+            white-space: nowrap;
+            padding: 0;
+        }
+
+        .shift-button-paint {
+            min-width: 40px;
+            width: 40px;
+            height: 40px;
+            padding: 0;
+            border-radius: 50%;
+            border: none;
+            cursor: pointer;
+            font-size: 11px;
+            font-weight: 600;
+            color: white;
+            transition: transform 0.1s, box-shadow 0.1s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            flex-shrink: 0;
+        }
+
+        .shift-button-paint:active {
+            transform: scale(0.95);
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+        }
+
+        .shift-button-paint:hover {
+            opacity: 0.9;
+        }
+
+        /* Color por defecto para turnos sin color especificado */
+        .shift-button-paint.default {
+            background: #9E9E9E;
+        }
+
+        /* Botón de borrar turnos */
+        .shift-button-delete {
+            min-width: 40px;
+            width: 40px;
+            height: 40px;
+            padding: 0;
+            border-radius: 50%;
+            border: 2px solid #f44336;
+            cursor: pointer;
+            font-size: 20px;
+            font-weight: normal;
+            color: #f44336;
+            background: white;
+            transition: all 0.1s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .shift-button-delete:active {
+            transform: scale(0.95);
+            background: #f44336;
+            color: white;
+        }
+
+        .shift-button-delete:hover {
+            background: #f44336;
+            color: white;
+        }
+
     </style>
 </head>
 <body>
+    <!-- Connection Status -->
+    <div class="connection-status" id="connectionStatus">Conectando...</div>
+
     <!-- Header -->
     <div class="header">
         <div class="header-title">My Calendar</div>
@@ -483,33 +1040,186 @@
         <button class="action-btn turnos" onclick="showShifts()">TURNOS</button>
     </div>
 
-    <!-- Modal for Day Details -->
+    <!-- Pop-up de Selección de Turnos para Pintar -->
+    <div class="shifts-popup" id="shiftsPopup" hidden>
+        <button class="shifts-popup-close" onclick="closeShiftsPopup()">⌄</button>
+        <div class="shifts-scroll" id="shiftsScroll">
+            <!-- Se carga dinámicamente -->
+        </div>
+    </div>
+
+    <!-- Modal for Day Details - Réplica exacta de las fotos -->
     <div class="modal" id="dayModal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <div class="modal-title" id="modalTitle"></div>
-                <button class="close-btn" onclick="closeModal()">×</button>
+        <div class="modal-content-exact">
+            <!-- Top Blue Header -->
+            <div class="modal-header-blue">
+                <button class="back-arrow" onclick="closeModal()">←</button>
+                <div class="header-date" id="modalDate">8/10/25</div>
+                <div class="header-spacer"></div>
             </div>
 
-            <div class="modal-section">
-                <div class="section-title">Eventos del día</div>
-                <div class="event-list" id="eventList">
-                    <div class="empty-message">No hay eventos para este día</div>
+            <!-- Main Content Card -->
+            <div class="main-content-card">
+                <div class="document-icon">📄+</div>
+                <textarea class="main-textarea" placeholder="Añadir nota..." id="mainTextarea"></textarea>
+            </div>
+
+            <!-- Alarm Section -->
+            <div class="alarm-section">
+                <div class="alarm-icon">🔔</div>
+                <div class="alarm-text">Aviso de Alarma</div>
+                <div class="alarm-number" id="alarmNumber">8</div>
+            </div>
+
+            <!-- Day Shifts Section -->
+            <div class="shifts-card">
+                <div class="shifts-title">Turnos del día</div>
+                <div class="shifts-content" id="shiftsContent">
+                    <div class="clock-icon">🕐</div>
+                    <div class="no-shifts-text">No hay turnos asignados</div>
                 </div>
             </div>
 
-            <div class="modal-section">
-                <div class="section-title">Agregar evento</div>
-                <div class="input-group">
-                    <input 
-                        type="text" 
-                        id="eventInput" 
-                        class="input-field" 
-                        placeholder="Escribe un evento..."
-                        onkeypress="if(event.key==='Enter') addEvent()"
-                    >
-                    <button class="btn-primary" onclick="addEvent()">Agregar Evento</button>
+            <!-- Categories Section -->
+            <div class="categories-card">
+                <div class="categories-title">Categorías</div>
+                <div class="categories-dropdowns">
+                    <div class="category-dropdown" onclick="toggleDropdown(0)">
+                        <div class="no-icon">🚫</div>
+                        <span class="dropdown-text">Ninguno</span>
+                        <span class="dropdown-arrow">▼</span>
+                        <div class="dropdown-options" id="dropdown-0">
+                            <div class="dropdown-option" onclick="selectCategory(0, 'Ninguno', '')">
+                                <div class="dropdown-option-icon"></div>
+                                <div class="dropdown-option-text">Ninguno</div>
+                            </div>
+                            <div class="dropdown-option" onclick="selectCategory(0, 'Cambio de turno', '🔄')">
+                                <div class="dropdown-option-icon">🔄</div>
+                                <div class="dropdown-option-text">Cambio de turno</div>
+                            </div>
+                            <div class="dropdown-option" onclick="selectCategory(0, 'Ingreso', '$')">
+                                <div class="dropdown-option-icon">$</div>
+                                <div class="dropdown-option-text">Ingreso</div>
+                            </div>
+                            <div class="dropdown-option" onclick="selectCategory(0, 'Importante', '⚠️')">
+                                <div class="dropdown-option-icon">⚠️</div>
+                                <div class="dropdown-option-text">Importante</div>
+                            </div>
+                            <div class="dropdown-option" onclick="selectCategory(0, 'Festivo', '☀️')">
+                                <div class="dropdown-option-icon">☀️</div>
+                                <div class="dropdown-option-text">Festivo</div>
+                            </div>
+                            <div class="dropdown-option" onclick="selectCategory(0, 'Médico', '🩺')">
+                                <div class="dropdown-option-icon">🩺</div>
+                                <div class="dropdown-option-text">Médico</div>
+                            </div>
+                            <div class="dropdown-option" onclick="selectCategory(0, 'Mascota', '🐱')">
+                                <div class="dropdown-option-icon">🐱</div>
+                                <div class="dropdown-option-text">Mascota</div>
+                            </div>
+                            <div class="dropdown-option" onclick="selectCategory(0, 'Favorito', '⭐')">
+                                <div class="dropdown-option-icon">⭐</div>
+                                <div class="dropdown-option-text">Favorito</div>
+                            </div>
+                            <div class="dropdown-option" onclick="selectCategory(0, 'Coche', '🚗')">
+                                <div class="dropdown-option-icon">🚗</div>
+                                <div class="dropdown-option-text">Coche</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="category-dropdown" onclick="toggleDropdown(1)">
+                        <div class="no-icon">🚫</div>
+                        <span class="dropdown-text">Ninguno</span>
+                        <span class="dropdown-arrow">▼</span>
+                        <div class="dropdown-options" id="dropdown-1">
+                            <div class="dropdown-option" onclick="selectCategory(1, 'Ninguno', '')">
+                                <div class="dropdown-option-icon"></div>
+                                <div class="dropdown-option-text">Ninguno</div>
+                            </div>
+                            <div class="dropdown-option" onclick="selectCategory(1, 'Cambio de turno', '🔄')">
+                                <div class="dropdown-option-icon">🔄</div>
+                                <div class="dropdown-option-text">Cambio de turno</div>
+                            </div>
+                            <div class="dropdown-option" onclick="selectCategory(1, 'Ingreso', '$')">
+                                <div class="dropdown-option-icon">$</div>
+                                <div class="dropdown-option-text">Ingreso</div>
+                            </div>
+                            <div class="dropdown-option" onclick="selectCategory(1, 'Importante', '⚠️')">
+                                <div class="dropdown-option-icon">⚠️</div>
+                                <div class="dropdown-option-text">Importante</div>
+                            </div>
+                            <div class="dropdown-option" onclick="selectCategory(1, 'Festivo', '☀️')">
+                                <div class="dropdown-option-icon">☀️</div>
+                                <div class="dropdown-option-text">Festivo</div>
+                            </div>
+                            <div class="dropdown-option" onclick="selectCategory(1, 'Médico', '🩺')">
+                                <div class="dropdown-option-icon">🩺</div>
+                                <div class="dropdown-option-text">Médico</div>
+                            </div>
+                            <div class="dropdown-option" onclick="selectCategory(1, 'Mascota', '🐱')">
+                                <div class="dropdown-option-icon">🐱</div>
+                                <div class="dropdown-option-text">Mascota</div>
+                            </div>
+                            <div class="dropdown-option" onclick="selectCategory(1, 'Favorito', '⭐')">
+                                <div class="dropdown-option-icon">⭐</div>
+                                <div class="dropdown-option-text">Favorito</div>
+                            </div>
+                            <div class="dropdown-option" onclick="selectCategory(1, 'Coche', '🚗')">
+                                <div class="dropdown-option-icon">🚗</div>
+                                <div class="dropdown-option-text">Coche</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="category-dropdown" onclick="toggleDropdown(2)">
+                        <div class="no-icon">🚫</div>
+                        <span class="dropdown-text">Ninguno</span>
+                        <span class="dropdown-arrow">▼</span>
+                        <div class="dropdown-options" id="dropdown-2">
+                            <div class="dropdown-option" onclick="selectCategory(2, 'Ninguno', '')">
+                                <div class="dropdown-option-icon"></div>
+                                <div class="dropdown-option-text">Ninguno</div>
+                            </div>
+                            <div class="dropdown-option" onclick="selectCategory(2, 'Cambio de turno', '🔄')">
+                                <div class="dropdown-option-icon">🔄</div>
+                                <div class="dropdown-option-text">Cambio de turno</div>
+                            </div>
+                            <div class="dropdown-option" onclick="selectCategory(2, 'Ingreso', '$')">
+                                <div class="dropdown-option-icon">$</div>
+                                <div class="dropdown-option-text">Ingreso</div>
+                            </div>
+                            <div class="dropdown-option" onclick="selectCategory(2, 'Importante', '⚠️')">
+                                <div class="dropdown-option-icon">⚠️</div>
+                                <div class="dropdown-option-text">Importante</div>
+                            </div>
+                            <div class="dropdown-option" onclick="selectCategory(2, 'Festivo', '☀️')">
+                                <div class="dropdown-option-icon">☀️</div>
+                                <div class="dropdown-option-text">Festivo</div>
+                            </div>
+                            <div class="dropdown-option" onclick="selectCategory(2, 'Médico', '🩺')">
+                                <div class="dropdown-option-icon">🩺</div>
+                                <div class="dropdown-option-text">Médico</div>
+                            </div>
+                            <div class="dropdown-option" onclick="selectCategory(2, 'Mascota', '🐱')">
+                                <div class="dropdown-option-icon">🐱</div>
+                                <div class="dropdown-option-text">Mascota</div>
+                            </div>
+                            <div class="dropdown-option" onclick="selectCategory(2, 'Favorito', '⭐')">
+                                <div class="dropdown-option-icon">⭐</div>
+                                <div class="dropdown-option-text">Favorito</div>
+                            </div>
+                            <div class="dropdown-option" onclick="selectCategory(2, 'Coche', '🚗')">
+                                <div class="dropdown-option-icon">🚗</div>
+                                <div class="dropdown-option-text">Coche</div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="action-buttons">
+                <button class="btn-cancel" onclick="closeModal()">CANCELAR</button>
+                <button class="btn-accept" onclick="acceptDayChanges()">ACEPTAR</button>
             </div>
         </div>
     </div>
@@ -519,13 +1229,21 @@
         let currentDate = new Date();
         let currentUserId = 1;
         let selectedDate = null;
-        
-        const users = [
-            { id: 1, name: 'Usuario 1', color: '#2196F3' },
-            { id: 2, name: 'Usuario 2', color: '#4CAF50' },
-            { id: 3, name: 'Usuario 3', color: '#FF9800' },
-            { id: 4, name: 'Usuario 4', color: '#9C27B0' }
-        ];
+        let db = null;
+        let isFirebaseConnected = false;
+        let users = [];
+        let shiftTemplates = [];
+
+        // Configuración de Firebase (configuración real del proyecto)
+        const firebaseConfig = {
+            apiKey: "AIzaSyB5vvp7IQOZLO7LlsUY_Wq-H8M_5PH3ZQE",
+            authDomain: "apptaxi-f2190.firebaseapp.com",
+            projectId: "apptaxi-f2190",
+            storageBucket: "apptaxi-f2190.firebasestorage.app",
+            messagingSenderId: "804273724178",
+            appId: "1:804273724178:web:c5955a1f657884c0e7f1cb",
+            measurementId: "G-3D8R30TYTM"
+        };
 
         const monthNames = [
             'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
@@ -534,9 +1252,162 @@
 
         const weekDays = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
 
+        // Variables globales
+        let isRendering = false;
+        let renderTimeout = null;
+        let lastRenderTime = 0;
+        let eventsCache = {}; // Cache de eventos para evitar múltiples llamadas a Firebase
+
+        // Actualizar estado de conexión
+        function updateConnectionStatus(status, message) {
+            const statusEl = document.getElementById('connectionStatus');
+            statusEl.className = `connection-status ${status}`;
+            statusEl.textContent = message;
+        }
+
+        // Inicializar Firebase
+        async function initFirebase() {
+            try {
+                // Inicializar Firebase
+                firebase.initializeApp(firebaseConfig);
+                db = firebase.firestore();
+                isFirebaseConnected = true;
+                console.log('✅ Firebase conectado correctamente');
+                updateConnectionStatus('connected', '🟢 Sincronizado');
+                
+                // Cargar usuarios desde Firebase
+                await loadUsersFromFirebase();
+                
+                // Cargar shift templates
+                loadShiftTemplates();
+                
+                // Configurar listener para cambios en tiempo real
+                setupRealtimeListener();
+                
+                return true;
+            } catch (error) {
+                console.error('❌ Error conectando Firebase:', error);
+                isFirebaseConnected = false;
+                updateConnectionStatus('error', '❌ Error Firebase');
+                // Usar usuarios por defecto si Firebase falla
+                loadDefaultUsers();
+                return false;
+            }
+        }
+
+        // Cargar usuarios desde Firebase
+        async function loadUsersFromFirebase() {
+            try {
+                const snapshot = await db.collection('users').get();
+                
+                if (snapshot.empty) {
+                    console.log('⚠️ No hay usuarios en Firebase, usando usuarios por defecto');
+                    loadDefaultUsers();
+                    await saveUsersToFirebase();
+                } else {
+                    users = snapshot.docs.map(doc => {
+                        const data = doc.data();
+                        return {
+                            id: parseInt(data.id) || parseInt(doc.id),
+                            name: data.name || `Usuario ${doc.id}`,
+                            color: data.color || '#9E9E9E'
+                        };
+                    });
+                    console.log('✅ Usuarios cargados desde Firebase:', users.length, users);
+                }
+            } catch (error) {
+                console.error('❌ Error cargando usuarios:', error);
+                loadDefaultUsers();
+            }
+        }
+
+        // Cargar usuarios por defecto
+        function loadDefaultUsers() {
+            users = [
+                { id: 1, name: 'Usuario 1', color: '#2196F3' },
+                { id: 2, name: 'Usuario 2', color: '#4CAF50' },
+                { id: 3, name: 'Usuario 3', color: '#FF9800' },
+                { id: 4, name: 'Usuario 4', color: '#9C27B0' }
+            ];
+        }
+
+        // Guardar usuarios en Firebase
+        async function saveUsersToFirebase() {
+            if (!isFirebaseConnected) return;
+
+            try {
+                for (const user of users) {
+                    await db.collection('users').doc(user.id.toString()).set({
+                        id: user.id,
+                        name: user.name,
+                        color: user.color,
+                        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                }
+                console.log('✅ Usuarios guardados en Firebase');
+            } catch (error) {
+                console.error('❌ Error guardando usuarios:', error);
+            }
+        }
+
+        // Cargar shift templates desde Firebase
+        async function loadShiftTemplates() {
+            if (!isFirebaseConnected) return;
+            
+            try {
+                    const snapshot = await db.collection('shifts').get();
+                shiftTemplates = snapshot.docs.map(doc => ({
+                    id: doc.id,
+                    ...doc.data()
+                }));
+                console.log('✅ Shift templates cargados:', shiftTemplates.length);
+            } catch (error) {
+                console.error('❌ Error cargando shift templates:', error);
+                // Usar templates por defecto si falla
+                shiftTemplates = [
+                    { id: '1', name: 'D1', colorHex: '#FF5722', abbreviation: 'D1' },
+                    { id: '2', name: 'D2', colorHex: '#4CAF50', abbreviation: 'D2' },
+                    { id: '3', name: 'N1', colorHex: '#9C27B0', abbreviation: 'N1' },
+                    { id: '4', name: 'Libre', colorHex: '#607D8B', abbreviation: 'Lib' },
+                    { id: '5', name: 'Tarde', colorHex: '#FF9800', abbreviation: 'T' },
+                    { id: '6', name: 'Mañana', colorHex: '#2196F3', abbreviation: 'M' }
+                ];
+            }
+        }
+
+        // Configurar listener en tiempo real
+        function setupRealtimeListener() {
+            if (!isFirebaseConnected) return;
+            
+            // Desactivados los listeners para mejorar rendimiento
+            // Los cambios se reflejan localmente al pintar días
+            /*
+            // Escuchar cambios en eventos del calendario
+            db.collection('calendar_events').onSnapshot((snapshot) => {
+                console.log('🔄 Cambios detectados en Firestore');
+                scheduleRenderCalendar(); // Refrescar calendario cuando hay cambios (con debounce)
+            }, (error) => {
+                console.error('❌ Error en listener de Firestore:', error);
+            });
+
+            // Escuchar cambios en shifts
+            db.collection('shifts').onSnapshot((snapshot) => {
+                console.log('🔄 Cambios detectados en shifts');
+                shiftTemplates = snapshot.docs.map(doc => ({
+                    id: doc.id,
+                    ...doc.data()
+                }));
+                scheduleRenderCalendar(); // Refrescar calendario cuando cambien los shifts (con debounce)
+            }, (error) => {
+                console.error('❌ Error en listener de shifts:', error);
+            });
+            */
+        }
+
         // Inicializar
-        function init() {
+        async function init() {
             console.log('📅 Inicializando calendario...');
+            updateConnectionStatus('disconnected', '🟡 Conectando...');
             
             // Cargar usuario guardado
             const savedUserId = localStorage.getItem('current_user_id');
@@ -544,8 +1415,19 @@
                 currentUserId = parseInt(savedUserId);
             }
 
-            renderCalendar();
-            updateCurrentUserInfo();
+            // Intentar conectar Firebase
+            if (!(await initFirebase())) {
+                updateConnectionStatus('disconnected', '🟠 Solo Local');
+            }
+
+            // Agregar algunos eventos de prueba
+            addTestEvents();
+
+            // Renderizar calendario solo una vez
+            setTimeout(() => {
+                renderCalendar();
+                updateCurrentUserInfo();
+            }, 100);
         }
 
         // Abrir menú (función placeholder)
@@ -573,18 +1455,522 @@
 
         // Activar modo pintar
         function activatePaintMode() {
-            alert('🎨 Modo PINTAR\n\nPróximamente podrás:\n- Pintar días con colores\n- Marcar períodos especiales\n- Destacar fechas importantes');
+            console.log('🎨 Activando modo pintar...');
+            // Mostrar el pop-up de selección de turnos
+            openShiftsPopup();
+        }
+
+        // Abrir pop-up de turnos
+        async function openShiftsPopup() {
+            console.log('📂 Abriendo pop-up de turnos...');
+            const popup = document.getElementById('shiftsPopup');
+            
+            if (!popup) {
+                console.error('❌ No se encontró el elemento shiftsPopup');
+                return;
+            }
+            
+            console.log('✅ Pop-up encontrado, agregando clase show...');
+            
+            // Mostrar pop-up: remover atributo hidden y agregar clase show
+            popup.removeAttribute('hidden');
+            popup.classList.add('show');
+            await renderShiftsForPainting();
+            console.log('✅ Pop-up abierto');
+        }
+
+        // Cerrar pop-up de turnos
+        function closeShiftsPopup() {
+            const popup = document.getElementById('shiftsPopup');
+            
+            // Ocultar pop-up: agregar atributo hidden y remover clase show
+            popup.setAttribute('hidden', '');
+            popup.classList.remove('show');
+            
+            // Salir del modo pintura si estaba activo
+            exitPaintMode();
+        }
+
+        // Renderizar turnos en el pop-up
+        async function renderShiftsForPainting() {
+            console.log('🎨 Renderizando turnos para pintar...');
+            const container = document.getElementById('shiftsScroll');
+            if (!container) {
+                console.error('❌ No se encontró el contenedor shiftsScroll');
+                return;
+            }
+            container.innerHTML = '';
+
+            console.log('📊 Turnos disponibles:', shiftTemplates.length);
+
+            // Si no hay turnos, intentar cargarlos
+            if (shiftTemplates.length === 0) {
+                console.log('⚠️ No hay turnos, intentando cargarlos...');
+                if (isFirebaseConnected) {
+                    await loadShiftTemplates();
+                }
+                
+                // Si aún no hay turnos, mostrar mensaje
+                if (shiftTemplates.length === 0) {
+                    console.log('❌ Aún no hay turnos disponibles');
+                    container.innerHTML = '<div style="padding: 16px; color: #999; text-align: center; width: 100%;">No hay turnos disponibles<br/>Crea turnos en la sección "TURNOS"</div>';
+                    return;
+                }
+            }
+
+            console.log('✅ Renderizando', shiftTemplates.length, 'turnos...');
+            // Renderizar cada turno
+            shiftTemplates.forEach(shift => {
+                const button = document.createElement('button');
+                button.className = 'shift-button-paint';
+                
+                // Determinar el color de fondo
+                const backgroundColor = shift.backgroundColor || shift.colorHex || shift.color || '#9E9E9E';
+                button.style.backgroundColor = backgroundColor;
+                
+                // Usar la abreviatura si existe, sino el nombre
+                const displayText = shift.abbreviation || shift.name || 'Turno';
+                button.textContent = displayText;
+                
+                // Evento click para pintar con este turno
+                button.onclick = () => selectShiftForPainting(shift);
+                
+                container.appendChild(button);
+            });
+
+            // Añadir botón de borrar
+            const deleteButton = document.createElement('button');
+            deleteButton.className = 'shift-button-delete';
+            deleteButton.innerHTML = '🗑️';
+            deleteButton.title = 'Borrar turnos del día seleccionado';
+            deleteButton.onclick = () => selectDeleteMode();
+            container.appendChild(deleteButton);
+            
+            console.log('✅ Turnos renderizados correctamente');
+        }
+
+        // Variable para almacenar el turno seleccionado para pintar
+        let selectedShiftForPainting = null;
+        let isDeleteMode = false;
+
+        // Seleccionar turno para pintar
+        function selectShiftForPainting(shift) {
+            selectedShiftForPainting = shift;
+            // NO cerrar el pop-up - se mantiene abierto
+            
+            // Cambiar el cursor a "modo pintura"
+            document.body.style.cursor = 'crosshair';
+            
+            // Agregar event listeners a las celdas del calendario
+            const dayCells = document.querySelectorAll('.calendar-day');
+            dayCells.forEach(cell => {
+                // Crear nuevo onclick que pinta
+                const paintOnclick = (e) => {
+                    // Prevenir que se abra el modal de detalles del día
+                    e.stopPropagation();
+                    // Pintar el día con el turno seleccionado
+                    paintDay(cell, shift);
+                    // NO salir del modo pintura - permitir seguir pintando
+                };
+                
+                cell.onclick = paintOnclick;
+                cell.style.cursor = 'pointer';
+            });
+
+            // No mostrar alert - el pop-up permanece visible
+            console.log(`🎨 Modo PINTAR activo - Turno: ${shift.name || shift.abbreviation}`);
+        }
+
+        // Salir del modo pintura
+        function exitPaintMode() {
+            document.body.style.cursor = '';
+            selectedShiftForPainting = null;
+            isDeleteMode = false;
+            
+            // Restaurar el cursor de las celdas (no re-renderizar para evitar flashes)
+            const dayCells = document.querySelectorAll('.calendar-day');
+            dayCells.forEach(cell => {
+                cell.style.cursor = '';
+            });
+            
+            console.log('✅ Modo pintura desactivado');
+        }
+
+        // Seleccionar modo borrar
+        function selectDeleteMode() {
+            isDeleteMode = true;
+            selectedShiftForPainting = null;
+            
+            // Cambiar el cursor a "modo borrar"
+            document.body.style.cursor = 'not-allowed';
+            
+            // Agregar event listeners a las celdas del calendario
+            const dayCells = document.querySelectorAll('.calendar-day');
+            dayCells.forEach(cell => {
+                const deleteOnclick = (e) => {
+                    e.stopPropagation();
+                    deleteDayShifts(cell);
+                };
+                
+                cell.onclick = deleteOnclick;
+                cell.style.cursor = 'not-allowed';
+            });
+
+            console.log('🗑️ Modo BORRAR activo');
+        }
+
+        // Borrar turnos de un día
+        async function deleteDayShifts(cell) {
+            const dateStr = cell.dataset.date;
+            if (!dateStr) return;
+
+            const date = new Date(dateStr);
+            const dateKey = formatDateKey(date);
+            
+            console.log('🗑️ Borrando turnos del día:', dateKey);
+
+            try {
+                if (isFirebaseConnected) {
+                    // Eliminar el documento completo del día
+                    await db.collection('calendar_events').doc(dateKey).delete();
+                    console.log('✅ Turnos eliminados de Firebase');
+                } else {
+                    // Eliminar localmente
+                    await saveEventsToLocalStorage(date, []);
+                }
+
+                // Actualizar solo la visualización de este día
+                updateDayDisplay(cell, []);
+                
+            } catch (error) {
+                console.error('❌ Error borrando turnos:', error);
+            }
+        }
+
+        // Pintar un día con un turno
+        async function paintDay(cell, shift) {
+            const dateStr = cell.dataset.date;
+            if (!dateStr) return;
+
+            const date = new Date(dateStr);
+            const dateKey = formatDateKey(date);
+            
+            console.log('🎨 Pintando día:', dateKey, 'con turno:', shift);
+
+            try {
+                // Obtener eventos existentes del día
+                const existingEvents = await getEventsForDate(date);
+                
+                // Verificar si ya existe este turno
+                const shiftText = shift.abbreviation || shift.name;
+                const exists = existingEvents.some(evt => evt.text === shiftText);
+                
+                if (exists) {
+                    console.log('⚠️ Ya existe un evento para este día con este turno');
+                    return; // No mostrar alert para no interrumpir el flujo
+                }
+
+                // Crear nuevo evento
+                const newEvent = {
+                    text: shiftText,
+                    userId: currentUserId,
+                    userColor: shift.backgroundColor || shift.colorHex || shift.color,
+                    createdAt: new Date().toISOString(),
+                    updatedAt: new Date().toISOString()
+                };
+
+                // Agregar el nuevo evento a la lista
+                existingEvents.push(newEvent);
+
+                if (isFirebaseConnected) {
+                    // Guardar en Firebase
+                    await db.collection('calendar_events').doc(dateKey).set({
+                        events: existingEvents
+                    }, { merge: true });
+                    console.log('✅ Turno guardado en Firebase');
+                } else {
+                    // Guardar localmente
+                    await saveEventsToLocalStorage(date, existingEvents);
+                }
+
+                // Actualizar solo la visualización de este día sin re-renderizar todo
+                updateDayDisplay(cell, existingEvents);
+                
+            } catch (error) {
+                console.error('❌ Error pintando día:', error);
+            }
+        }
+
+        // Actualizar visualización de un día sin re-renderizar todo el calendario
+        async function updateDayDisplay(cell, events) {
+            const dateStr = cell.dataset.date;
+            if (!dateStr) return;
+
+            const date = new Date(dateStr);
+            const dateKey = formatDateKey(date);
+            
+            // Actualizar la caché con los nuevos eventos
+            if (!eventsCache.events) eventsCache.events = {};
+            eventsCache.events[dateKey] = events;
+            
+            // Filtrar solo turnos (excluir notas)
+            const shifts = events.filter(event => event.type !== 'note');
+            
+            // Obtener el número del día
+            const dayNumber = cell.querySelector('.day-number');
+            if (!dayNumber) return;
+            
+            // Limpiar estilo anterior de la celda
+            cell.style.background = '';
+            cell.style.backgroundColor = '';
+            cell.style.backgroundImage = '';
+            
+            // Limpiar eventos visuales previos
+            const eventsEl = cell.querySelector('.day-events');
+            if (eventsEl) {
+                eventsEl.remove();
+            }
+            
+            // Limpiar textos de turnos previos
+            const shiftTexts = cell.querySelectorAll('.shift-text-full, .shift-text-half, .event-badge');
+            shiftTexts.forEach(el => el.remove());
+            
+            // Limpiar iconos de categoría previos
+            const categoryIconsEl = cell.querySelector('.category-icons');
+            if (categoryIconsEl) {
+                categoryIconsEl.remove();
+            }
+            
+            // Limpiar texto de nota previo
+            const noteTextEl = cell.querySelector('.note-text');
+            if (noteTextEl) {
+                noteTextEl.remove();
+            }
+            
+            // SIEMPRE mostrar el número del día, pero con estilo para que sea visible
+            dayNumber.style.display = 'block';
+            dayNumber.style.position = 'absolute';
+            dayNumber.style.top = '2px';
+            dayNumber.style.right = '2px';
+            dayNumber.style.zIndex = '100';
+            dayNumber.style.fontWeight = '600';
+            dayNumber.style.fontSize = '11px';
+            
+            if (shifts.length > 0) {
+                
+                if (shifts.length === 1) {
+                    // Un solo turno: pintar toda la celda
+                    const template = shiftTemplates.find(t => t.name === shifts[0].text || t.abbreviation === shifts[0].text);
+                    const color = template ? (template.backgroundColor || template.colorHex || template.color) : 
+                                  (shifts[0].userColor || getUserColor(shifts[0].userId));
+                    
+                    cell.style.backgroundColor = color;
+                    
+                    // Número del día en esquina superior derecha, sin fondo
+                    dayNumber.style.backgroundColor = '';
+                    dayNumber.style.padding = '';
+                    dayNumber.style.borderRadius = '';
+                    dayNumber.style.color = '#ffffff';
+                    dayNumber.style.textShadow = '0 0 3px rgba(0,0,0,0.7)';
+                    
+                    // Crear texto del turno centrado
+                    const shiftText = document.createElement('div');
+                    shiftText.className = 'shift-text-full';
+                    shiftText.textContent = template ? (template.abbreviation || template.name) : shifts[0].text;
+                    shiftText.style.cssText = `
+                        position: absolute;
+                        top: 50%;
+                        left: 50%;
+                        transform: translate(-50%, -50%);
+                        color: white;
+                        font-weight: 700;
+                        font-size: 13px;
+                        white-space: nowrap;
+                        z-index: 10;
+                    `;
+                    cell.appendChild(shiftText);
+                    
+                } else if (shifts.length === 2) {
+                    // Dos turnos: dividir la celda en dos
+                    const shift1 = shifts[0];
+                    const shift2 = shifts[1];
+                    
+                    const template1 = shiftTemplates.find(t => t.name === shift1.text || t.abbreviation === shift1.text);
+                    const template2 = shiftTemplates.find(t => t.name === shift2.text || t.abbreviation === shift2.text);
+                    
+                    const color1 = template1 ? (template1.backgroundColor || template1.colorHex || template1.color) : 
+                                   (shift1.userColor || getUserColor(shift1.userId));
+                    const color2 = template2 ? (template2.backgroundColor || template2.colorHex || template2.color) : 
+                                   (shift2.userColor || getUserColor(shift2.userId));
+                    
+                    // Usar gradiente lineal para dividir en dos
+                    cell.style.background = `linear-gradient(to bottom, ${color1} 50%, ${color2} 50%)`;
+                    
+                    // Número del día sin fondo, con sombra para contraste
+                    dayNumber.style.backgroundColor = '';
+                    dayNumber.style.padding = '';
+                    dayNumber.style.borderRadius = '';
+                    dayNumber.style.color = '#ffffff';
+                    dayNumber.style.textShadow = '0 0 3px rgba(0,0,0,0.7)';
+
+                    // Crear texto para cada mitad
+                    const text1 = document.createElement('div');
+                    text1.className = 'shift-text-half';
+                    text1.textContent = template1 ? (template1.abbreviation || template1.name) : shift1.text;
+                    text1.style.cssText = `
+                        position: absolute;
+                        top: 25%;
+                        left: 50%;
+                        transform: translate(-50%, -50%);
+                        color: white;
+                        font-weight: 700;
+                        font-size: 12px;
+                        white-space: nowrap;
+                        z-index: 10;
+                    `;
+                    cell.appendChild(text1);
+
+                    const text2 = document.createElement('div');
+                    text2.className = 'shift-text-half';
+                    text2.textContent = template2 ? (template2.abbreviation || template2.name) : shift2.text;
+                    text2.style.cssText = `
+                        position: absolute;
+                        top: 75%;
+                        left: 50%;
+                        transform: translate(-50%, -50%);
+                        color: white;
+                        font-weight: 700;
+                        font-size: 12px;
+                        white-space: nowrap;
+                        z-index: 10;
+                    `;
+                    cell.appendChild(text2);
+
+                } else if (shifts.length === 3) {
+                    // Tres turnos: dividir en tres bandas
+                    const [s1, s2, s3] = shifts;
+                    const t1 = shiftTemplates.find(t => t.name === s1.text || t.abbreviation === s1.text);
+                    const t2 = shiftTemplates.find(t => t.name === s2.text || t.abbreviation === s2.text);
+                    const t3 = shiftTemplates.find(t => t.name === s3.text || t.abbreviation === s3.text);
+                    const c1 = t1 ? (t1.backgroundColor || t1.colorHex || t1.color) : (s1.userColor || getUserColor(s1.userId));
+                    const c2 = t2 ? (t2.backgroundColor || t2.colorHex || t2.color) : (s2.userColor || getUserColor(s2.userId));
+                    const c3 = t3 ? (t3.backgroundColor || t3.colorHex || t3.color) : (s3.userColor || getUserColor(s3.userId));
+                    cell.style.background = `linear-gradient(to bottom, ${c1} 33.333%, ${c2} 33.333% 66.666%, ${c3} 66.666%)`;
+
+                    dayNumber.style.backgroundColor = '';
+                    dayNumber.style.color = '#ffffff';
+                    dayNumber.style.textShadow = '0 0 3px rgba(0,0,0,0.7)';
+
+                    const mk = (txt, top) => {
+                        const el = document.createElement('div');
+                        el.className = 'shift-text-third';
+                        el.textContent = txt;
+                        el.style.cssText = `position:absolute; top:${top}%; left:50%; transform:translate(-50%,-50%); color:white; font-weight:700; font-size:11px; white-space:nowrap; z-index:10;`;
+                        cell.appendChild(el);
+                    };
+                    mk(t1 ? (t1.abbreviation || t1.name) : s1.text, 16.5);
+                    mk(t2 ? (t2.abbreviation || t2.name) : s2.text, 50);
+                    mk(t3 ? (t3.abbreviation || t3.name) : s3.text, 83.5);
+                    
+                } else {
+                    // Más de dos turnos: mostrar los primeros tres
+                    shifts.slice(0, 3).forEach((event, index) => {
+                        const template = shiftTemplates.find(t => t.name === event.text || t.abbreviation === event.text);
+                        const color = template ? (template.backgroundColor || template.colorHex || template.color) : 
+                                      (event.userColor || getUserColor(event.userId));
+                        
+                        const eventEl = document.createElement('div');
+                        eventEl.className = 'event-badge';
+                        eventEl.style.cssText = `
+                            position: absolute;
+                            top: ${20 + index * 30}%;
+                            left: 50%;
+                            transform: translate(-50%, -50%);
+                            background-color: ${color};
+                            color: white;
+                            padding: 2px 6px;
+                            border-radius: 4px;
+                            font-size: 10px;
+                            font-weight: 600;
+                            z-index: 10;
+                        `;
+                        eventEl.textContent = template ? (template.abbreviation || template.name) : event.text;
+                        cell.appendChild(eventEl);
+                    });
+                }
+            } else {
+                // No hay turnos: mostrar el número del día con estilo normal
+                dayNumber.style.backgroundColor = '';
+                dayNumber.style.padding = '';
+                dayNumber.style.borderRadius = '';
+                dayNumber.style.color = '';
+            }
+            
+            // Agregar iconos de categoría con el color del usuario
+            const note = events.find(event => event.type === 'note');
+            if (note) {
+                // Obtener el color del usuario que creó la nota
+                const userColor = note.userColor || getUserColor(note.userId);
+                console.log('🎨 Color de nota:', userColor, 'userId:', note.userId, 'userId type:', typeof note.userId, 'users:', users.map(u => ({id: u.id, idType: typeof u.id, name: u.name, color: u.color})));
+                
+                // Si hay nota con texto, ocultar los textos de los turnos para evitar superposición
+                if (note.text && note.text.trim() !== '') {
+                    const shiftTexts = cell.querySelectorAll('.shift-text-full, .shift-text-half, .shift-text-third, .event-badge');
+                    shiftTexts.forEach(el => el.style.display = 'none');
+                }
+                
+                // Agregar texto de la nota si existe
+                if (note.text && note.text.trim() !== '') {
+                    const noteTextEl = document.createElement('div');
+                    noteTextEl.className = 'note-text';
+                    noteTextEl.textContent = note.text;
+                    noteTextEl.style.cssText = `
+                        position: absolute;
+                        top: 20px;
+                        left: 50%;
+                        transform: translateX(-50%);
+                        color: ${userColor};
+                        font-weight: 700;
+                        font-size: 11px;
+                        white-space: nowrap;
+                        overflow: hidden;
+                        text-overflow: ellipsis;
+                        max-width: calc(100% - 8px);
+                        z-index: 15;
+                    `;
+                    cell.appendChild(noteTextEl);
+                }
+                
+                // Agregar iconos de categoría si existen
+                if (note.categories && note.categories.length > 0) {
+                    const categoriesEl = document.createElement('div');
+                    categoriesEl.className = 'category-icons';
+                    
+                    note.categories.forEach(category => {
+                        if (category.icon && category.icon.trim() !== '') {
+                            const iconEl = document.createElement('span');
+                            iconEl.className = 'category-icon';
+                            iconEl.textContent = category.icon;
+                            iconEl.title = category.text;
+                            // Aplicar el color del usuario al icono
+                            iconEl.style.color = userColor;
+                            iconEl.style.borderColor = userColor;
+                            categoriesEl.appendChild(iconEl);
+                        }
+                    });
+                    
+                    if (categoriesEl.children.length > 0) {
+                        cell.appendChild(categoriesEl);
+                    }
+                }
+            }
         }
 
         // Activar modo editar
         function activateEditMode() {
-            alert('✏️ Modo EDITAR\n\nPróximamente podrás:\n- Editar múltiples eventos\n- Copiar/pegar eventos\n- Mover eventos entre días');
+            window.location.href = 'users-management.html';
         }
 
-        // Mostrar turnos
-        function showShifts() {
-            alert('🔄 TURNOS\n\nPróximamente podrás:\n- Ver configuración de turnos\n- Asignar turnos a días\n- Gestionar patrones de turnos');
-        }
 
         // Actualizar info del usuario actual (oculto)
         function updateCurrentUserInfo() {
@@ -594,9 +1980,38 @@
             //     `Usuario actual: ${user.name}`;
         }
 
+        // Renderizar calendario con debounce
+        function scheduleRenderCalendar() {
+            // Cancelar render anterior si existe
+            if (renderTimeout) {
+                clearTimeout(renderTimeout);
+            }
+            
+            // Programar nuevo render con delay
+            renderTimeout = setTimeout(() => {
+                renderCalendar();
+            }, 200);
+        }
+
         // Renderizar calendario
-        function renderCalendar() {
+        async function renderCalendar(force = false) {
+            // Prevenir renders muy frecuentes (mínimo 100ms entre renders)
+            const now = Date.now();
+            if (!force && now - lastRenderTime < 100) {
+                console.log('⏳ Render muy frecuente, saltando...');
+                return;
+            }
+            
+            if (isRendering) {
+                console.log('⏳ Ya se está renderizando, saltando...');
+                return;
+            }
+            
+            isRendering = true;
+            lastRenderTime = now;
             const container = document.getElementById('calendarGrid');
+            
+            // Limpiar completamente el contenedor
             container.innerHTML = '';
 
             // Título del mes
@@ -619,34 +2034,111 @@
             const daysInMonth = lastDay.getDate();
             const startDayOfWeek = firstDay.getDay();
 
-            // Días del mes anterior (ajustado para empezar en lunes)
-            const prevMonthLastDay = new Date(year, month, 0).getDate();
-            const adjustedStartDay = startDayOfWeek === 0 ? 6 : startDayOfWeek - 1; // Domingo = 6, Lunes = 0
-            for (let i = adjustedStartDay - 1; i >= 0; i--) {
-                const day = prevMonthLastDay - i;
-                const date = new Date(year, month - 1, day);
-                renderDay(container, date, true);
+            // Ajustar para que la semana empiece en lunes
+            const adjustedStartDay = startDayOfWeek === 0 ? 6 : startDayOfWeek - 1;
+            
+            // Cargar todos los eventos del mes de una vez (optimización)
+            if (isFirebaseConnected && eventsCache.month !== `${year}-${month}`) {
+                await loadAllEventsForMonth(year, month);
+            }
+            
+            // Días del mes anterior (solo los necesarios para completar la primera semana)
+            if (adjustedStartDay > 0) {
+                const prevMonthLastDay = new Date(year, month, 0).getDate();
+                for (let i = adjustedStartDay - 1; i >= 0; i--) {
+                    const day = prevMonthLastDay - i;
+                    const date = new Date(year, month - 1, day);
+                    await renderDay(container, date, true);
+                }
             }
 
             // Días del mes actual
             for (let day = 1; day <= daysInMonth; day++) {
                 const date = new Date(year, month, day);
-                renderDay(container, date, false);
+                await renderDay(container, date, false);
             }
 
-            // Días del mes siguiente (ajustado para empezar en lunes)
-            const totalCells = adjustedStartDay + daysInMonth;
-            const remainingCells = 42 - totalCells; // 6 semanas * 7 días
-            for (let day = 1; day <= remainingCells; day++) {
-                const date = new Date(year, month + 1, day);
-                renderDay(container, date, true);
+            // Días del mes siguiente (solo los necesarios para completar las 6 semanas)
+            const totalCellsUsed = adjustedStartDay + daysInMonth;
+            const remainingCells = 42 - totalCellsUsed; // 6 semanas * 7 días = 42 celdas
+            
+            // Solo agregar días si realmente necesitamos completar la grilla
+            if (remainingCells > 0) {
+                for (let day = 1; day <= remainingCells; day++) {
+                    const date = new Date(year, month + 1, day);
+                    await renderDay(container, date, true);
+                }
+            }
+            
+            isRendering = false;
+            
+            // Si estamos en modo pintura o borrar, restaurar los event listeners
+            const dayCells = document.querySelectorAll('.calendar-day');
+            
+            if (selectedShiftForPainting) {
+                // Modo pintura
+                dayCells.forEach(cell => {
+                    const paintOnclick = (e) => {
+                        e.stopPropagation();
+                        paintDay(cell, selectedShiftForPainting);
+                    };
+                    cell.onclick = paintOnclick;
+                    cell.style.cursor = 'pointer';
+                });
+                document.body.style.cursor = 'crosshair';
+            } else if (isDeleteMode) {
+                // Modo borrar
+                dayCells.forEach(cell => {
+                    const deleteOnclick = (e) => {
+                        e.stopPropagation();
+                        deleteDayShifts(cell);
+                    };
+                    cell.onclick = deleteOnclick;
+                    cell.style.cursor = 'not-allowed';
+                });
+                document.body.style.cursor = 'not-allowed';
+            }
+        }
+
+        // Cargar todos los eventos del mes de una vez
+        async function loadAllEventsForMonth(year, month) {
+            eventsCache.month = `${year}-${month}`;
+            eventsCache.events = {};
+            
+            if (!isFirebaseConnected) return;
+            
+            try {
+                // Calcular rango de fechas del mes
+                const firstDay = new Date(year, month, 1);
+                const lastDay = new Date(year, month + 1, 0);
+                const daysInMonth = lastDay.getDate();
+                
+                // Cargar eventos de todos los días del mes en paralelo
+                const promises = [];
+                for (let day = 1; day <= daysInMonth; day++) {
+                    const date = new Date(year, month, day);
+                    const dateKey = formatDateKey(date);
+                    promises.push(
+                        db.collection('calendar_events').doc(dateKey).get().then(doc => {
+                            if (doc.exists) {
+                                eventsCache.events[dateKey] = doc.data().events || [];
+                            }
+                        })
+                    );
+                }
+                
+                await Promise.all(promises);
+                console.log('✅ Eventos del mes cargados en caché');
+            } catch (error) {
+                console.error('❌ Error cargando eventos del mes:', error);
             }
         }
 
         // Renderizar un día
-        function renderDay(container, date, isOtherMonth) {
+        async function renderDay(container, date, isOtherMonth) {
             const dayEl = document.createElement('div');
             dayEl.className = 'calendar-day';
+            dayEl.dataset.date = date.toISOString(); // Guardar la fecha en dataset para acceso desde fuera
             
             if (isOtherMonth) {
                 dayEl.classList.add('other-month');
@@ -662,41 +2154,240 @@
             const numberEl = document.createElement('div');
             numberEl.className = 'day-number';
             numberEl.textContent = date.getDate();
+            // Estilo base del número del día
+            numberEl.style.position = 'absolute';
+            numberEl.style.top = '2px';
+            numberEl.style.right = '2px';
+            numberEl.style.zIndex = '100';
+            numberEl.style.fontWeight = '600';
+            numberEl.style.fontSize = '11px';
             dayEl.appendChild(numberEl);
 
-            // Eventos del día
+            // Eventos del día (cargar pero aplicar el nuevo estilo después)
             const eventsEl = document.createElement('div');
             eventsEl.className = 'day-events';
             
-            const events = getEventsForDate(date);
-            if (events.length > 0) {
-                events.slice(0, 3).forEach(event => {
-                    const eventEl = document.createElement('div');
-                    eventEl.className = 'event-badge';
-                    eventEl.style.backgroundColor = getUserColor(event.userId) + '20';
-                    eventEl.style.borderLeft = `3px solid ${getUserColor(event.userId)}`;
-                    eventEl.textContent = event.text;
-                    eventsEl.appendChild(eventEl);
-                });
+            const events = await getEventsForDate(date);
+            dayEl.appendChild(eventsEl);
+            
+            // Aplicar el nuevo estilo de visualización
+            const shifts = events.filter(event => event.type !== 'note');
+            if (shifts.length > 0) {
+                
+                if (shifts.length === 1) {
+                    // Un solo turno: pintar toda la celda
+                    const template = shiftTemplates.find(t => t.name === shifts[0].text || t.abbreviation === shifts[0].text);
+                    const color = template ? (template.backgroundColor || template.colorHex || template.color) : 
+                                  (shifts[0].userColor || getUserColor(shifts[0].userId));
+                    
+                    dayEl.style.backgroundColor = color;
+                    
+                    // Hacer el número del día más visible en fondo oscuro
+                    numberEl.style.backgroundColor = 'rgba(255, 255, 255, 0.8)';
+                    numberEl.style.padding = '1px 3px';
+                    numberEl.style.borderRadius = '3px';
+                    numberEl.style.color = '#333';
+                    
+                    const shiftText = document.createElement('div');
+                    shiftText.className = 'shift-text-full';
+                    shiftText.textContent = template ? (template.abbreviation || template.name) : shifts[0].text;
+                    shiftText.style.cssText = `
+                        position: absolute;
+                        top: 50%;
+                        left: 50%;
+                        transform: translate(-50%, -50%);
+                        color: white;
+                        font-weight: 700;
+                        font-size: 13px;
+                        white-space: nowrap;
+                        z-index: 10;
+                    `;
+                    dayEl.appendChild(shiftText);
+                    
+                } else if (shifts.length === 2) {
+                    // Dos turnos: dividir la celda en dos
+                    const shift1 = shifts[0];
+                    const shift2 = shifts[1];
+                    
+                    const template1 = shiftTemplates.find(t => t.name === shift1.text || t.abbreviation === shift1.text);
+                    const template2 = shiftTemplates.find(t => t.name === shift2.text || t.abbreviation === shift2.text);
+                    
+                    const color1 = template1 ? (template1.backgroundColor || template1.colorHex || template1.color) : 
+                                   (shift1.userColor || getUserColor(shift1.userId));
+                    const color2 = template2 ? (template2.backgroundColor || template2.colorHex || template2.color) : 
+                                   (shift2.userColor || getUserColor(shift2.userId));
+                    
+                    dayEl.style.background = `linear-gradient(to bottom, ${color1} 50%, ${color2} 50%)`;
+                    
+                    // Hacer el número del día más visible en fondo oscuro
+                    numberEl.style.backgroundColor = 'rgba(255, 255, 255, 0.8)';
+                    numberEl.style.padding = '1px 3px';
+                    numberEl.style.borderRadius = '3px';
+                    numberEl.style.color = '#333';
+                    
+                    const text1 = document.createElement('div');
+                    text1.className = 'shift-text-half';
+                    text1.textContent = template1 ? (template1.abbreviation || template1.name) : shift1.text;
+                    text1.style.cssText = `
+                        position: absolute;
+                        top: 25%;
+                        left: 50%;
+                        transform: translate(-50%, -50%);
+                        color: white;
+                        font-weight: 700;
+                        font-size: 12px;
+                        white-space: nowrap;
+                        z-index: 10;
+                    `;
+                    dayEl.appendChild(text1);
 
-                if (events.length > 3) {
-                    const moreEl = document.createElement('div');
-                    moreEl.className = 'event-badge';
-                    moreEl.textContent = `+${events.length - 3} más`;
-                    eventsEl.appendChild(moreEl);
+                    const text2 = document.createElement('div');
+                    text2.className = 'shift-text-half';
+                    text2.textContent = template2 ? (template2.abbreviation || template2.name) : shift2.text;
+                    text2.style.cssText = `
+                        position: absolute;
+                        top: 75%;
+                        left: 50%;
+                        transform: translate(-50%, -50%);
+                        color: white;
+                        font-weight: 700;
+                        font-size: 12px;
+                        white-space: nowrap;
+                        z-index: 10;
+                    `;
+                    dayEl.appendChild(text2);
+                    
+                } else {
+                    // Más de dos turnos: mostrar los primeros tres
+                    shifts.slice(0, 3).forEach((event, index) => {
+                        const template = shiftTemplates.find(t => t.name === event.text || t.abbreviation === event.text);
+                        const color = template ? (template.backgroundColor || template.colorHex || template.color) : 
+                                      (event.userColor || getUserColor(event.userId));
+                        
+                        const eventEl = document.createElement('div');
+                        eventEl.className = 'event-badge';
+                        eventEl.style.cssText = `
+                            position: absolute;
+                            top: ${20 + index * 30}%;
+                            left: 50%;
+                            transform: translate(-50%, -50%);
+                            background-color: ${color};
+                            color: white;
+                            padding: 2px 6px;
+                            border-radius: 4px;
+                            font-size: 10px;
+                            font-weight: 600;
+                            z-index: 10;
+                        `;
+                        eventEl.textContent = template ? (template.abbreviation || template.name) : event.text;
+                        dayEl.appendChild(eventEl);
+                    });
                 }
             }
 
-            dayEl.appendChild(eventsEl);
+            // Agregar texto de nota e iconos de categorías
+            const note = events.find(event => event.type === 'note');
+            if (note) {
+                // Obtener el color del usuario que creó la nota
+                const userColor = note.userColor || getUserColor(note.userId);
+                console.log('🎨 Color de nota (renderDay):', userColor, 'userId:', note.userId, 'userId type:', typeof note.userId, 'users:', users.map(u => ({id: u.id, idType: typeof u.id, name: u.name, color: u.color})));
+                
+                // Si hay nota con texto, ocultar los textos de los turnos para evitar superposición
+                if (note.text && note.text.trim() !== '') {
+                    const shiftTexts = dayEl.querySelectorAll('.shift-text-full, .shift-text-half, .shift-text-third, .event-badge');
+                    shiftTexts.forEach(el => el.style.display = 'none');
+                }
+                
+                // Agregar texto de la nota si existe
+                if (note.text && note.text.trim() !== '') {
+                    const noteTextEl = document.createElement('div');
+                    noteTextEl.className = 'note-text';
+                    noteTextEl.textContent = note.text;
+                    noteTextEl.style.cssText = `
+                        position: absolute;
+                        top: 20px;
+                        left: 50%;
+                        transform: translateX(-50%);
+                        color: ${userColor};
+                        font-weight: 700;
+                        font-size: 11px;
+                        white-space: nowrap;
+                        overflow: hidden;
+                        text-overflow: ellipsis;
+                        max-width: calc(100% - 8px);
+                        z-index: 15;
+                    `;
+                    dayEl.appendChild(noteTextEl);
+                }
+                
+                // Agregar iconos de categoría si existen
+                if (note.categories && note.categories.length > 0) {
+                    const categoriesEl = document.createElement('div');
+                    categoriesEl.className = 'category-icons';
+                    
+                    note.categories.forEach(category => {
+                        if (category.icon && category.icon.trim() !== '') {
+                            const iconEl = document.createElement('span');
+                            iconEl.className = 'category-icon';
+                            iconEl.textContent = category.icon;
+                            iconEl.title = category.text;
+                            // Aplicar el color del usuario al icono
+                            iconEl.style.color = userColor;
+                            iconEl.style.borderColor = userColor;
+                            categoriesEl.appendChild(iconEl);
+                        }
+                    });
+                    
+                    if (categoriesEl.children.length > 0) {
+                        dayEl.appendChild(categoriesEl);
+                    }
+                }
+            }
 
-            // Click para abrir modal
-            dayEl.addEventListener('click', () => openDayModal(date));
+            // Click para abrir modal (solo si no estamos en modo pintura o borrar)
+            dayEl.addEventListener('click', (e) => {
+                if (!selectedShiftForPainting && !isDeleteMode) {
+                    openDayModal(date);
+                }
+            });
 
             container.appendChild(dayEl);
         }
 
         // Obtener eventos para una fecha
-        function getEventsForDate(date) {
+        async function getEventsForDate(date) {
+            const dateKey = formatDateKey(date);
+            
+            // Primero intentar desde la caché
+            if (eventsCache.events && eventsCache.events[dateKey]) {
+                return eventsCache.events[dateKey];
+            }
+            
+            if (isFirebaseConnected) {
+                try {
+                    const docRef = db.collection('calendar_events').doc(dateKey);
+                    const doc = await docRef.get();
+                    
+                    if (doc.exists) {
+                        const events = doc.data().events || [];
+                        // Guardar en caché para próximas consultas
+                        if (!eventsCache.events) eventsCache.events = {};
+                        eventsCache.events[dateKey] = events;
+                        return events;
+                    }
+                    return [];
+                } catch (error) {
+                    console.error('❌ Error obteniendo eventos de Firestore:', error);
+                    // Fallback a localStorage
+                    return getEventsFromLocalStorage(date);
+                }
+            } else {
+                return getEventsFromLocalStorage(date);
+            }
+        }
+
+        // Fallback: obtener eventos de localStorage
+        function getEventsFromLocalStorage(date) {
             const dateKey = formatDateKey(date);
             const eventsJson = localStorage.getItem('calendar_events');
             const allEvents = eventsJson ? JSON.parse(eventsJson) : {};
@@ -704,12 +2395,35 @@
         }
 
         // Guardar eventos
-        function saveEvents(date, events) {
+        async function saveEvents(date, events) {
+            const dateKey = formatDateKey(date);
+            
+            if (isFirebaseConnected) {
+                try {
+                    await db.collection('calendar_events').doc(dateKey).set({
+                        events: events,
+                        lastModified: firebase.firestore.FieldValue.serverTimestamp(),
+                        modifiedBy: currentUserId
+                    });
+                    console.log('✅ Eventos guardados en Firestore');
+                } catch (error) {
+                    console.error('❌ Error guardando en Firestore:', error);
+                    // Fallback a localStorage
+                    saveEventsToLocalStorage(date, events);
+                }
+            } else {
+                saveEventsToLocalStorage(date, events);
+            }
+        }
+
+        // Fallback: guardar eventos en localStorage
+        function saveEventsToLocalStorage(date, events) {
             const dateKey = formatDateKey(date);
             const eventsJson = localStorage.getItem('calendar_events');
             const allEvents = eventsJson ? JSON.parse(eventsJson) : {};
             allEvents[dateKey] = events;
             localStorage.setItem('calendar_events', JSON.stringify(allEvents));
+            console.log('💾 Eventos guardados en localStorage');
         }
 
         // Formatear fecha como clave
@@ -743,88 +2457,406 @@
         // Cambiar mes
         function changeMonth(delta) {
             currentDate.setMonth(currentDate.getMonth() + delta);
-            renderCalendar();
+            renderCalendar(true); // Forzar render inmediato para cambio de mes
         }
 
         // Abrir modal de día
-        function openDayModal(date) {
+        async function openDayModal(date) {
             selectedDate = date;
-            document.getElementById('modalTitle').textContent = formatDateDisplay(date);
             
-            // Renderizar eventos existentes
-            const events = getEventsForDate(date);
-            const eventList = document.getElementById('eventList');
-            eventList.innerHTML = '';
-
-            if (events.length === 0) {
-                eventList.innerHTML = '<div class="empty-message">No hay eventos para este día</div>';
-            } else {
-                events.forEach((event, index) => {
-                    const eventItem = document.createElement('div');
-                    eventItem.className = 'event-item';
-                    eventItem.style.borderLeft = `4px solid ${getUserColor(event.userId)}`;
-
-                    const textDiv = document.createElement('div');
-                    const eventText = document.createElement('div');
-                    eventText.className = 'event-text';
-                    eventText.textContent = event.text;
-                    
-                    const userText = document.createElement('div');
-                    userText.className = 'event-user';
-                    userText.textContent = `Por ${getUserName(event.userId)}`;
-                    
-                    textDiv.appendChild(eventText);
-                    textDiv.appendChild(userText);
-
-                    const deleteBtn = document.createElement('button');
-                    deleteBtn.className = 'delete-btn';
-                    deleteBtn.textContent = 'Eliminar';
-                    deleteBtn.onclick = () => deleteEvent(index);
-
-                    eventItem.appendChild(textDiv);
-                    eventItem.appendChild(deleteBtn);
-                    eventList.appendChild(eventItem);
-                });
-            }
-
-            document.getElementById('eventInput').value = '';
+            // Actualizar fecha en formato D/M/YY
+            const day = date.getDate();
+            const month = date.getMonth() + 1;
+            const year = date.getFullYear().toString().slice(-2);
+            document.getElementById('modalDate').textContent = `${day}/${month}/${year}`;
+            
+            // Actualizar número de alarma con el día del mes
+            document.getElementById('alarmNumber').textContent = day;
+            
+            // Cargar notas existentes del día
+            await loadDayNotes(date);
+            
+            // Cargar y mostrar turnos del día
+            await loadDayShifts(date);
+            
             document.getElementById('dayModal').classList.add('show');
+        }
+
+        // Cargar notas del día desde Firebase
+        async function loadDayNotes(date) {
+            try {
+                // Obtener eventos del día
+                const events = await getEventsForDate(date);
+                
+                // Buscar la nota del día (debería haber solo una)
+                const note = events.find(event => event.type === 'note');
+                
+                if (note) {
+                    // Mostrar la nota en el textarea
+                    document.getElementById('mainTextarea').value = note.text;
+                    
+                    // Cargar categorías si existen
+                    if (note.categories && note.categories.length > 0) {
+                        loadCategories(note.categories);
+                    } else {
+                        resetCategories();
+                    }
+                    
+                    console.log('✅ Nota cargada para el día:', note.text);
+                } else {
+                    // Limpiar textarea si no hay nota
+                    document.getElementById('mainTextarea').value = '';
+                    resetCategories();
+                    console.log('ℹ️ No hay nota para este día');
+                }
+                
+            } catch (error) {
+                console.error('❌ Error cargando notas del día:', error);
+                document.getElementById('mainTextarea').value = '';
+                resetCategories();
+            }
+        }
+
+        // Cargar categorías en los dropdowns
+        function loadCategories(categories) {
+            for (let i = 0; i < 3; i++) {
+                if (i < categories.length) {
+                    const category = categories[i];
+                    const dropdown = document.getElementById(`dropdown-${i}`);
+                    if (dropdown) {
+                        const iconElement = dropdown.querySelector('.no-icon');
+                        const textElement = dropdown.querySelector('.dropdown-text');
+                        if (iconElement && textElement) {
+                            iconElement.textContent = category.icon;
+                            textElement.textContent = category.text;
+                        }
+                    }
+                } else {
+                    resetCategory(i);
+                }
+            }
+        }
+
+        // Resetear categorías
+        function resetCategories() {
+            for (let i = 0; i < 3; i++) {
+                resetCategory(i);
+            }
+        }
+
+        // Resetear una categoría específica
+        function resetCategory(index) {
+            const dropdown = document.getElementById(`dropdown-${index}`);
+            if (dropdown) {
+                const iconElement = dropdown.querySelector('.no-icon');
+                const textElement = dropdown.querySelector('.dropdown-text');
+                if (iconElement && textElement) {
+                    iconElement.textContent = '🚫';
+                    textElement.textContent = 'Ninguno';
+                }
+            }
+        }
+
+        // Cargar turnos del día desde Firebase
+        async function loadDayShifts(date) {
+            const shiftsContent = document.getElementById('shiftsContent');
+            
+            try {
+                // Obtener eventos del día
+                const events = await getEventsForDate(date);
+                
+                // Filtrar solo turnos (excluir notas con type='note')
+                const shifts = events.filter(event => event.type !== 'note');
+                
+                if (shifts.length === 0) {
+                    shiftsContent.innerHTML = `
+                        <div class="clock-icon">🕐</div>
+                        <div class="no-shifts-text">No hay turnos asignados</div>
+                    `;
+                    return;
+                }
+                
+                // Limpiar contenido
+                shiftsContent.innerHTML = '';
+                
+                // Mostrar cada turno
+                shifts.forEach(shift => {
+                    const shiftItem = document.createElement('div');
+                    shiftItem.className = 'shift-item';
+                    
+                    // Buscar el shift template correspondiente
+                    const template = shiftTemplates.find(t => t.name === shift.text || t.abbreviation === shift.text);
+                    
+                    if (template) {
+                        shiftItem.innerHTML = `
+                            <div class="shift-circle" style="background-color: ${template.colorHex}"></div>
+                            <div class="shift-name">${template.name}</div>
+                        `;
+                    } else {
+                        // Fallback si no se encuentra template
+                        shiftItem.innerHTML = `
+                            <div class="shift-circle"></div>
+                            <div class="shift-name">${shift.text}</div>
+                        `;
+                    }
+                    
+                    shiftsContent.appendChild(shiftItem);
+                });
+                
+                console.log('✅ Turnos cargados para el día:', shifts.length);
+                
+            } catch (error) {
+                console.error('❌ Error cargando turnos del día:', error);
+                shiftsContent.innerHTML = `
+                    <div class="clock-icon">🕐</div>
+                    <div class="no-shifts-text">Error cargando turnos</div>
+                `;
+            }
         }
 
         // Cerrar modal
         function closeModal() {
             document.getElementById('dayModal').classList.remove('show');
-            renderCalendar(); // Refrescar calendario
+            scheduleRenderCalendar(); // Refrescar calendario con debounce
         }
 
-        // Agregar evento
-        function addEvent() {
-            const input = document.getElementById('eventInput');
-            const text = input.value.trim();
+        // Obtener categorías seleccionadas
+        function getSelectedCategories() {
+            const categories = [];
+            for (let i = 0; i < 3; i++) {
+                // Buscar el dropdown por su ID
+                const dropdown = document.getElementById(`dropdown-${i}`);
+                if (dropdown) {
+                    // Los elementos están en el parentElement del dropdown
+                    const dropdownContainer = dropdown.parentElement;
+                    const textElement = dropdownContainer.querySelector('.dropdown-text');
+                    const iconElement = dropdownContainer.querySelector('.no-icon');
+                    
+                    console.log(`🔍 Dropdown ${i}:`, {
+                        dropdown: dropdown,
+                        dropdownContainer: dropdownContainer,
+                        textElement: textElement?.textContent,
+                        iconElement: iconElement?.textContent
+                    });
+                    
+                    if (textElement && iconElement) {
+                        const selectedText = textElement.textContent;
+                        const selectedIcon = iconElement.textContent;
+                        
+                        console.log(`📝 Categoría ${i}: "${selectedText}" con icono "${selectedIcon}"`);
+                        
+                        if (selectedText !== 'Ninguno' && selectedText.trim() !== '') {
+                            categories.push({
+                                text: selectedText,
+                                icon: selectedIcon
+                            });
+                            console.log(`✅ Categoría ${i} agregada:`, {text: selectedText, icon: selectedIcon});
+                        } else {
+                            console.log(`⏭️ Categoría ${i} omitida (Ninguno o vacía)`);
+                        }
+                    } else {
+                        console.log(`❌ No se encontraron elementos para dropdown ${i}`);
+                        // Intentar con selectores alternativos
+                        const altTextElement = dropdownContainer.querySelector('span.dropdown-text');
+                        const altIconElement = dropdownContainer.querySelector('div.no-icon');
+                        console.log(`🔄 Selectores alternativos:`, {
+                            altTextElement: altTextElement?.textContent,
+                            altIconElement: altIconElement?.textContent
+                        });
+                    }
+                } else {
+                    console.log(`❌ No se encontró dropdown ${i}`);
+                }
+            }
+            console.log('📋 Categorías finales:', categories);
+            return categories;
+        }
 
-            if (!text) {
-                alert('Por favor escribe un evento');
+        // Aceptar cambios del día
+        async function acceptDayChanges() {
+            const mainText = document.getElementById('mainTextarea').value;
+            const selectedCategories = getSelectedCategories();
+            
+            console.log('✅ Cambios aceptados para el día:', selectedDate);
+            console.log('📝 Nota principal:', mainText);
+            console.log('🏷️ Categorías seleccionadas:', selectedCategories);
+            
+            try {
+                // Obtener eventos existentes del día
+                const existingEvents = await getEventsForDate(selectedDate);
+                
+                // Buscar si ya existe una nota para este día
+                const existingNoteIndex = existingEvents.findIndex(event => event.type === 'note');
+                
+                if (mainText.trim() === '') {
+                    // Si no hay texto, eliminar la nota existente
+                    if (existingNoteIndex !== -1) {
+                        existingEvents.splice(existingNoteIndex, 1);
+                        console.log('🗑️ Nota eliminada');
+                    }
+                } else {
+                    // Crear o actualizar la nota
+                    const noteEvent = {
+                        text: mainText.trim(),
+                        userId: currentUserId,
+                        userColor: getUserColor(currentUserId),
+                        createdAt: existingNoteIndex !== -1 ? existingEvents[existingNoteIndex].createdAt : new Date().toISOString(),
+                        updatedAt: new Date().toISOString(),
+                        categories: selectedCategories,
+                        type: 'note'
+                    };
+                    
+                    if (existingNoteIndex !== -1) {
+                        // Actualizar nota existente
+                        existingEvents[existingNoteIndex] = noteEvent;
+                        console.log('✏️ Nota actualizada');
+                    } else {
+                        // Crear nueva nota
+                        existingEvents.push(noteEvent);
+                        console.log('📝 Nueva nota creada');
+                    }
+                }
+                
+                // Guardar en Firebase
+                await saveEvents(selectedDate, existingEvents);
+                
+                console.log('✅ Cambios guardados en Firebase');
+                
+                // Mostrar mensaje de éxito
+                alert('✅ Cambios guardados correctamente');
+                
+            } catch (error) {
+                console.error('❌ Error guardando cambios:', error);
+                alert('❌ Error al guardar los cambios');
+            }
+            
+            closeModal();
+        }
+
+        // Toggle dropdown
+        function toggleDropdown(index) {
+            // Cerrar todos los otros dropdowns
+            for (let i = 0; i < 3; i++) {
+                if (i !== index) {
+                    const dropdown = document.getElementById(`dropdown-${i}`);
+                    dropdown.classList.remove('show');
+                }
+            }
+            
+            // Toggle el dropdown actual
+            const dropdown = document.getElementById(`dropdown-${index}`);
+            dropdown.classList.toggle('show');
+        }
+
+        // Seleccionar categoría
+        async function selectCategory(index, text, icon) {
+            const dropdown = document.querySelector(`#dropdown-${index}`);
+            const dropdownText = dropdown.parentElement.querySelector('.dropdown-text');
+            const dropdownIcon = dropdown.parentElement.querySelector('.no-icon');
+            
+            // Actualizar texto e icono
+            dropdownText.textContent = text;
+            dropdownIcon.textContent = icon || '🚫';
+            
+            // Cerrar dropdown
+            dropdown.classList.remove('show');
+            
+            console.log(`✅ Categoría ${index + 1} seleccionada:`, text);
+            
+            // Guardar categorías inmediatamente en Firebase
+            await saveCategoriesToFirebase();
+        }
+
+        // Guardar categorías en Firebase inmediatamente
+        async function saveCategoriesToFirebase() {
+            if (!selectedDate || !isFirebaseConnected) {
+                console.log('⚠️ No se puede guardar categorías - selectedDate:', selectedDate, 'isFirebaseConnected:', isFirebaseConnected);
                 return;
             }
 
-            const events = getEventsForDate(selectedDate);
+            try {
+                const selectedCategories = getSelectedCategories();
+                console.log('📝 Categorías seleccionadas:', selectedCategories);
+                
+                // Obtener eventos existentes del día
+                const existingEvents = await getEventsForDate(selectedDate);
+                console.log('📅 Eventos existentes:', existingEvents);
+                
+                // Buscar si ya existe una nota para este día
+                const existingNoteIndex = existingEvents.findIndex(event => event.type === 'note');
+                console.log('🔍 Índice de nota existente:', existingNoteIndex);
+                
+                if (existingNoteIndex !== -1) {
+                    // Actualizar categorías de la nota existente
+                    existingEvents[existingNoteIndex].categories = selectedCategories;
+                    existingEvents[existingNoteIndex].updatedAt = new Date().toISOString();
+                    
+                    console.log('✏️ Actualizando nota existente con categorías:', existingEvents[existingNoteIndex]);
+                    
+                    // Guardar en Firebase
+                    await saveEvents(selectedDate, existingEvents);
+                    console.log('✅ Categorías guardadas en Firebase inmediatamente');
+                } else {
+                    // Si no hay nota, crear una temporal solo con categorías
+                    const noteEvent = {
+                        text: '', // Nota vacía
+                        userId: currentUserId,
+                        createdAt: new Date().toISOString(),
+                        updatedAt: new Date().toISOString(),
+                        categories: selectedCategories,
+                        type: 'note'
+                    };
+                    
+                    console.log('📝 Creando nueva nota con categorías:', noteEvent);
+                    
+                    existingEvents.push(noteEvent);
+                    await saveEvents(selectedDate, existingEvents);
+                    console.log('✅ Categorías guardadas en Firebase (nota temporal creada)');
+                }
+                
+            } catch (error) {
+                console.error('❌ Error guardando categorías:', error);
+            }
+        }
+
+        // Cerrar dropdowns al hacer clic fuera
+        document.addEventListener('click', function(e) {
+            if (!e.target.closest('.category-dropdown')) {
+                for (let i = 0; i < 3; i++) {
+                    const dropdown = document.getElementById(`dropdown-${i}`);
+                    dropdown.classList.remove('show');
+                }
+            }
+        });
+
+        // Agregar evento
+        async function addEvent() {
+            const select = document.getElementById('shiftSelect');
+            const text = select.value.trim();
+
+            if (!text) {
+                alert('Por favor selecciona un turno');
+                return;
+            }
+
+            const events = await getEventsForDate(selectedDate);
             events.push({
                 text: text,
                 userId: currentUserId,
                 createdAt: new Date().toISOString()
             });
 
-            saveEvents(selectedDate, events);
-            openDayModal(selectedDate); // Refrescar modal
-            input.value = '';
+            await saveEvents(selectedDate, events);
+            await openDayModal(selectedDate); // Refrescar modal
+            select.value = '';
         }
 
         // Eliminar evento
-        function deleteEvent(index) {
-            const events = getEventsForDate(selectedDate);
+        async function deleteEvent(index) {
+            const events = await getEventsForDate(selectedDate);
             events.splice(index, 1);
-            saveEvents(selectedDate, events);
-            openDayModal(selectedDate); // Refrescar modal
+            await saveEvents(selectedDate, events);
+            await openDayModal(selectedDate); // Refrescar modal
         }
 
         // Volver a selector de usuarios
@@ -839,8 +2871,45 @@
             }
         });
 
+        // Función para agregar eventos de prueba (deshabilitada)
+        async function addTestEvents() {
+            // Datos de prueba deshabilitados - usar Firebase
+            console.log('ℹ️ Datos de prueba deshabilitados - usando Firebase');
+        }
+
+        // Mostrar turnos
+        function showShifts() {
+            window.location.href = 'shifts.html';
+        }
+
         // Inicializar cuando cargue la página
         window.addEventListener('load', init);
+
+        // Asegurar que los botones de acción sean visibles
+        window.addEventListener('DOMContentLoaded', () => {
+            const bottomActions = document.querySelector('.bottom-actions');
+            if (bottomActions) {
+                bottomActions.style.display = 'flex';
+                bottomActions.style.visibility = 'visible';
+                bottomActions.style.opacity = '1';
+                console.log('✅ Botones de acción asegurados como visibles');
+            } else {
+                console.error('❌ No se encontró la barra de botones');
+            }
+        });
+
+        // Script de depuración para verificar botones
+        setTimeout(() => {
+            const bottomActions = document.querySelector('.bottom-actions');
+            console.log('🔍 Estado de los botones:', {
+                elemento: bottomActions,
+                display: bottomActions ? getComputedStyle(bottomActions).display : 'N/A',
+                visibility: bottomActions ? getComputedStyle(bottomActions).visibility : 'N/A',
+                opacity: bottomActions ? getComputedStyle(bottomActions).opacity : 'N/A',
+                height: bottomActions ? getComputedStyle(bottomActions).height : 'N/A',
+                zIndex: bottomActions ? getComputedStyle(bottomActions).zIndex : 'N/A',
+            });
+        }, 1000);
     </script>
 </body>
 </html>

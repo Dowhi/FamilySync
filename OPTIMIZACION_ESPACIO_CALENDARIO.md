@@ -214,3 +214,4 @@ El calendario ahora aprovecha al máximo el espacio disponible en pantalla, espe
 ---
 
 *Optimización completada: 28 Octubre 2025*
+
