@@ -158,6 +158,22 @@
             color: white;
         }
 
+        /* Settings Modal */
+        .settings-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.4); display: none; align-items: flex-end; justify-content: center; z-index: 3000; }
+        .settings-backdrop.show { display: flex; }
+        .settings-panel { background: #ffffff; width: 100%; max-width: 520px; border-top-left-radius: 16px; border-top-right-radius: 16px; box-shadow: 0 -8px 24px rgba(0,0,0,0.2); padding: 16px; }
+        .settings-header { display:flex; align-items:center; justify-content: space-between; margin-bottom: 8px; }
+        .settings-title { font-size:16px; font-weight:700; }
+        .settings-group { margin: 12px 0; padding: 12px; background:#f7f7f7; border-radius: 12px; }
+        .settings-row { display:flex; align-items:center; justify-content: space-between; gap: 12px; padding: 8px 0; }
+        .settings-row + .settings-row { border-top: 1px solid #eaeaea; }
+        .settings-label { font-size:14px; font-weight:600; color:#333; }
+        .settings-select, .settings-checkbox { margin-left: auto; }
+        .settings-actions { display:flex; gap:8px; margin-top: 8px; }
+        .btn { border:none; padding:10px 12px; border-radius:10px; font-weight:700; cursor:pointer; }
+        .btn-primary { background:#2a7ade; color:#fff; }
+        .btn-secondary { background:#e9e9e9; color:#333; }
+
         /* Calendar */
         .calendar-container {
             flex: 1;
@@ -1073,7 +1089,7 @@
         <div class="header-title">My Calendar</div>
         <div class="header-actions">
             <button class="header-btn" onclick="goBack()">👤</button>
-            <button class="menu-btn" onclick="openMenu()">⚙️</button>
+            <button class="menu-btn" onclick="openSettings()">⚙️</button>
         </div>
     </div>
 
@@ -1120,6 +1136,62 @@
         <button class="action-btn pintar" onclick="activatePaintMode()">PINTAR</button>
         <button class="action-btn editar" onclick="activateEditMode()">EDITAR</button>
         <button class="action-btn turnos" onclick="showShifts()">TURNOS</button>
+    </div>
+
+    <!-- Settings Modal -->
+    <div class="settings-backdrop" id="settingsModal">
+        <div class="settings-panel" onclick="event.stopPropagation()">
+            <div class="settings-header">
+                <div class="settings-title">Configuración</div>
+                <button class="btn btn-secondary" onclick="closeSettings()">Cerrar</button>
+            </div>
+            <div class="settings-group">
+                <div class="settings-row">
+                    <div class="settings-label">Tema</div>
+                    <select id="stTheme" class="settings-select">
+                        <option value="system">Sistema</option>
+                        <option value="light">Claro</option>
+                        <option value="dark">Oscuro</option>
+                    </select>
+                </div>
+                <div class="settings-row">
+                    <div class="settings-label">Inicio de semana</div>
+                    <select id="stWeekStart" class="settings-select">
+                        <option value="monday">Lunes</option>
+                        <option value="sunday">Domingo</option>
+                    </select>
+                </div>
+                <div class="settings-row">
+                    <div class="settings-label">Resaltar día de hoy en rojo</div>
+                    <input id="stHighlightToday" type="checkbox" class="settings-checkbox" />
+                </div>
+                <div class="settings-row">
+                    <div class="settings-label">Sexta semana solo si es necesaria</div>
+                    <input id="stSmartWeeks" type="checkbox" class="settings-checkbox" />
+                </div>
+            </div>
+            <div class="settings-group">
+                <div class="settings-row">
+                    <div class="settings-label">Abrir Resumen</div>
+                    <button class="btn btn-secondary" onclick="window.location.href='summary.html'">Ir</button>
+                </div>
+                <div class="settings-row">
+                    <div class="settings-label">Abrir 2025</div>
+                    <button class="btn btn-secondary" onclick="showTab('year')">Ir</button>
+                </div>
+                <div class="settings-row">
+                    <div class="settings-label">Copias de seguridad</div>
+                    <div class="settings-actions">
+                        <button class="btn btn-secondary" onclick="window.location.href='firestore_backup.html'">Backup</button>
+                        <button class="btn btn-secondary" onclick="window.location.href='firestore_cleanup.html'">Herramientas</button>
+                    </div>
+                </div>
+            </div>
+            <div class="settings-actions">
+                <button class="btn btn-primary" onclick="saveSettings()">Guardar</button>
+                <button class="btn btn-secondary" onclick="resetSettings()">Restablecer</button>
+            </div>
+        </div>
     </div>
 
     <!-- Pop-up de Selección de Turnos para Pintar -->
@@ -1332,7 +1404,8 @@
             'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
         ];
 
-        const weekDays = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
+        // Días de la semana (se obtiene dinámicamente según configuración)
+        function weekDays(){ return getWeekDays(); }
 
         // Variables globales
         let isRendering = false;
@@ -1495,6 +1568,8 @@
         // Inicializar
         async function init() {
             console.log('📅 Inicializando calendario...');
+            // Aplicar tema y configuración persistida
+            applySettings();
             
             
             // Cargar usuario guardado
@@ -1534,9 +1609,46 @@
             }, 100);
         }
 
-        // Abrir menú (función placeholder)
-        function openMenu() {
-            alert('Funcionalidad de menú próximamente...\n\nPuedes agregar aquí:\n- Configuración\n- Estadísticas\n- Exportar calendario\n- Etc.');
+        // Configuración
+        const SETTINGS_KEY = 'app_settings_v1';
+        function loadSettings(){
+            try { return JSON.parse(localStorage.getItem(SETTINGS_KEY)) || { theme:'system', weekStart:'monday', highlightToday:true, smartWeeks:true }; } catch(e){ return { theme:'system', weekStart:'monday', highlightToday:true, smartWeeks:true }; }
+        }
+        function saveSettings(){
+            const st = loadSettings();
+            st.theme = document.getElementById('stTheme').value;
+            st.weekStart = document.getElementById('stWeekStart').value;
+            st.highlightToday = document.getElementById('stHighlightToday').checked;
+            st.smartWeeks = document.getElementById('stSmartWeeks').checked;
+            localStorage.setItem(SETTINGS_KEY, JSON.stringify(st));
+            applySettings();
+            closeSettings();
+            // Re-render para aplicar semana y estilos
+            renderCalendar(true);
+        }
+        function resetSettings(){ localStorage.removeItem(SETTINGS_KEY); applySettings(); closeSettings(); renderCalendar(true); }
+        function openSettings(){
+            const st = loadSettings();
+            document.getElementById('stTheme').value = st.theme||'system';
+            document.getElementById('stWeekStart').value = st.weekStart||'monday';
+            document.getElementById('stHighlightToday').checked = st.highlightToday!==false;
+            document.getElementById('stSmartWeeks').checked = st.smartWeeks!==false;
+            document.getElementById('settingsModal').classList.add('show');
+        }
+        function closeSettings(ev){ if (ev && ev.target && !ev.target.classList){} document.getElementById('settingsModal').classList.remove('show'); }
+        function applySettings(){
+            const st = loadSettings();
+            // Tema
+            if (st.theme==='dark') document.documentElement.style.colorScheme='dark';
+            else if (st.theme==='light') document.documentElement.style.colorScheme='light';
+            else document.documentElement.style.colorScheme='normal';
+        }
+        // Utilidad: días de la semana según configuración
+        function getWeekDays(){
+            const st = loadSettings();
+            const base = ['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'];
+            if (st.weekStart==='sunday') return ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
+            return base;
         }
 
         // Mostrar tabs
@@ -2160,7 +2272,7 @@
                 `${monthNames[currentDate.getMonth()]} ${currentDate.getFullYear()}`;
 
             // Headers de días de la semana
-            weekDays.forEach(day => {
+            weekDays().forEach(day => {
                 const header = document.createElement('div');
                 header.className = 'weekday-header';
                 header.textContent = day;
