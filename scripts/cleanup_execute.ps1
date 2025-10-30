@@ -26,7 +26,7 @@ foreach($p in $candidates){
       Remove-Item -LiteralPath $p -Recurse -Force -ErrorAction Stop
       Write-Host "Eliminado: $p" -ForegroundColor Green
     } catch {
-      Write-Host "No se pudo eliminar $p: $($_.Exception.Message)" -ForegroundColor Red
+      Write-Host ("No se pudo eliminar {0}: {1}" -f $p, $_.Exception.Message) -ForegroundColor Red
     }
   } else {
     Write-Host "No existe: $p" -ForegroundColor DarkGray
