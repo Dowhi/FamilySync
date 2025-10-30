@@ -209,6 +209,7 @@
             font-weight: 600;
             z-index: 1000;
             transition: all 0.3s;
+            display: none !important;
         }
 
         .connection-status.connected {
@@ -315,8 +316,7 @@
     </style>
 </head>
 <body>
-    <!-- Connection Status -->
-    <div class="connection-status" id="connectionStatus">Conectando...</div>
+    
 
     <!-- Header -->
     <div class="header">
@@ -382,27 +382,16 @@
             
             // Pequeño delay para asegurar que el DOM esté listo
             setTimeout(() => {
-                updateConnectionStatus('disconnected', '🟡 Conectando...');
-                
                 // Intentar conectar Firebase
                 if (!initFirebase()) {
-                    updateConnectionStatus('disconnected', '🟠 Solo Local');
+                    
                 }
 
                 loadShifts();
             }, 100);
         }
 
-        // Actualizar estado de conexión
-        function updateConnectionStatus(status, message) {
-            const statusEl = document.getElementById('connectionStatus');
-            if (statusEl) {
-                statusEl.className = `connection-status ${status}`;
-                statusEl.textContent = message;
-            } else {
-                console.warn('⚠️ Elemento connectionStatus no encontrado');
-            }
-        }
+        
 
         // Inicializar Firebase
         function initFirebase() {
@@ -411,7 +400,7 @@
                 db = firebase.firestore();
                 isFirebaseConnected = true;
                 console.log('✅ Firebase conectado correctamente');
-                updateConnectionStatus('connected', '🟢 Sincronizado');
+                
                 
                 // Configurar listener para cambios en tiempo real
                 setupRealtimeListener();
@@ -420,7 +409,7 @@
             } catch (error) {
                 console.error('❌ Error conectando Firebase:', error);
                 isFirebaseConnected = false;
-                updateConnectionStatus('error', '❌ Error Firebase');
+                
                 return false;
             }
         }

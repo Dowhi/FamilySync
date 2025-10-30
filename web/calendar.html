@@ -174,6 +174,11 @@
             height: 100%;
         }
 
+        /* Celdas más altas cuando el mes sólo ocupa 5 semanas */
+        .calendar-grid.five-weeks .calendar-day {
+            min-height: calc((100vh - 160px) / 5);
+        }
+
         .weekday-header {
             text-align: center;
             padding: 2px;
@@ -217,6 +222,14 @@
             background: #f1f8e9;
         }
 
+        /* Estilo específico para el número del día de hoy */
+        .calendar-day.today .day-number {
+            background: #FF1744; /* rojo fluorescente */
+            color: #ffffff !important;
+            border-radius: 50%;
+            padding: 2px 6px;
+        }
+
         .day-number {
             position: absolute;
             top: 2px;
@@ -249,6 +262,63 @@
             font-weight: 600;
             box-shadow: 0 1px 2px rgba(0,0,0,0.2);
         }
+
+        /* Year view */
+        .year-nav {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 8px 12px;
+            background: #2e7d32;
+            color: white;
+        }
+        .year-nav .title { font-weight: 700; }
+        .year-nav button {
+            width: 40px;
+            height: 28px;
+            color: white;
+            background: rgba(255,255,255,0.15);
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+        .year-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 8px;
+            padding: 8px;
+        }
+        .year-month {
+            background: #f5f5f5;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        .year-month-header {
+            background: #4da3ff;
+            color: #fff;
+            text-align: center;
+            font-weight: 700;
+            font-size: 12px;
+            padding: 6px 0;
+        }
+        .year-month-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+        }
+        .year-weekday {
+            text-align: center;
+            font-size: 10px;
+            color: #666;
+            padding: 3px 0;
+            background: #eaeaea;
+            border-bottom: 1px solid #ddd;
+        }
+        .year-day { position: relative; height: 22px; border-right: 1px solid #eee; border-bottom: 1px solid #eee; background: #fff; }
+        .year-day.other-month { background: #fafafa; }
+        .year-day-number { position: absolute; top: 2px; left: 2px; font-size: 10px; color: #333; z-index: 2; }
+
+        /* (Revertido) estilos de vista anual eliminados */
 
         .day-events {
             flex: 1;
@@ -843,6 +913,7 @@
             font-weight: 600;
             z-index: 1000;
             transition: all 0.3s;
+            display: none !important;
         }
 
         .connection-status.connected {
@@ -995,8 +1066,7 @@
     </style>
 </head>
 <body>
-    <!-- Connection Status -->
-    <div class="connection-status" id="connectionStatus">Conectando...</div>
+    
 
     <!-- Header -->
     <div class="header">
@@ -1027,6 +1097,18 @@
             <!-- Se carga dinámicamente -->
         </div>
     </div>
+
+        <!-- Year View (anual) -->
+        <div class="calendar-container" id="yearView" style="display: none;">
+            <div class="year-nav">
+                <button onclick="changeYear(-1)">‹</button>
+                <div class="title" id="yearTitle">2025</div>
+                <button onclick="changeYear(1)">›</button>
+            </div>
+            <div class="year-grid" id="yearGrid"></div>
+        </div>
+
+        
 
     <!-- Bottom Info -->
     <div class="bottom-info" style="display: none;">
@@ -1258,12 +1340,7 @@
         let lastRenderTime = 0;
         let eventsCache = {}; // Cache de eventos para evitar múltiples llamadas a Firebase
 
-        // Actualizar estado de conexión
-        function updateConnectionStatus(status, message) {
-            const statusEl = document.getElementById('connectionStatus');
-            statusEl.className = `connection-status ${status}`;
-            statusEl.textContent = message;
-        }
+        
 
         // Inicializar Firebase
         async function initFirebase() {
@@ -1273,7 +1350,7 @@
                 db = firebase.firestore();
                 isFirebaseConnected = true;
                 console.log('✅ Firebase conectado correctamente');
-                updateConnectionStatus('connected', '🟢 Sincronizado');
+                
                 
                 // Cargar usuarios desde Firebase
                 await loadUsersFromFirebase();
@@ -1288,7 +1365,7 @@
             } catch (error) {
                 console.error('❌ Error conectando Firebase:', error);
                 isFirebaseConnected = false;
-                updateConnectionStatus('error', '❌ Error Firebase');
+                
                 // Usar usuarios por defecto si Firebase falla
                 loadDefaultUsers();
                 return false;
@@ -1379,35 +1456,46 @@
         function setupRealtimeListener() {
             if (!isFirebaseConnected) return;
             
-            // Desactivados los listeners para mejorar rendimiento
-            // Los cambios se reflejan localmente al pintar días
-            /*
-            // Escuchar cambios en eventos del calendario
-            db.collection('calendar_events').onSnapshot((snapshot) => {
-                console.log('🔄 Cambios detectados en Firestore');
-                scheduleRenderCalendar(); // Refrescar calendario cuando hay cambios (con debounce)
-            }, (error) => {
-                console.error('❌ Error en listener de Firestore:', error);
-            });
-
-            // Escuchar cambios en shifts
+            // Listener SOLO para shifts: si se edita un turno (nombre/color/abreviatura),
+            // actualizamos plantillas y re-renderizamos el calendario.
             db.collection('shifts').onSnapshot((snapshot) => {
                 console.log('🔄 Cambios detectados en shifts');
                 shiftTemplates = snapshot.docs.map(doc => ({
                     id: doc.id,
                     ...doc.data()
                 }));
-                scheduleRenderCalendar(); // Refrescar calendario cuando cambien los shifts (con debounce)
+                scheduleRenderCalendar();
             }, (error) => {
                 console.error('❌ Error en listener de shifts:', error);
             });
-            */
+
+            // Listener para eventos del calendario: actualizar caché por doc cambiado
+            db.collection('calendar_events').onSnapshot((snapshot) => {
+                if (!eventsCache.events) eventsCache.events = {};
+                snapshot.docChanges().forEach(change => {
+                    const id = change.doc.id; // dateKey YYYY-MM-DD
+                    const data = change.doc.data();
+                    if (change.type === 'removed') {
+                        eventsCache.events[id] = [];
+                    } else {
+                        eventsCache.events[id] = data?.events || [];
+                    }
+                });
+                // Refrescar vistas activas
+                scheduleRenderCalendar();
+                const yearView = document.getElementById('yearView');
+                if (yearView && yearView.style.display !== 'none') {
+                    renderYear();
+                }
+            }, (error) => {
+                console.error('❌ Error en listener de calendar_events:', error);
+            });
         }
 
         // Inicializar
         async function init() {
             console.log('📅 Inicializando calendario...');
-            updateConnectionStatus('disconnected', '🟡 Conectando...');
+            
             
             // Cargar usuario guardado
             const savedUserId = localStorage.getItem('current_user_id');
@@ -1417,16 +1505,32 @@
 
             // Intentar conectar Firebase
             if (!(await initFirebase())) {
-                updateConnectionStatus('disconnected', '🟠 Solo Local');
+                
             }
 
             // Agregar algunos eventos de prueba
             addTestEvents();
 
+            // Soporte de salto desde Resumen: ajustar mes/día si hay 'jump_to_date'
+            const jump = localStorage.getItem('jump_to_date');
+            if (jump) {
+                try {
+                    const [y,m,d]=jump.split('-').map(Number);
+                    currentDate = new Date(y, m-1, d);
+                } catch(e) { console.warn('jump_to_date inválido', e); }
+                localStorage.removeItem('jump_to_date');
+            }
+
             // Renderizar calendario solo una vez
             setTimeout(() => {
                 renderCalendar();
                 updateCurrentUserInfo();
+                // Abrir modal si se solicitó salto exacto a día
+                if (jump) {
+                    const [y,m,d]=jump.split('-').map(Number);
+                    const dt = new Date(y, m-1, d);
+                    setTimeout(()=>openDayModal(dt), 300);
+                }
             }, 100);
         }
 
@@ -1445,11 +1549,26 @@
             // Agregar active al botón clickeado
             event.target.classList.add('active');
 
-            // Por ahora solo mostrar alert para tabs no implementados
+            // Mostrar/ocultar vistas
+            const mainGridContainer = document.querySelector('.calendar-container');
+            const yearView = document.getElementById('yearView');
+            const monthNav = document.querySelector('.month-nav');
+
             if (tab === 'year') {
-                alert('📅 Vista Anual 2025\n\nPróximamente verás una vista completa del año con todos los eventos y turnos.');
+                if (monthNav) monthNav.style.display = 'none';
+                mainGridContainer.style.display = 'none';
+                yearView.style.display = 'block';
+                updateYearNav();
+                renderYear();
+                // Precarga en segundo plano para que aparezcan todos los turnos del año
+                const yr = yearViewYear ?? currentDate.getFullYear();
+                preloadYearEvents(yr);
+            } else if (tab === 'calendar') {
+                if (monthNav) monthNav.style.display = 'flex';
+                yearView.style.display = 'none';
+                mainGridContainer.style.display = 'block';
             } else if (tab === 'summary') {
-                alert('📊 Resumen\n\nPróximamente verás:\n- Estadísticas de eventos\n- Resumen de turnos\n- Análisis mensual');
+                window.location.href = 'summary.html';
             }
         }
 
@@ -1591,6 +1710,17 @@
             const dayCells = document.querySelectorAll('.calendar-day');
             dayCells.forEach(cell => {
                 cell.style.cursor = '';
+                // Restaurar handler por defecto: abrir modal del día
+                const dateStr = cell.dataset.date;
+                if (dateStr) {
+                    const dateObj = new Date(dateStr);
+                    cell.onclick = (e) => {
+                        e.stopPropagation();
+                        openDayModal(dateObj);
+                    };
+                } else {
+                    cell.onclick = null;
+                }
             });
             
             console.log('✅ Modo pintura desactivado');
@@ -1651,6 +1781,10 @@
         async function paintDay(cell, shift) {
             const dateStr = cell.dataset.date;
             if (!dateStr) return;
+            if (!shift) {
+                console.warn('⚠️ paintDay llamado sin shift válido');
+                return;
+            }
 
             const date = new Date(dateStr);
             const dateKey = formatDateKey(date);
@@ -1662,8 +1796,8 @@
                 const existingEvents = await getEventsForDate(date);
                 
                 // Verificar si ya existe este turno
-                const shiftText = shift.abbreviation || shift.name;
-                const exists = existingEvents.some(evt => evt.text === shiftText);
+                const shiftText = (shift && (shift.abbreviation || shift.name)) || 'Turno';
+                const exists = existingEvents.some(evt => (evt.shiftId && evt.shiftId === shift.id) || evt.text === shiftText);
                 
                 if (exists) {
                     console.log('⚠️ Ya existe un evento para este día con este turno');
@@ -1673,6 +1807,7 @@
                 // Crear nuevo evento
                 const newEvent = {
                     text: shiftText,
+                    shiftId: shift.id,
                     userId: currentUserId,
                     userColor: shift.backgroundColor || shift.colorHex || shift.color,
                     createdAt: new Date().toISOString(),
@@ -1714,7 +1849,9 @@
             eventsCache.events[dateKey] = events;
             
             // Filtrar solo turnos (excluir notas)
-            const shifts = events.filter(event => event.type !== 'note');
+            const shifts = events
+                .filter(event => event.type !== 'note')
+                .map(e => normalizeShiftEvent(e));
             
             // Obtener el número del día
             const dayNumber = cell.querySelector('.day-number');
@@ -1757,12 +1894,16 @@
             dayNumber.style.fontSize = '11px';
             
             if (shifts.length > 0) {
+                if (cell.classList.contains('other-month')) {
+                    cell.classList.remove('other-month');
+                    cell.style.opacity = '1';
+                }
                 
                 if (shifts.length === 1) {
                     // Un solo turno: pintar toda la celda
-                    const template = shiftTemplates.find(t => t.name === shifts[0].text || t.abbreviation === shifts[0].text);
+                    const template = getTemplateForEvent(shifts[0]);
                     const color = template ? (template.backgroundColor || template.colorHex || template.color) : 
-                                  (shifts[0].userColor || getUserColor(shifts[0].userId));
+                                  (shifts[0].backgroundColor || shifts[0].colorHex || shifts[0].color || shifts[0].userColor || getUserColor(shifts[0].userId));
                     
                     cell.style.backgroundColor = color;
                     
@@ -1795,13 +1936,13 @@
                     const shift1 = shifts[0];
                     const shift2 = shifts[1];
                     
-                    const template1 = shiftTemplates.find(t => t.name === shift1.text || t.abbreviation === shift1.text);
-                    const template2 = shiftTemplates.find(t => t.name === shift2.text || t.abbreviation === shift2.text);
+                    const template1 = getTemplateForEvent(shift1);
+                    const template2 = getTemplateForEvent(shift2);
                     
                     const color1 = template1 ? (template1.backgroundColor || template1.colorHex || template1.color) : 
-                                   (shift1.userColor || getUserColor(shift1.userId));
+                                   (shift1.backgroundColor || shift1.colorHex || shift1.color || shift1.userColor || getUserColor(shift1.userId));
                     const color2 = template2 ? (template2.backgroundColor || template2.colorHex || template2.color) : 
-                                   (shift2.userColor || getUserColor(shift2.userId));
+                                   (shift2.backgroundColor || shift2.colorHex || shift2.color || shift2.userColor || getUserColor(shift2.userId));
                     
                     // Usar gradiente lineal para dividir en dos
                     cell.style.background = `linear-gradient(to bottom, ${color1} 50%, ${color2} 50%)`;
@@ -1875,9 +2016,9 @@
                 } else {
                     // Más de dos turnos: mostrar los primeros tres
                     shifts.slice(0, 3).forEach((event, index) => {
-                        const template = shiftTemplates.find(t => t.name === event.text || t.abbreviation === event.text);
+                        const template = getTemplateForEvent(event);
                         const color = template ? (template.backgroundColor || template.colorHex || template.color) : 
-                                      (event.userColor || getUserColor(event.userId));
+                                      (event.backgroundColor || event.colorHex || event.color || event.userColor || getUserColor(event.userId));
                         
                         const eventEl = document.createElement('div');
                         eventEl.className = 'event-badge';
@@ -2048,25 +2189,44 @@
                 for (let i = adjustedStartDay - 1; i >= 0; i--) {
                     const day = prevMonthLastDay - i;
                     const date = new Date(year, month - 1, day);
-                    await renderDay(container, date, true);
+                    renderDay(container, date, true);
                 }
             }
 
             // Días del mes actual
             for (let day = 1; day <= daysInMonth; day++) {
                 const date = new Date(year, month, day);
-                await renderDay(container, date, false);
+                renderDay(container, date, false);
             }
 
-            // Días del mes siguiente (solo los necesarios para completar las 6 semanas)
+            // Días del mes siguiente (completar sólo si necesitamos 6 semanas)
             const totalCellsUsed = adjustedStartDay + daysInMonth;
-            const remainingCells = 42 - totalCellsUsed; // 6 semanas * 7 días = 42 celdas
-            
-            // Solo agregar días si realmente necesitamos completar la grilla
-            if (remainingCells > 0) {
-                for (let day = 1; day <= remainingCells; day++) {
-                    const date = new Date(year, month + 1, day);
-                    await renderDay(container, date, true);
+            const needsSixWeeks = totalCellsUsed > 35; // 5 semanas * 7 = 35
+
+            // Marcar el grid para ajustar alturas cuando son 5 semanas
+            const gridEl = document.getElementById('calendarGrid');
+            if (needsSixWeeks) {
+                gridEl.classList.remove('five-weeks');
+            } else {
+                gridEl.classList.add('five-weeks');
+            }
+
+            if (needsSixWeeks) {
+                const remainingCells = 42 - totalCellsUsed; // completar a 6 semanas
+                if (remainingCells > 0) {
+                    for (let day = 1; day <= remainingCells; day++) {
+                        const date = new Date(year, month + 1, day);
+                        renderDay(container, date, true);
+                    }
+                }
+            } else {
+                // Completar la última semana hasta 5 semanas (35 celdas)
+                const remainingToFiveWeeks = 35 - totalCellsUsed;
+                if (remainingToFiveWeeks > 0) {
+                    for (let day = 1; day <= remainingToFiveWeeks; day++) {
+                        const date = new Date(year, month + 1, day);
+                        renderDay(container, date, true);
+                    }
                 }
             }
             
@@ -2080,7 +2240,10 @@
                 dayCells.forEach(cell => {
                     const paintOnclick = (e) => {
                         e.stopPropagation();
-                        paintDay(cell, selectedShiftForPainting);
+                        // Capturar referencia actual de turno; si fuese null, salir sin error
+                        const shiftRef = selectedShiftForPainting;
+                        if (!shiftRef) return exitPaintMode();
+                        paintDay(cell, shiftRef);
                     };
                     cell.onclick = paintOnclick;
                     cell.style.cursor = 'pointer';
@@ -2134,8 +2297,50 @@
             }
         }
 
+        // Añadir eventos de un mes al caché SIN resetear el resto
+        async function loadEventsForMonthIntoCache(year, month) {
+            if (!isFirebaseConnected) return;
+            if (!eventsCache.events) eventsCache.events = {};
+            try {
+                const firstDay = new Date(year, month, 1);
+                const lastDay = new Date(year, month + 1, 0);
+                const daysInMonth = lastDay.getDate();
+                const ops = [];
+                for (let day = 1; day <= daysInMonth; day++) {
+                    const date = new Date(year, month, day);
+                    const dateKey = formatDateKey(date);
+                    ops.push(
+                        db.collection('calendar_events').doc(dateKey).get().then(doc => {
+                            eventsCache.events[dateKey] = doc.exists ? (doc.data().events || []) : [];
+                        })
+                    );
+                }
+                await Promise.all(ops);
+            } catch (e) {
+                console.error('❌ Error cargando mes en caché:', e);
+            }
+        }
+
+        // Precargar todo el año actual (12 meses) en segundo plano y luego refrescar vista anual
+        async function preloadYearEvents(year) {
+            if (!isFirebaseConnected) return;
+            if (!eventsCache.events) eventsCache.events = {};
+            try {
+                const tasks = [];
+                for (let m = 0; m < 12; m++) tasks.push(loadEventsForMonthIntoCache(year, m));
+                await Promise.all(tasks);
+                // Si sigue visible la vista anual, re-renderizar
+                const yearView = document.getElementById('yearView');
+                if (yearView && yearView.style.display !== 'none') {
+                    renderYear();
+                }
+            } catch (e) {
+                console.error('❌ Error precargando eventos del año:', e);
+            }
+        }
+
         // Renderizar un día
-        async function renderDay(container, date, isOtherMonth) {
+        function renderDay(container, date, isOtherMonth) {
             const dayEl = document.createElement('div');
             dayEl.className = 'calendar-day';
             dayEl.dataset.date = date.toISOString(); // Guardar la fecha en dataset para acceso desde fuera
@@ -2167,26 +2372,34 @@
             const eventsEl = document.createElement('div');
             eventsEl.className = 'day-events';
             
-            const events = await getEventsForDate(date);
+            const events = getEventsForDateCached(date);
             dayEl.appendChild(eventsEl);
             
             // Aplicar el nuevo estilo de visualización
-            const shifts = events.filter(event => event.type !== 'note');
+            const shifts = events
+                .filter(event => event.type !== 'note')
+                .map(e => normalizeShiftEvent(e));
             if (shifts.length > 0) {
+                // Si tiene turnos, asegurar que no esté atenuado como "otro mes"
+                if (dayEl.classList.contains('other-month')) {
+                    dayEl.classList.remove('other-month');
+                    dayEl.style.opacity = '1';
+                }
                 
                 if (shifts.length === 1) {
                     // Un solo turno: pintar toda la celda
-                    const template = shiftTemplates.find(t => t.name === shifts[0].text || t.abbreviation === shifts[0].text);
+                    const template = getTemplateForEvent(shifts[0]);
                     const color = template ? (template.backgroundColor || template.colorHex || template.color) : 
-                                  (shifts[0].userColor || getUserColor(shifts[0].userId));
+                                  (shifts[0].backgroundColor || shifts[0].colorHex || shifts[0].color || shifts[0].userColor || getUserColor(shifts[0].userId));
                     
                     dayEl.style.backgroundColor = color;
                     
-                    // Hacer el número del día más visible en fondo oscuro
-                    numberEl.style.backgroundColor = 'rgba(255, 255, 255, 0.8)';
-                    numberEl.style.padding = '1px 3px';
-                    numberEl.style.borderRadius = '3px';
-                    numberEl.style.color = '#333';
+                    // Ajustar número: sin fondo, alto contraste con el fondo del turno
+                    numberEl.style.backgroundColor = 'transparent';
+                    numberEl.style.padding = '0';
+                    numberEl.style.borderRadius = '0';
+                    numberEl.style.color = getContrastColor(color);
+                    numberEl.style.textShadow = '0 1px 2px rgba(0,0,0,0.35)';
                     
                     const shiftText = document.createElement('div');
                     shiftText.className = 'shift-text-full';
@@ -2209,21 +2422,22 @@
                     const shift1 = shifts[0];
                     const shift2 = shifts[1];
                     
-                    const template1 = shiftTemplates.find(t => t.name === shift1.text || t.abbreviation === shift1.text);
-                    const template2 = shiftTemplates.find(t => t.name === shift2.text || t.abbreviation === shift2.text);
+                    const template1 = getTemplateForEvent(shift1);
+                    const template2 = getTemplateForEvent(shift2);
                     
                     const color1 = template1 ? (template1.backgroundColor || template1.colorHex || template1.color) : 
-                                   (shift1.userColor || getUserColor(shift1.userId));
+                                   (shift1.backgroundColor || shift1.colorHex || shift1.color || shift1.userColor || getUserColor(shift1.userId));
                     const color2 = template2 ? (template2.backgroundColor || template2.colorHex || template2.color) : 
-                                   (shift2.userColor || getUserColor(shift2.userId));
+                                   (shift2.backgroundColor || shift2.colorHex || shift2.color || shift2.userColor || getUserColor(shift2.userId));
                     
                     dayEl.style.background = `linear-gradient(to bottom, ${color1} 50%, ${color2} 50%)`;
                     
-                    // Hacer el número del día más visible en fondo oscuro
-                    numberEl.style.backgroundColor = 'rgba(255, 255, 255, 0.8)';
-                    numberEl.style.padding = '1px 3px';
-                    numberEl.style.borderRadius = '3px';
-                    numberEl.style.color = '#333';
+                    // En gradiente: usar blanco con sombra para legibilidad
+                    numberEl.style.backgroundColor = 'transparent';
+                    numberEl.style.padding = '0';
+                    numberEl.style.borderRadius = '0';
+                    numberEl.style.color = '#ffffff';
+                    numberEl.style.textShadow = '0 1px 3px rgba(0,0,0,0.6)';
                     
                     const text1 = document.createElement('div');
                     text1.className = 'shift-text-half';
@@ -2260,7 +2474,7 @@
                 } else {
                     // Más de dos turnos: mostrar los primeros tres
                     shifts.slice(0, 3).forEach((event, index) => {
-                        const template = shiftTemplates.find(t => t.name === event.text || t.abbreviation === event.text);
+                        const template = getTemplateForEvent(event);
                         const color = template ? (template.backgroundColor || template.colorHex || template.color) : 
                                       (event.userColor || getUserColor(event.userId));
                         
@@ -2272,7 +2486,7 @@
                             left: 50%;
                             transform: translate(-50%, -50%);
                             background-color: ${color};
-                            color: white;
+                            color: ${getContrastColorInline(color)};
                             padding: 2px 6px;
                             border-radius: 4px;
                             font-size: 10px;
@@ -2283,6 +2497,16 @@
                         dayEl.appendChild(eventEl);
                     });
                 }
+            }
+
+            // Asegurar que el día de hoy se vea con círculo, sin importar el fondo de turnos
+            const todayCheck = new Date();
+            if (date.toDateString() === todayCheck.toDateString()) {
+                numberEl.style.backgroundColor = '#FF1744';
+                numberEl.style.color = '#FFFFFF';
+                numberEl.style.borderRadius = '50%';
+                numberEl.style.padding = '2px 6px';
+                numberEl.style.textShadow = 'none';
             }
 
             // Agregar texto de nota e iconos de categorías
@@ -2308,7 +2532,7 @@
                         top: 20px;
                         left: 50%;
                         transform: translateX(-50%);
-                        color: ${userColor};
+                        color: ${resolveNoteColor(userColor, shifts)};
                         font-weight: 700;
                         font-size: 11px;
                         white-space: nowrap;
@@ -2316,6 +2540,7 @@
                         text-overflow: ellipsis;
                         max-width: calc(100% - 8px);
                         z-index: 15;
+                        text-shadow: 0 1px 2px rgba(0,0,0,0.25);
                     `;
                     dayEl.appendChild(noteTextEl);
                 }
@@ -2394,6 +2619,15 @@
             return allEvents[dateKey] || [];
         }
 
+        // Obtener eventos sincrónicamente desde caché precargada o localStorage (sin esperas)
+        function getEventsForDateCached(date) {
+            const dateKey = formatDateKey(date);
+            if (eventsCache.events && eventsCache.events[dateKey]) {
+                return eventsCache.events[dateKey];
+            }
+            return getEventsFromLocalStorage(date);
+        }
+
         // Guardar eventos
         async function saveEvents(date, events) {
             const dateKey = formatDateKey(date);
@@ -2454,11 +2688,254 @@
             return user ? user.name : 'Usuario';
         }
 
+        // Obtener plantilla de turno a partir de un evento (prioriza shiftId, luego nombre/abreviatura)
+        function getTemplateForEvent(event) {
+            if (!event) return null;
+            if (event.shiftId) {
+                const byId = shiftTemplates.find(t => t.id === event.shiftId);
+                if (byId) return byId;
+            }
+            const text = (event.text || '').toString().trim().toLowerCase();
+            if (!text) return null;
+            return shiftTemplates.find(t => {
+                const n = (t.name||'').toString().trim().toLowerCase();
+                const a = (t.abbreviation||'').toString().trim().toLowerCase();
+                return n === text || a === text;
+            }) || null;
+        }
+
+        // Normaliza un evento de turno a referencia canónica: asegura shiftId y texto estándar
+        function normalizeShiftEvent(event) {
+            if (!event) return event;
+            const tmpl = getTemplateForEvent(event);
+            if (tmpl) {
+                // Asegurar id y texto consistente
+                event.shiftId = tmpl.id;
+                event.text = tmpl.abbreviation || tmpl.name || event.text;
+                // Asegurar color para fallback
+                event.userColor = event.userColor || tmpl.backgroundColor || tmpl.colorHex || tmpl.color;
+            }
+            return event;
+        }
+
+        // Utilidades de color
+        function normalizeHex(color) {
+            if (!color) return null;
+            let c = color.trim();
+            if (c.startsWith('rgb')) {
+                // rgb/rgba -> hex aproximado
+                const m = c.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/i);
+                if (m) {
+                    const r = parseInt(m[1], 10), g = parseInt(m[2], 10), b = parseInt(m[3], 10);
+                    return '#' + [r,g,b].map(v => v.toString(16).padStart(2,'0')).join('').toUpperCase();
+                }
+            }
+            if (c.startsWith('#') && c.length === 4) {
+                // #RGB -> #RRGGBB
+                c = '#' + c[1]+c[1] + c[2]+c[2] + c[3]+c[3];
+            }
+            if (!c.startsWith('#')) return c.toUpperCase();
+            return c.toUpperCase();
+        }
+
+        function hexToRgb(hex) {
+            const c = normalizeHex(hex);
+            if (!c || !c.startsWith('#') || (c.length !== 7)) return null;
+            return {
+                r: parseInt(c.slice(1,3),16),
+                g: parseInt(c.slice(3,5),16),
+                b: parseInt(c.slice(5,7),16)
+            };
+        }
+
+        function getLuminance(hex) {
+            const rgb = hexToRgb(hex);
+            if (!rgb) return 0.5;
+            const srgb = [rgb.r/255, rgb.g/255, rgb.b/255].map(v => {
+                return v <= 0.03928 ? v/12.92 : Math.pow((v+0.055)/1.055, 2.4);
+            });
+            return 0.2126*srgb[0] + 0.7152*srgb[1] + 0.0722*srgb[2];
+        }
+
+        function getContrastColor(hex) {
+            const c = normalizeHex(hex);
+            const lum = getLuminance(c);
+            return lum > 0.5 ? '#000000' : '#FFFFFF';
+        }
+
+        function getContrastColorInline(hex) {
+            // Helper para CSS inline cuando hay gradientes/badges
+            try { return getContrastColor(hex); } catch(e) { return '#FFFFFF'; }
+        }
+
+        function colorsEqual(a,b) {
+            return normalizeHex(a) === normalizeHex(b);
+        }
+
+        function resolveNoteColor(userColor, shifts) {
+            // Si el color de la nota (usuario) coincide con alguno de los colores de turno del día,
+            // usar un color con alto contraste para que se lea.
+            const uc = normalizeHex(userColor);
+            const shiftColors = (shifts||[]).map(s => {
+                const t = shiftTemplates.find(t => t.name === s.text || t.abbreviation === s.text);
+                return normalizeHex(t ? (t.backgroundColor || t.colorHex || t.color) : (s.userColor || getUserColor(s.userId)));
+            }).filter(Boolean);
+            const conflict = shiftColors.some(c => c === uc);
+            if (conflict) {
+                // Elegir blanco o negro según luminancia de ese color
+                return getContrastColor(uc);
+            }
+            return userColor;
+        }
+
         // Cambiar mes
         function changeMonth(delta) {
             currentDate.setMonth(currentDate.getMonth() + delta);
             renderCalendar(true); // Forzar render inmediato para cambio de mes
         }
+
+        // Estado de año para vista anual
+        let yearViewYear = null;
+        function changeYear(delta) {
+            if (yearViewYear == null) yearViewYear = currentDate.getFullYear();
+            yearViewYear += delta;
+            updateYearNav();
+            renderYear();
+            // Actualiza el texto del botón de pestaña del año si coincide con formato YYYY
+            const yearTabBtn = Array.from(document.querySelectorAll('.tab-btn')).find(b => b.textContent.trim().match(/^\d{4}$/));
+            if (yearTabBtn) yearTabBtn.textContent = String(yearViewYear);
+        }
+
+        function updateYearNav() {
+            const title = document.getElementById('yearTitle');
+            const yr = yearViewYear ?? currentUserYear();
+            if (title) title.textContent = String(yr);
+        }
+
+        function currentUserYear() { return currentDate.getFullYear(); }
+
+        // Renderizar vista anual rápida usando caché/localStorage
+        async function renderYear() {
+            const grid = document.getElementById('yearGrid');
+            if (!grid) return;
+            grid.innerHTML = '';
+
+            const baseYear = yearViewYear ?? currentDate.getFullYear();
+            for (let m = 0; m < 12; m++) {
+                const monthBox = document.createElement('div');
+                monthBox.className = 'year-month';
+                monthBox.dataset.month = String(m);
+                monthBox.dataset.year = String(baseYear);
+
+                const header = document.createElement('div');
+                header.className = 'year-month-header';
+                header.textContent = monthNames[m].toUpperCase();
+                monthBox.appendChild(header);
+
+                const monthGrid = document.createElement('div');
+                monthGrid.className = 'year-month-grid';
+
+                // Encabezados de semana
+                ['L','M','X','J','V','S','D'].forEach(w => {
+                    const wEl = document.createElement('div');
+                    wEl.className = 'year-weekday';
+                    wEl.textContent = w;
+                    monthGrid.appendChild(wEl);
+                });
+
+                const firstDay = new Date(baseYear, m, 1);
+                const lastDay = new Date(baseYear, m + 1, 0);
+                const daysInMonth = lastDay.getDate();
+                const startDayOfWeek = firstDay.getDay();
+                const adjustedStart = startDayOfWeek === 0 ? 6 : startDayOfWeek - 1;
+
+                // Relleno inicial
+                for (let i = 0; i < adjustedStart; i++) {
+                    const dEl = document.createElement('div');
+                    dEl.className = 'year-day other-month';
+                    monthGrid.appendChild(dEl);
+                }
+
+                for (let d = 1; d <= daysInMonth; d++) {
+                    const date = new Date(baseYear, m, d);
+                    const dayEl = document.createElement('div');
+                    dayEl.className = 'year-day';
+
+                    const num = document.createElement('div');
+                    num.className = 'year-day-number';
+                    num.textContent = d;
+                    dayEl.appendChild(num);
+
+                    // Garantía de datos: usa caché si existe; si no, consulta inmediata
+                    let events = getEventsForDateCached(date);
+                    if (!events || events.length === 0) {
+                        events = await getEventsForDate(date);
+                    }
+                    const shifts = events.filter(e => e.type !== 'note');
+                    if (shifts.length > 0) {
+                        if (shifts.length === 1) {
+                            const ev = shifts[0];
+                            const template = shiftTemplates.find(t => t.name === ev.text || t.abbreviation === ev.text);
+                            const color = template ? (template.backgroundColor || template.colorHex || template.color) : (ev.userColor || getUserColor(ev.userId));
+                            dayEl.style.background = color;
+                            num.style.color = getContrastColor(color);
+                            num.style.textShadow = '0 1px 2px rgba(0,0,0,0.35)';
+                        } else if (shifts.length === 2) {
+                            const s1 = shifts[0], s2 = shifts[1];
+                            const t1 = shiftTemplates.find(t => t.name === s1.text || t.abbreviation === s1.text);
+                            const t2 = shiftTemplates.find(t => t.name === s2.text || t.abbreviation === s2.text);
+                            const c1 = t1 ? (t1.backgroundColor || t1.colorHex || t1.color) : (s1.userColor || getUserColor(s1.userId));
+                            const c2 = t2 ? (t2.backgroundColor || t2.colorHex || t2.color) : (s2.userColor || getUserColor(s2.userId));
+                            dayEl.style.background = `linear-gradient(to bottom, ${c1} 50%, ${c2} 50%)`;
+                            num.style.color = '#FFFFFF';
+                            num.style.textShadow = '0 1px 3px rgba(0,0,0,0.6)';
+                        } else {
+                            const s1 = shifts[0], s2 = shifts[1], s3 = shifts[2];
+                            const t1 = shiftTemplates.find(t => t.name === s1.text || t.abbreviation === s1.text);
+                            const t2 = shiftTemplates.find(t => t.name === s2.text || t.abbreviation === s2.text);
+                            const t3 = shiftTemplates.find(t => t.name === s3.text || t.abbreviation === s3.text);
+                            const c1 = t1 ? (t1.backgroundColor || t1.colorHex || t1.color) : (s1.userColor || getUserColor(s1.userId));
+                            const c2 = t2 ? (t2.backgroundColor || t2.colorHex || t2.color) : (s2.userColor || getUserColor(s2.userId));
+                            const c3 = t3 ? (t3.backgroundColor || t3.colorHex || t3.color) : (s3.userColor || getUserColor(s3.userId));
+                            dayEl.style.background = `linear-gradient(to bottom, ${c1} 33.34%, ${c2} 33.34%, ${c2} 66.66%, ${c3} 66.66%)`;
+                            num.style.color = '#FFFFFF';
+                            num.style.textShadow = '0 1px 3px rgba(0,0,0,0.6)';
+                        }
+                    }
+
+                    const today = new Date();
+                    if (date.toDateString() === today.toDateString()) {
+                        num.style.backgroundColor = '#FF1744';
+                        num.style.color = '#fff';
+                        num.style.borderRadius = '50%';
+                        num.style.padding = '1px 4px';
+                        num.style.textShadow = 'none';
+                    }
+
+                    monthGrid.appendChild(dayEl);
+                }
+
+                // Completar el final hasta múltiplo de 7
+                const used = adjustedStart + daysInMonth;
+                const rest = (7 - (used % 7)) % 7;
+                for (let i = 0; i < rest; i++) {
+                    const dEl = document.createElement('div');
+                    dEl.className = 'year-day other-month';
+                    monthGrid.appendChild(dEl);
+                }
+
+                monthBox.appendChild(monthGrid);
+                // Evitar duplicados: reemplazar si ya existe un mes con mismo índice
+                const existing = grid.querySelector(`.year-month[data-year="${baseYear}"][data-month="${m}"]`);
+                if (existing) {
+                    grid.replaceChild(monthBox, existing);
+                } else {
+                    grid.appendChild(monthBox);
+                }
+            }
+        }
+
+        
 
         // Abrir modal de día
         async function openDayModal(date) {
