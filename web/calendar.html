@@ -2153,6 +2153,10 @@
                 navigator.serviceWorker.addEventListener('message', (event) => {
                     if (event.data && event.data.type === 'OPEN_ALARM') {
                         window.location.href = event.data.url;
+                    } else if (event.data && event.data.type === 'SHOW_ALARM') {
+                        // Mostrar la pantalla de alarma cuando el Service Worker no puede abrir ventana
+                        const { url, date, time, note, user } = event.data;
+                        openAlarmNotificationPage(date, time, note);
                     }
                 });
             }
@@ -4067,20 +4071,31 @@
 
         // Cargar alarmas desde Firebase
         async function loadAlarms() {
-            if (!selectedDate) return [];
+            if (!selectedDate) {
+                console.log('⚠️ loadAlarms: No hay fecha seleccionada');
+                return [];
+            }
             
             try {
                 const events = await getEventsForDate(selectedDate);
                 const note = events.find(event => event.type === 'note');
+                
                 if (note && note.alarms && Array.isArray(note.alarms)) {
                     alarms = note.alarms;
+                    console.log(`✅ Alarmas cargadas: ${alarms.length} alarmas para ${formatDateKey(selectedDate)}`);
+                    console.log('📋 Contenido de alarmas cargadas:', JSON.stringify(alarms));
                 } else {
                     alarms = [];
+                    if (note) {
+                        console.log(`ℹ️ Nota encontrada pero sin alarmas para ${formatDateKey(selectedDate)}`);
+                    } else {
+                        console.log(`ℹ️ No se encontró nota para ${formatDateKey(selectedDate)}`);
+                    }
                 }
                 updateAlarmCount();
                 return alarms;
             } catch (error) {
-                console.error('Error cargando alarmas:', error);
+                console.error('❌ Error cargando alarmas:', error);
                 alarms = [];
                 return alarms;
             }
@@ -4178,11 +4193,12 @@
             
             // Agregar alarma a la lista
             const alarm = {
-                dateTime: dateTime.toISOString(),
-                id: Date.now() // ID único para la alarma
+                dateTime: dateTime.toISOString(), // Guardar como string ISO para Firebase
+                id: Date.now().toString() // ID único para la alarma (como string)
             };
             
             alarms.push(alarm);
+            console.log('➕ Alarma agregada:', JSON.stringify(alarm));
             
             // Guardar alarmas en Firebase
             await saveAlarms();
@@ -4214,8 +4230,15 @@
                 const existingNoteIndex = existingEvents.findIndex(event => event.type === 'note');
                 
                 if (existingNoteIndex !== -1) {
-                    // Actualizar nota existente con alarmas
-                    existingEvents[existingNoteIndex].alarms = alarms;
+                    // Actualizar nota existente con alarmas, preservando todos los demás campos
+                    const existingNote = existingEvents[existingNoteIndex];
+                    existingEvents[existingNoteIndex] = {
+                        ...existingNote, // Preservar todos los campos existentes
+                        alarms: alarms,
+                        updatedAt: new Date().toISOString()
+                    };
+                    console.log('✅ Nota actualizada con alarmas:', alarms.length, 'alarmas');
+                    console.log('📋 Contenido de alarmas:', JSON.stringify(alarms));
                 } else {
                     // Crear nota con alarmas
                     const noteEvent = {
@@ -4226,13 +4249,25 @@
                         updatedAt: new Date().toISOString(),
                         categories: [],
                         alarms: alarms,
-                        type: 'note'
+                        type: 'note',
+                        textSize: 11 // Tamaño por defecto
                     };
                     existingEvents.push(noteEvent);
+                    console.log('✅ Nueva nota creada con alarmas:', alarms.length, 'alarmas');
                 }
                 
                 await saveEvents(selectedDate, existingEvents);
-                console.log('✅ Alarmas guardadas:', alarms.length);
+                console.log('✅ Alarmas guardadas en Firebase:', alarms.length);
+                
+                // Verificar que se guardaron correctamente
+                const verifyEvents = await getEventsForDate(selectedDate);
+                const verifyNote = verifyEvents.find(event => event.type === 'note');
+                if (verifyNote && verifyNote.alarms) {
+                    console.log('✅ Verificación: Alarmas guardadas correctamente:', verifyNote.alarms.length);
+                    console.log('📋 Alarmas verificadas:', JSON.stringify(verifyNote.alarms));
+                } else {
+                    console.warn('⚠️ Advertencia: No se encontraron alarmas después de guardar');
+                }
                 
                 // Configurar notificaciones y programar en Service Worker
                 setupAlarmNotifications();
@@ -4338,40 +4373,53 @@
         async function checkAlarms() {
             const now = new Date();
             const checkedAlarmIds = new Set(); // Para evitar duplicados
+            let totalAlarmsChecked = 0;
             
             try {
                 // Verificar alarmas del día actual y los próximos 7 días
                 for (let i = 0; i < 7; i++) {
                     const checkDate = new Date(now);
                     checkDate.setDate(checkDate.getDate() + i);
+                    const dateKey = formatDateKey(checkDate);
                     
                     try {
                         const events = await getEventsForDate(checkDate);
                         const note = events.find(event => event.type === 'note');
                         
                         if (note && note.alarms && Array.isArray(note.alarms)) {
+                            console.log(`🔍 Verificando ${note.alarms.length} alarmas para ${dateKey}`);
+                            
                             note.alarms.forEach(alarm => {
                                 // Evitar verificar la misma alarma dos veces
                                 if (checkedAlarmIds.has(alarm.id)) return;
                                 checkedAlarmIds.add(alarm.id);
+                                totalAlarmsChecked++;
                                 
                                 const alarmDate = new Date(alarm.dateTime);
-                                const diff = alarmDate - now;
+                                const diff = alarmDate.getTime() - now.getTime();
+                                
+                                console.log(`⏰ Alarma ${alarm.id}: fecha=${alarmDate.toISOString()}, diff=${Math.round(diff/1000)}s`);
                                 
                                 // Si la alarma es ahora o en los próximos 60 segundos
                                 if (diff >= 0 && diff <= 60000) {
+                                    console.log(`🔔 ¡ALARMA ACTIVADA! ${alarm.id} - Diferencia: ${Math.round(diff/1000)}s`);
                                     const noteText = note.text || '';
                                     showAlarmNotification(alarm, noteText);
                                 }
                             });
                         }
                     } catch (error) {
+                        console.error(`Error verificando alarmas para ${dateKey}:`, error);
                         // Continuar con el siguiente día si hay error
                         continue;
                     }
                 }
+                
+                if (totalAlarmsChecked > 0) {
+                    console.log(`✅ Verificación completada: ${totalAlarmsChecked} alarmas verificadas`);
+                }
             } catch (error) {
-                console.error('Error verificando alarmas:', error);
+                console.error('❌ Error verificando alarmas:', error);
             }
         }
 
@@ -4466,16 +4514,28 @@
             // Abrir en nueva ventana/pestaña o redirigir
             const alarmUrl = `alarm-notification.html?${params.toString()}`;
             
-            // Intentar abrir en ventana completa
-            if (window.open) {
-                const alarmWindow = window.open(alarmUrl, '_blank', 'fullscreen=yes');
+            console.log('🔔 Abriendo página de alarma:', alarmUrl);
+            
+            // Intentar abrir en nueva ventana primero
+            try {
+                // Usar window.open con características específicas para pantalla completa
+                const alarmWindow = window.open(
+                    alarmUrl, 
+                    'alarmWindow',
+                    'width=' + screen.width + ',height=' + screen.height + ',left=0,top=0,fullscreen=yes'
+                );
+                
                 if (alarmWindow) {
                     alarmWindow.focus();
+                    console.log('✅ Ventana de alarma abierta');
                 } else {
-                    // Si falla, redirigir en la misma ventana
+                    // Si falla por bloqueo del navegador, redirigir en la misma ventana
+                    console.log('⚠️ No se pudo abrir nueva ventana, redirigiendo en la misma ventana');
                     window.location.href = alarmUrl;
                 }
-            } else {
+            } catch (error) {
+                console.error('Error abriendo ventana de alarma:', error);
+                // Fallback: redirigir en la misma ventana
                 window.location.href = alarmUrl;
             }
         }
@@ -4556,7 +4616,7 @@
                     }
                 } else {
                     // Crear o actualizar la nota
-                    // Preservar textSize existente si existe
+                    // Preservar textSize y alarmas existentes si existen
                     const existingNote = existingNoteIndex !== -1 ? existingEvents[existingNoteIndex] : null;
                     const noteEvent = {
                         text: mainText.trim(),
@@ -4567,13 +4627,15 @@
                         categories: selectedCategories,
                         type: 'note',
                         // Preservar textSize si existe, si no usar el por defecto
-                        textSize: existingNote && existingNote.textSize ? existingNote.textSize : 11
+                        textSize: existingNote && existingNote.textSize ? existingNote.textSize : 11,
+                        // Preservar alarmas si existen
+                        alarms: existingNote && existingNote.alarms && Array.isArray(existingNote.alarms) ? existingNote.alarms : []
                     };
                     
                     if (existingNoteIndex !== -1) {
                         // Actualizar nota existente
                         existingEvents[existingNoteIndex] = noteEvent;
-                        console.log('✏️ Nota actualizada con textSize:', noteEvent.textSize);
+                        console.log('✏️ Nota actualizada con textSize:', noteEvent.textSize, 'y alarmas:', noteEvent.alarms.length);
                     } else {
                         // Crear nueva nota
                         existingEvents.push(noteEvent);

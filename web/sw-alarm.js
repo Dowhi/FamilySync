@@ -35,7 +35,7 @@ self.addEventListener('notificationclick', (event) => {
     
     // Obtener datos de la notificación
     const data = event.notification.data || {};
-    const alarmUrl = data.url || '/alarm-notification.html';
+    const alarmUrl = data.url || 'alarm-notification.html';
     
     // Abrir o enfocar la ventana de la alarma
     event.waitUntil(
@@ -48,9 +48,18 @@ self.addEventListener('notificationclick', (event) => {
                 }
             }
             
-            // Si no hay ventana abierta, abrir una nueva
+            // Intentar abrir una nueva ventana (esto solo funciona si es en respuesta al click del usuario)
             if (clients.openWindow) {
-                return clients.openWindow(data.url || alarmUrl);
+                return clients.openWindow(alarmUrl).catch((error) => {
+                    console.error('Error abriendo ventana de alarma:', error);
+                    // Si falla, intentar redirigir una ventana existente
+                    if (clientList.length > 0) {
+                        const firstClient = clientList[0];
+                        if ('navigate' in firstClient) {
+                            return firstClient.navigate(alarmUrl);
+                        }
+                    }
+                });
             }
         })
     );
@@ -123,12 +132,12 @@ self.addEventListener('message', (event) => {
                 
                 const alarmUrl = `alarm-notification.html?${params.toString()}`;
                 
-                // Intentar mostrar notificación si hay permiso
-                // Nota: Los Service Workers no pueden verificar Notification.permission directamente
-                // Intentamos mostrar la notificación y si falla por falta de permiso, simplemente continuamos
+                // Mostrar notificación (si hay permiso)
+                // Nota: Los Service Workers NO pueden abrir ventanas automáticamente por seguridad
+                // La ventana solo se abrirá cuando el usuario haga clic en la notificación
                 try {
                     await self.registration.showNotification('🔔 Recordatorio', {
-                        body: `Tienes una alarma programada`,
+                        body: `Tienes una alarma programada para ${alarmDate} ${alarmTime}`,
                         icon: './icons/Icon-192.png',
                         badge: './icons/Icon-192.png',
                         tag: `alarm-${alarmId}`,
@@ -143,36 +152,29 @@ self.addEventListener('message', (event) => {
                             user: userName
                         }
                     });
+                    console.log('🔔 Notificación de alarma mostrada');
                 } catch (error) {
-                    // Si no hay permiso o falla la notificación, simplemente continuamos
-                    // La página de alarma se abrirá de todas formas
+                    // Si no hay permiso, intentar enviar mensaje a las ventanas abiertas
                     console.log('Notificación no disponible (permiso requerido):', error.message);
-                }
-                
-                // Siempre intentar abrir la página de alarma
-                try {
-                    const clientList = await clients.matchAll({ type: 'window', includeUncontrolled: true });
                     
-                    // Intentar abrir en una ventana nueva
-                    const openedWindow = await clients.openWindow(alarmUrl);
-                    
-                    // Si no se pudo abrir, intentar enfocar una ventana existente
-                    if (!openedWindow && clientList.length > 0) {
-                        // Buscar si hay una ventana de calendario abierta
+                    // Intentar enviar mensaje a ventanas abiertas para que abran la alarma
+                    try {
+                        const clientList = await clients.matchAll({ type: 'window', includeUncontrolled: true });
                         for (const client of clientList) {
-                            if (client.url.includes('calendar.html') || client.url.includes('alarm-notification.html')) {
-                                await client.focus();
-                                // Enviar mensaje para que abra la página de alarma
+                            if (client.url.includes('calendar.html')) {
                                 client.postMessage({
-                                    type: 'OPEN_ALARM',
-                                    url: alarmUrl
+                                    type: 'SHOW_ALARM',
+                                    url: alarmUrl,
+                                    date: alarmDate,
+                                    time: alarmTime,
+                                    note: noteText,
+                                    user: userName
                                 });
-                                break;
                             }
                         }
+                    } catch (msgError) {
+                        console.error('Error enviando mensaje a ventanas:', msgError);
                     }
-                } catch (error) {
-                    console.error('Error abriendo página de alarma:', error);
                 }
                 
                 scheduledAlarms.delete(alarmId);
