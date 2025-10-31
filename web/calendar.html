@@ -2120,6 +2120,9 @@
                 localStorage.removeItem('jump_to_date');
             }
 
+            // Asegurar que el tab de calendario esté activo al iniciar
+            ensureCalendarTabActive();
+            
             // Renderizar calendario solo una vez
             setTimeout(() => {
                 renderCalendar();
@@ -2134,11 +2137,13 @@
             
             // Solicitar permiso para notificaciones al iniciar
             if ('Notification' in window && Notification.permission === 'default') {
-                Notification.requestPermission();
+                Notification.requestPermission().then(permission => {
+                    console.log('📱 Permiso de notificaciones:', permission);
+                });
             }
             
-            // Registrar Service Worker para alarmas
-            if ('serviceWorker' in navigator) {
+            // Registrar Service Worker para alarmas (no funciona bien en iOS cuando la app está cerrada)
+            if ('serviceWorker' in navigator && !isIOS) {
                 navigator.serviceWorker.register('sw-alarm.js')
                     .then((registration) => {
                         console.log('✅ Service Worker registrado para alarmas:', registration.scope);
@@ -2146,11 +2151,13 @@
                     .catch((error) => {
                         console.error('❌ Error registrando Service Worker:', error);
                     });
+            } else if (isIOS) {
+                console.log('ℹ️ iOS detectado: Service Worker tiene limitaciones, usando verificación local');
             }
             
             // Escuchar mensajes del Service Worker
-            if ('serviceWorker' in navigator) {
-                navigator.serviceWorker.addEventListener('message', (event) => {
+            if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+                navigator.serviceWorker.controller.addEventListener('message', (event) => {
                     if (event.data && event.data.type === 'OPEN_ALARM') {
                         window.location.href = event.data.url;
                     } else if (event.data && event.data.type === 'SHOW_ALARM') {
@@ -2161,10 +2168,27 @@
                 });
             }
             
+            // Guardar alarmas en localStorage para verificación cuando la app se abre (especialmente para iOS)
+            saveAlarmsToLocalStorage();
+            
+            // Verificar alarmas pendientes al abrir la app
+            checkPendingAlarmsOnStart();
+            
+            // Detectar cuando la app vuelve al primer plano (importante para iOS)
+            setupVisibilityChangeListener();
+            
+            // Detectar cuando la app se convierte en PWA instalada
+            checkPWAInstallation();
+            
             // Iniciar verificación de alarmas después de un breve delay
             setTimeout(() => {
                 setupAlarmNotifications();
-                scheduleAllAlarms(); // Programar todas las alarmas existentes
+                if (!isIOS) {
+                    scheduleAllAlarms(); // Programar todas las alarmas existentes en Service Worker
+                } else {
+                    // En iOS, programar alarmas en localStorage para verificación periódica
+                    scheduleAlarmsForIOS();
+                }
             }, 2000);
         }
 
@@ -2210,21 +2234,65 @@
             return base;
         }
 
+        // Asegurar que el tab de calendario esté activo
+        function ensureCalendarTabActive() {
+            // Verificar parámetros de URL que puedan cambiar el tab
+            const urlParams = new URLSearchParams(window.location.search);
+            const tabParam = urlParams.get('tab');
+            
+            // Si hay un parámetro tab=summary, eliminarlo y quedarse en calendario
+            if (tabParam === 'summary') {
+                // Limpiar parámetro y redirigir a calendario limpio
+                const newUrl = window.location.pathname;
+                window.history.replaceState({}, '', newUrl);
+            }
+            
+            // Asegurar que el tab de calendario esté visible
+            const calendarBtn = document.querySelector('.tab-btn[onclick*="calendar"]');
+            const yearBtn = document.querySelector('.tab-btn[onclick*="year"]');
+            const summaryBtn = document.querySelector('.tab-btn[onclick*="summary"]');
+            
+            // Remover active de todos
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            
+            // Activar solo el de calendario
+            if (calendarBtn) {
+                calendarBtn.classList.add('active');
+            }
+            
+            // Mostrar calendario y ocultar año
+            const mainGridContainer = document.querySelector('.calendar-container');
+            const yearView = document.getElementById('yearView');
+            const monthNav = document.querySelector('.month-nav');
+            
+            if (monthNav) monthNav.style.display = 'flex';
+            if (yearView) yearView.style.display = 'none';
+            if (mainGridContainer) mainGridContainer.style.display = 'block';
+        }
+        
         // Mostrar tabs
         function showTab(tab) {
             // Remover active de todos los botones
             document.querySelectorAll('.tab-btn').forEach(btn => {
                 btn.classList.remove('active');
             });
-
+            
             // Agregar active al botón clickeado
-            event.target.classList.add('active');
-
+            if (event && event.target) {
+                event.target.classList.add('active');
+            } else {
+                // Si no hay event, activar el botón correspondiente
+                const targetBtn = document.querySelector(`.tab-btn[onclick*="${tab}"]`);
+                if (targetBtn) targetBtn.classList.add('active');
+            }
+            
             // Mostrar/ocultar vistas
             const mainGridContainer = document.querySelector('.calendar-container');
             const yearView = document.getElementById('yearView');
             const monthNav = document.querySelector('.month-nav');
-
+            
             if (tab === 'year') {
                 if (monthNav) monthNav.style.display = 'none';
                 mainGridContainer.style.display = 'none';
@@ -4068,6 +4136,11 @@
 
         // Variables para alarmas
         let alarms = [];
+        
+        // Detectar dispositivo móvil
+        const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+        const isAndroid = /Android/i.test(navigator.userAgent);
 
         // Cargar alarmas desde Firebase
         async function loadAlarms() {
@@ -4269,9 +4342,18 @@
                     console.warn('⚠️ Advertencia: No se encontraron alarmas después de guardar');
                 }
                 
+                // Guardar también en localStorage para verificación local (especialmente iOS)
+                saveAlarmsToLocalStorage();
+                
                 // Configurar notificaciones y programar en Service Worker
                 setupAlarmNotifications();
-                scheduleAllAlarms();
+                if (!isIOS) {
+                    scheduleAllAlarms();
+                } else {
+                    // En iOS, programar en localStorage para verificación cuando la app se abre
+                    scheduleAlarmsForIOS();
+                    console.log('ℹ️ iOS: Alarmas programadas para verificación cuando la app se abra');
+                }
             } catch (error) {
                 console.error('❌ Error guardando alarmas:', error);
             }
@@ -4355,15 +4437,275 @@
             }
         }
 
+        // Guardar alarmas en localStorage para verificación cuando la app se abre
+        function saveAlarmsToLocalStorage() {
+            try {
+                // Obtener todas las alarmas de los próximos 30 días
+                const allAlarms = [];
+                const now = new Date();
+                
+                // Guardar timestamp de última verificación
+                localStorage.setItem('last_alarm_check', now.toISOString());
+                
+                const alarmsData = {
+                    lastSaved: now.toISOString(),
+                    alarms: alarms, // Alarmas del día actual
+                    version: '2.0'
+                };
+                localStorage.setItem('pending_alarms', JSON.stringify(alarmsData));
+                console.log('💾 Alarmas guardadas en localStorage para verificación local');
+            } catch (error) {
+                console.error('Error guardando alarmas en localStorage:', error);
+            }
+        }
+        
+        // Detectar cuando la app vuelve al primer plano (iOS)
+        function setupVisibilityChangeListener() {
+            document.addEventListener('visibilitychange', () => {
+                if (!document.hidden) {
+                    // La app volvió al primer plano
+                    console.log('📱 App vuelta al primer plano - verificando alarmas pendientes');
+                    
+                    // Verificar inmediatamente alarmas que pudieron haberse perdido
+                    setTimeout(() => {
+                        checkPendingAlarmsOnStart();
+                        checkAlarms();
+                    }, 500);
+                } else {
+                    // La app se fue a segundo plano - guardar estado
+                    console.log('📱 App en segundo plano - guardando estado');
+                    saveAlarmsToLocalStorage();
+                }
+            });
+            
+            // También detectar cuando la ventana recibe foco
+            window.addEventListener('focus', () => {
+                console.log('📱 Ventana recibió foco - verificando alarmas');
+                setTimeout(() => {
+                    checkPendingAlarmsOnStart();
+                    checkAlarms();
+                }, 500);
+            });
+        }
+        
+        // Verificar si la app está instalada como PWA
+        function checkPWAInstallation() {
+            // Verificar si se está ejecutando en modo standalone (PWA instalada)
+            const isStandalone = window.matchMedia('(display-mode: standalone)').matches ||
+                                window.navigator.standalone ||
+                                document.referrer.includes('android-app://');
+            
+            if (isStandalone) {
+                console.log('✅ PWA instalada detectada - mejores capacidades disponibles');
+                // Cuando está instalada como PWA, puede tener más permisos
+                if ('Notification' in window && Notification.permission === 'default') {
+                    Notification.requestPermission();
+                }
+            } else if (isIOS) {
+                console.log('ℹ️ Para mejor funcionalidad en iPhone, instala la app:');
+                console.log('   1. Toca el botón Compartir (cuadrado con flecha)');
+                console.log('   2. Selecciona "Añadir a pantalla de inicio"');
+                console.log('   3. Abre la app desde el icono en la pantalla de inicio');
+                
+                // Mostrar un mensaje visual la primera vez
+                const hasSeenPWAMessage = localStorage.getItem('pwa_install_message_seen');
+                if (!hasSeenPWAMessage && isIOS) {
+                    setTimeout(() => {
+                        const pwaHint = document.createElement('div');
+                        pwaHint.style.cssText = `
+                            position: fixed;
+                            bottom: 20px;
+                            left: 10px;
+                            right: 10px;
+                            background: #FF9800;
+                            color: white;
+                            padding: 15px;
+                            border-radius: 10px;
+                            z-index: 10000;
+                            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+                            font-size: 14px;
+                            line-height: 1.5;
+                        `;
+                        pwaHint.innerHTML = `
+                            <strong>💡 Mejora las alarmas en iPhone:</strong><br>
+                            Instala esta app tocando <strong>Compartir</strong> → <strong>"Añadir a pantalla de inicio"</strong>
+                            <button onclick="this.parentElement.remove(); localStorage.setItem('pwa_install_message_seen', 'true');" 
+                                    style="float: right; margin-top: 5px; background: white; color: #FF9800; border: none; padding: 5px 10px; border-radius: 5px; font-weight: bold; cursor: pointer;">
+                                ✕
+                            </button>
+                        `;
+                        document.body.appendChild(pwaHint);
+                    }, 3000);
+                }
+            }
+            
+            return isStandalone;
+        }
+        
+        // Programar alarmas para iOS usando localStorage (para verificación cuando la app se abre)
+        async function scheduleAlarmsForIOS() {
+            try {
+                const now = new Date();
+                const scheduledAlarms = [];
+                
+                // Obtener todas las alarmas de los próximos 7 días
+                for (let i = 0; i < 7; i++) {
+                    const checkDate = new Date(now);
+                    checkDate.setDate(checkDate.getDate() + i);
+                    
+                    try {
+                        const events = await getEventsForDate(checkDate);
+                        const note = events.find(event => event.type === 'note');
+                        
+                        if (note && note.alarms && Array.isArray(note.alarms)) {
+                            note.alarms.forEach(alarm => {
+                                const alarmDate = new Date(alarm.dateTime);
+                                const timeUntilAlarm = alarmDate.getTime() - now.getTime();
+                                
+                                // Solo programar alarmas futuras
+                                if (timeUntilAlarm > 0) {
+                                    scheduledAlarms.push({
+                                        id: alarm.id,
+                                        dateTime: alarm.dateTime,
+                                        date: alarmDate.toISOString().split('T')[0],
+                                        time: alarmDate.toTimeString().split(' ')[0].slice(0, 5),
+                                        noteText: note.text || ''
+                                    });
+                                }
+                            });
+                        }
+                    } catch (error) {
+                        continue;
+                    }
+                }
+                
+                // Guardar en localStorage para verificación cuando la app se abre
+                localStorage.setItem('ios_scheduled_alarms', JSON.stringify({
+                    alarms: scheduledAlarms,
+                    lastUpdated: now.toISOString()
+                }));
+                
+                console.log(`✅ ${scheduledAlarms.length} alarmas programadas para verificación en iOS`);
+            } catch (error) {
+                console.error('Error programando alarmas para iOS:', error);
+            }
+        }
+        
+        // Verificar alarmas pendientes al abrir la app (especialmente importante para iOS)
+        async function checkPendingAlarmsOnStart() {
+            try {
+                const now = new Date();
+                const checkedAlarmIds = new Set();
+                let foundAlarms = false;
+                
+                // Obtener última verificación
+                const lastCheck = localStorage.getItem('last_alarm_check');
+                const lastCheckTime = lastCheck ? new Date(lastCheck) : null;
+                
+                // Si no hay última verificación, buscar en las últimas 24 horas
+                const checkRange = lastCheckTime ? 
+                    Math.max(1, Math.ceil((now - lastCheckTime) / (1000 * 60 * 60))) : 24; // Horas
+                
+                console.log(`🔍 Verificando alarmas perdidas (últimos ${checkRange} horas o 7 días)`);
+                
+                // Verificar alarmas de los últimos 7 días (o desde última verificación)
+                const daysToCheck = Math.min(7, Math.ceil(checkRange / 24) + 1);
+                
+                for (let i = 0; i < daysToCheck; i++) {
+                    const checkDate = new Date(now);
+                    checkDate.setDate(checkDate.getDate() - i); // Verificar días pasados también
+                    
+                    try {
+                        const events = await getEventsForDate(checkDate);
+                        const note = events.find(event => event.type === 'note');
+                        
+                        if (note && note.alarms && Array.isArray(note.alarms)) {
+                            note.alarms.forEach(alarm => {
+                                if (checkedAlarmIds.has(alarm.id)) return;
+                                checkedAlarmIds.add(alarm.id);
+                                
+                                const alarmDate = new Date(alarm.dateTime);
+                                const diff = alarmDate.getTime() - now.getTime();
+                                
+                                // Si la alarma era en el pasado (se perdió mientras la app estaba cerrada)
+                                // Verificar desde la última verificación o máximo 30 minutos atrás
+                                const maxTimeBack = lastCheckTime ? 
+                                    (now - lastCheckTime) : (30 * 60 * 1000); // 30 minutos por defecto
+                                
+                                if (diff < 0 && diff > -maxTimeBack) {
+                                    console.log(`🔔 Alarma perdida detectada: ${alarm.id} (hace ${Math.round(-diff/1000)}s)`);
+                                    foundAlarms = true;
+                                    const noteText = note.text || '';
+                                    
+                                    // Mostrar notificación inmediatamente
+                                    setTimeout(() => {
+                                        showAlarmNotification(alarm, noteText);
+                                    }, 100);
+                                }
+                            });
+                        }
+                    } catch (error) {
+                        continue;
+                    }
+                }
+                
+                // Verificar también alarmas programadas en localStorage (iOS)
+                if (isIOS) {
+                    const iosAlarms = localStorage.getItem('ios_scheduled_alarms');
+                    if (iosAlarms) {
+                        try {
+                            const data = JSON.parse(iosAlarms);
+                            data.alarms.forEach(alarm => {
+                                if (checkedAlarmIds.has(alarm.id)) return;
+                                checkedAlarmIds.add(alarm.id);
+                                
+                                const alarmDate = new Date(alarm.dateTime);
+                                const diff = alarmDate.getTime() - now.getTime();
+                                
+                                const maxTimeBack = lastCheckTime ? 
+                                    (now - lastCheckTime) : (30 * 60 * 1000);
+                                
+                                if (diff < 0 && diff > -maxTimeBack) {
+                                    console.log(`🔔 Alarma iOS perdida detectada: ${alarm.id}`);
+                                    foundAlarms = true;
+                                    
+                                    setTimeout(() => {
+                                        showAlarmNotification({id: alarm.id, dateTime: alarm.dateTime}, alarm.noteText);
+                                    }, 100);
+                                }
+                            });
+                        } catch (e) {
+                            console.error('Error verificando alarmas iOS:', e);
+                        }
+                    }
+                }
+                
+                // Actualizar timestamp de última verificación
+                localStorage.setItem('last_alarm_check', now.toISOString());
+                
+                if (!foundAlarms) {
+                    console.log('✅ No se encontraron alarmas perdidas');
+                } else {
+                    console.log('⚠️ Alarmas perdidas encontradas y mostradas');
+                }
+            } catch (error) {
+                console.error('Error verificando alarmas pendientes:', error);
+            }
+        }
+        
         // Configurar notificaciones de alarmas
         function setupAlarmNotifications() {
             // Limpiar notificaciones anteriores
             clearInterval(window.alarmCheckInterval);
             
-            // Verificar alarmas cada minuto
+            // Verificar alarmas cada minuto (o cada 30 segundos en móviles para mejor respuesta)
+            const checkInterval = isMobile ? 30000 : 60000;
+            
             window.alarmCheckInterval = setInterval(() => {
                 checkAlarms();
-            }, 60000); // Cada 60 segundos
+            }, checkInterval);
+            
+            console.log(`⏰ Verificación de alarmas cada ${checkInterval/1000} segundos (${isMobile ? 'móvil' : 'escritorio'})`);
             
             // Verificar inmediatamente
             checkAlarms();
@@ -4516,7 +4858,14 @@
             
             console.log('🔔 Abriendo página de alarma:', alarmUrl);
             
-            // Intentar abrir en nueva ventana primero
+            // En móviles, mejor redirigir directamente en la misma ventana
+            if (isMobile) {
+                console.log('📱 Dispositivo móvil detectado: redirigiendo a pantalla de alarma');
+                window.location.href = alarmUrl;
+                return;
+            }
+            
+            // En escritorio, intentar abrir en nueva ventana
             try {
                 // Usar window.open con características específicas para pantalla completa
                 const alarmWindow = window.open(

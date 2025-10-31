@@ -1,7 +1,7 @@
 {
     "name": "Calendario Familiar",
     "short_name": "Calendario",
-    "start_url": "./",
+    "start_url": "./calendar.html",
     "display": "standalone",
     "background_color": "#1B5E20",
     "theme_color": "#1B5E20",
