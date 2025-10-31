@@ -6,7 +6,10 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="FamilySync">
+    <meta name="theme-color" content="#1B5E20">
+    <meta name="mobile-web-app-capable" content="yes">
     <title>Calendario - FamilySync</title>
+    <link rel="manifest" href="manifest.json">
     <link rel="apple-touch-icon" href="icons/Icon-192.png">
     
     <!-- Firebase SDK -->
@@ -2142,14 +2145,31 @@
                 });
             }
             
-            // Registrar Service Worker para alarmas (no funciona bien en iOS cuando la app está cerrada)
-            if ('serviceWorker' in navigator && !isIOS) {
-                navigator.serviceWorker.register('sw-alarm.js')
+            // Registrar Service Workers
+            if ('serviceWorker' in navigator) {
+                // Primero registrar Service Worker principal para PWA (requerido para instalación)
+                navigator.serviceWorker.register('sw.js')
                     .then((registration) => {
-                        console.log('✅ Service Worker registrado para alarmas:', registration.scope);
+                        console.log('✅ Service Worker principal registrado:', registration.scope);
+                        
+                        // Luego registrar Service Worker de alarmas (solo si no es iOS)
+                        if (!isIOS) {
+                            return navigator.serviceWorker.register('sw-alarm.js');
+                        }
+                    })
+                    .then((registration) => {
+                        if (registration) {
+                            console.log('✅ Service Worker de alarmas registrado:', registration.scope);
+                        }
                     })
                     .catch((error) => {
                         console.error('❌ Error registrando Service Worker:', error);
+                        // Si falla sw.js, intentar solo sw-alarm.js en Android
+                        if (isAndroid && !isIOS) {
+                            navigator.serviceWorker.register('sw-alarm.js')
+                                .then((reg) => console.log('✅ Service Worker de alarmas registrado:', reg.scope))
+                                .catch((err) => console.error('❌ Error registrando SW de alarmas:', err));
+                        }
                     });
             } else if (isIOS) {
                 console.log('ℹ️ iOS detectado: Service Worker tiene limitaciones, usando verificación local');
@@ -2179,6 +2199,11 @@
             
             // Detectar cuando la app se convierte en PWA instalada
             checkPWAInstallation();
+            
+            // Mostrar botón de instalación en Android si no está instalada
+            if (isAndroid) {
+                setupAndroidInstallPrompt();
+            }
             
             // Iniciar verificación de alarmas después de un breve delay
             setTimeout(() => {
@@ -4488,6 +4513,87 @@
             });
         }
         
+        // Configurar prompt de instalación para Android
+        let deferredPrompt = null;
+        
+        function setupAndroidInstallPrompt() {
+            // Escuchar el evento beforeinstallprompt (Android Chrome)
+            window.addEventListener('beforeinstallprompt', (e) => {
+                console.log('📱 Evento beforeinstallprompt recibido');
+                e.preventDefault();
+                deferredPrompt = e;
+                showAndroidInstallButton();
+            });
+            
+            // Verificar si ya está instalada
+            if (window.matchMedia('(display-mode: standalone)').matches) {
+                console.log('✅ App ya está instalada como PWA');
+                hideAndroidInstallButton();
+            }
+        }
+        
+        // Mostrar botón de instalación en Android
+        function showAndroidInstallButton() {
+            // Verificar si ya existe el botón
+            let installBtn = document.getElementById('androidInstallBtn');
+            
+            if (!installBtn && deferredPrompt) {
+                installBtn = document.createElement('button');
+                installBtn.id = 'androidInstallBtn';
+                installBtn.innerHTML = '📱 Instalar App';
+                installBtn.style.cssText = `
+                    position: fixed;
+                    bottom: 20px;
+                    left: 50%;
+                    transform: translateX(-50%);
+                    background: #4CAF50;
+                    color: white;
+                    border: none;
+                    padding: 12px 24px;
+                    border-radius: 25px;
+                    font-size: 14px;
+                    font-weight: bold;
+                    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+                    z-index: 10000;
+                    cursor: pointer;
+                    display: flex;
+                    align-items: center;
+                    gap: 8px;
+                    font-family: inherit;
+                `;
+                
+                installBtn.addEventListener('click', async () => {
+                    if (!deferredPrompt) return;
+                    
+                    // Mostrar el prompt de instalación
+                    deferredPrompt.prompt();
+                    
+                    // Esperar respuesta del usuario
+                    const { outcome } = await deferredPrompt.userChoice;
+                    console.log('Usuario eligió:', outcome);
+                    
+                    if (outcome === 'accepted') {
+                        console.log('✅ Usuario aceptó instalar la app');
+                    } else {
+                        console.log('❌ Usuario rechazó instalar la app');
+                    }
+                    
+                    deferredPrompt = null;
+                    hideAndroidInstallButton();
+                });
+                
+                document.body.appendChild(installBtn);
+            }
+        }
+        
+        // Ocultar botón de instalación
+        function hideAndroidInstallButton() {
+            const installBtn = document.getElementById('androidInstallBtn');
+            if (installBtn) {
+                installBtn.remove();
+            }
+        }
+        
         // Verificar si la app está instalada como PWA
         function checkPWAInstallation() {
             // Verificar si se está ejecutando en modo standalone (PWA instalada)
@@ -4501,6 +4607,7 @@
                 if ('Notification' in window && Notification.permission === 'default') {
                     Notification.requestPermission();
                 }
+                hideAndroidInstallButton();
             } else if (isIOS) {
                 console.log('ℹ️ Para mejor funcionalidad en iPhone, instala la app:');
                 console.log('   1. Toca el botón Compartir (cuadrado con flecha)');
