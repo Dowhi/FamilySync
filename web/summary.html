@@ -25,8 +25,9 @@
         .section { background: #f7f9fc; border: 1px solid #cfd8e3; border-radius: 10px; margin: 10px; overflow: hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.06); }
         .section .header { background: #ffffff; color: #6b7c8f; font-weight: 900; text-align: center; padding: 8px 0; border-bottom: 1px solid #e1e7ef; letter-spacing: .5px; }
         .pill-tabs { display: flex; margin: 10px; border: 1px solid #cfd8e3; border-radius: 16px; overflow: hidden; background:#fff; }
-        .pill { flex: 1; text-align: center; padding: 8px 0; font-weight: 800; background: #fff; color: #6b7c8f; }
+        .pill { flex: 1; text-align: center; padding: 8px 0; font-weight: 800; background: #fff; color: #6b7c8f; cursor: pointer; user-select: none; }
         .pill.active { background: #2f3b44; color: #9fc1ff; }
+        .pill:active { opacity: 0.8; }
 
         .list { margin: 10px; background:#fff; border: 1px solid #dde5ee; border-radius: 8px; overflow: hidden; }
         .list .item { padding: 8px 10px; border-bottom: 1px solid #eef3f9; }
@@ -40,6 +41,11 @@
         .input { background: #fff; border: 1px solid #cfd8e3; border-radius: 12px; padding: 12px; font-size: 14px; }
         .btn { background: #2f3b44; color: #fff; border: none; padding: 10px 16px; border-radius: 12px; font-weight: 800; box-shadow: 0 1px 2px rgba(0,0,0,0.1); }
         .note-table { background: #fff; border: 1px solid #dde5ee; border-radius: 8px; padding: 10px; color: #6b7c8f; }
+        .icon-results-list { background: #fff; border: 1px solid #dde5ee; border-radius: 8px; overflow: hidden; }
+        .icon-results-list .result-item { padding: 12px 16px; border-bottom: 1px solid #eef3f9; }
+        .icon-results-list .result-item:last-child { border-bottom: none; }
+        .icon-results-list .result-date { font-weight: 900; font-size: 16px; color: #2f3b44; margin-bottom: 4px; cursor: pointer; }
+        .icon-results-list .result-event { font-size: 14px; color: #6b7c8f; margin-top: 2px; }
 
         .switch-row { display: flex; align-items: center; gap: 8px; padding: 10px; }
         .switch-row .switch { width: 22px; height: 22px; display: inline-flex; align-items: center; justify-content: center; border: 1px solid #cfd8e3; border-radius: 6px; background: #fff; }
@@ -61,19 +67,13 @@
     </style>
 </head>
 <body>
-    <div class="app-header">
-        <div class="seg">
-            <button class="btn" onclick="goCalendar()" style="background:#2f3b44;border:1px solid #44525c">◀</button>
-            <div class="chip">AGOSTO</div>
-        </div>
-        <div class="title">2025</div>
-        <div class="seg">
-            <div class="chip" style="color:#9fe5d8">RESUMEN</div>
-        </div>
+    <div class="app-header" style="justify-content: space-between; align-items: center;">
+        <button class="btn" onclick="goCalendar()" style="background:#2f3b44;border:1px solid #44525c; padding: 6px 12px; font-size: 18px;">◀</button>
+        <div class="title">ESTADÍSTICAS</div>
+        <div style="width: 50px;"></div> <!-- Spacer para centrar el título -->
     </div>
 
     <div class="section stats">
-        <div class="header">ESTADÍSTICAS</div>
         <div class="tabs">
             <button class="tab active" id="tabMonth">Mes</button>
             <button class="tab" id="tabYear">Año</button>
@@ -96,8 +96,8 @@
     <div class="section">
         <div class="header">NOTAS CERCANAS (30 DÍAS)</div>
         <div class="pill-tabs">
-            <div class="pill" id="tabPast">Pasadas</div>
-            <div class="pill active" id="tabNext">Próximas</div>
+            <div class="pill" id="tabPast" style="cursor: pointer;" onclick="togglePastNext(true)">Pasadas</div>
+            <div class="pill active" id="tabNext" style="cursor: pointer;" onclick="togglePastNext(false)">Próximas</div>
         </div>
         <div class="list" id="nearNotes">
             <div class="item" style="display:none"></div>
@@ -149,7 +149,8 @@
         <div style="display:flex; gap:8px; margin: 0 10px 10px;">
             <button class="btn" id="clearFiltersBtn" style="background:#6b7c8f">Limpiar filtros</button>
         </div>
-        <div class="note-table" id="iconSearchResult">No se han encontrado días con el icono seleccionado</div>
+        <div class="icon-results-list" id="iconSearchResult" style="display: none;"></div>
+        <div class="note-table" id="iconSearchResultEmpty">No se han encontrado días con el icono seleccionado</div>
     </div>
 
     <script>
@@ -202,6 +203,7 @@
         const statsCache = new Map(); // key: from_to -> { map, acc, at }
         const cacheKey = (a,b)=> `${formatDateKey(a)}_${formatDateKey(b)}`;
         const FILTERS_KEY = 'summary_filters_v1';
+        const selectedShifts = new Set(); // Turnos seleccionados para incluir en el global
 
         async function getEventsForRange(d1,d2){
             const key=cacheKey(d1,d2);
@@ -333,13 +335,60 @@
             const table=document.getElementById('statsTable');
             table.querySelectorAll('.row.data').forEach(el=>el.remove());
             let totalCount=0, totalMins=0;
+            
+            // Inicializar todos los turnos como seleccionados si no hay selecciones previas
+            if (selectedShifts.size === 0) {
+                Object.keys(acc).forEach(key => selectedShifts.add(key));
+            }
+            
             Object.entries(acc).forEach(([key,info])=>{
                 const tmpl = shiftTemplates.find(t=> t.id===info.sample?.shiftId || t.name===info.sample?.text || t.abbreviation===info.sample?.text);
                 const color = tmpl?.backgroundColor || tmpl?.colorHex || tmpl?.color || '#3B82F6';
                 const text = tmpl?.abbreviation || tmpl?.name || info.sample?.text || key;
-                totalCount+=info.count; totalMins+=info.mins;
-                const row=document.createElement('div'); row.className='row data';
-                row.innerHTML=`<div><span class="badge" style="background:${color}">${text}</span></div><div class="center">${info.count}</div><div class="center">${asHhMm(info.mins)}</div><div class="center">✅</div>`;
+                const isSelected = selectedShifts.has(key);
+                
+                if (isSelected) {
+                    totalCount+=info.count;
+                    totalMins+=info.mins;
+                }
+                
+                const row=document.createElement('div');
+                row.className='row data';
+                row.setAttribute('data-shift-key', key);
+                
+                const checkbox = document.createElement('input');
+                checkbox.type = 'checkbox';
+                checkbox.checked = isSelected;
+                checkbox.style.cursor = 'pointer';
+                checkbox.onchange = function() {
+                    if (this.checked) {
+                        selectedShifts.add(key);
+                    } else {
+                        selectedShifts.delete(key);
+                    }
+                    renderStats(acc); // Re-renderizar para actualizar el global
+                };
+                
+                const checkboxCell = document.createElement('div');
+                checkboxCell.className = 'center';
+                checkboxCell.appendChild(checkbox);
+                
+                const badgeCell = document.createElement('div');
+                badgeCell.innerHTML = `<span class="badge" style="background:${color}">${text}</span>`;
+                
+                const countCell = document.createElement('div');
+                countCell.className = 'center';
+                countCell.textContent = info.count;
+                
+                const timeCell = document.createElement('div');
+                timeCell.className = 'center';
+                timeCell.textContent = asHhMm(info.mins);
+                
+                row.appendChild(badgeCell);
+                row.appendChild(countCell);
+                row.appendChild(timeCell);
+                row.appendChild(checkboxCell);
+                
                 table.appendChild(row);
             });
             document.getElementById('statsGlobal').textContent=`Global: ${totalCount} Turnos ${asHhMm(totalMins)}`;
@@ -358,16 +407,36 @@
             renderNearNotes(map);
             let acc = statsCache.get(key)?.acc;
             if (!acc){ acc = computeStats(map); const ref=statsCache.get(key); if (ref) ref.acc=acc; }
+            // Limpiar selecciones si cambió el rango (nueva clave) y reinicializar con todos los turnos
+            const currentKey = cacheKey(d1,d2);
+            const lastKey = localStorage.getItem('lastStatsKey');
+            if (lastKey !== currentKey) {
+                selectedShifts.clear();
+                localStorage.setItem('lastStatsKey', currentKey);
+            }
             renderStats(acc);
             populateIconsFromMap(map);
             populateShiftAndUsersFromMap(map);
         }
 
-        function activateTabs(){
+        function togglePastNext(isPast){
             const tabPast=document.getElementById('tabPast');
             const tabNext=document.getElementById('tabNext');
-            tabPast.onclick=()=>{ tabPast.classList.add('active'); tabNext.classList.remove('active'); refreshAll(currentFrom,currentTo); };
-            tabNext.onclick=()=>{ tabNext.classList.add('active'); tabPast.classList.remove('active'); refreshAll(currentFrom,currentTo); };
+            if (isPast) {
+                tabPast.classList.add('active');
+                tabNext.classList.remove('active');
+            } else {
+                tabNext.classList.add('active');
+                tabPast.classList.remove('active');
+            }
+            refreshAll(currentFrom,currentTo);
+        }
+
+        function activateTabs(){
+            // Los botones ya tienen onclick en el HTML, pero mantenemos compatibilidad
+            const tabPast=document.getElementById('tabPast');
+            const tabNext=document.getElementById('tabNext');
+            // Ya están configurados con onclick en HTML, así que solo refrescamos si es necesario
 
             document.getElementById('searchBtn').onclick=()=>{
                 const q=document.getElementById('searchInput').value.trim().toLowerCase();
@@ -387,7 +456,13 @@
                 const shiftWanted = document.getElementById('shiftFilter').value; // shiftId o texto
                 const userWanted = document.getElementById('userFilter').value; // userId
                 const out = document.getElementById('iconSearchResult');
-                if (!icon){ out.textContent='Selecciona un icono para buscar'; return; }
+                const outEmpty = document.getElementById('iconSearchResultEmpty');
+                if (!icon){ 
+                    out.style.display = 'none';
+                    outEmpty.style.display = 'block';
+                    outEmpty.textContent='Selecciona un icono para buscar'; 
+                    return; 
+                }
                 const now=new Date();
                 const from = pastTgl.checked? addDays(now,-365) : now;
                 const to = addDays(now, 365);
@@ -401,14 +476,119 @@
                         const hasShift = es.some(ev => ev.type!=='note' && (ev.shiftId===shiftWanted || ev.text===shiftWanted));
                         if (!hasShift) return;
                     }
-                    hits.push(k);
+                    hits.push({dateKey: k, events: es});
                 });
-                if (hits.length===0){ out.textContent='No se han encontrado días con el icono seleccionado'; return; }
+                if (hits.length===0){ 
+                    out.style.display = 'none';
+                    outEmpty.style.display = 'block';
+                    outEmpty.textContent='No se han encontrado días con el icono seleccionado'; 
+                    return; 
+                }
+                outEmpty.style.display = 'none';
+                out.style.display = 'block';
                 out.innerHTML='';
-                hits.sort().forEach(dateKey=>{
-                    const a=document.createElement('a'); a.href='#'; a.textContent=dateKey; a.style.marginRight='8px';
-                    a.onclick=(e)=>{ e.preventDefault(); localStorage.setItem('jump_to_date', dateKey); window.location.href='calendar.html'; };
-                    out.appendChild(a);
+                
+                // Ordenar por fecha
+                hits.sort((a,b)=> a.dateKey.localeCompare(b.dateKey));
+                
+                hits.forEach(({dateKey, events})=>{
+                    const dateObj = parseKey(dateKey);
+                    const day = String(dateObj.getDate()).padStart(2, '0');
+                    const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+                    const year = String(dateObj.getFullYear()).slice(-2);
+                    const dateStr = `${day}/${month}/${year}`;
+                    
+                    const item = document.createElement('div');
+                    item.className = 'result-item';
+                    
+                    const dateDiv = document.createElement('div');
+                    dateDiv.className = 'result-date';
+                    dateDiv.textContent = dateStr;
+                    dateDiv.onclick = () => {
+                        localStorage.setItem('jump_to_date', dateKey);
+                        window.location.href = 'calendar.html';
+                    };
+                    
+                    item.appendChild(dateDiv);
+                    
+                    // Obtener todos los eventos del día (turnos, notas, eventos personalizados)
+                    const allEvents = events.filter(e => {
+                        // Incluir todos los eventos excepto notas vacías, pero mostrar notas si tienen texto
+                        return true;
+                    });
+                    
+                    // Primero mostrar turnos y eventos (no notas)
+                    const nonNoteEvents = allEvents.filter(e => e.type !== 'note');
+                    // Luego mostrar notas con texto
+                    const notesWithText = allEvents.filter(e => e.type === 'note' && e.text && e.text.trim());
+                    
+                    // Combinar: primero eventos, luego notas
+                    const displayEvents = [...nonNoteEvents, ...notesWithText];
+                    
+                    if (displayEvents.length > 0) {
+                        displayEvents.forEach(event => {
+                            const eventDiv = document.createElement('div');
+                            eventDiv.className = 'result-event';
+                            
+                            let eventText = event.text || '';
+                            let timeStr = '';
+                            
+                            // Si el texto ya contiene una hora (formato HH:MM o H:MM), extraerla
+                            const timeInText = eventText.match(/\b(\d{1,2}):(\d{2})\b/);
+                            if (timeInText) {
+                                // El texto ya contiene la hora, usarlo directamente
+                                eventDiv.textContent = eventText;
+                                item.appendChild(eventDiv);
+                                return;
+                            }
+                            
+                            // Buscar el template del turno para obtener información
+                            const tmpl = shiftTemplates.find(t => 
+                                t.id === event.shiftId || 
+                                t.name === event.text || 
+                                t.abbreviation === event.text
+                            );
+                            
+                            // Si el evento tiene timeSlots, usar la primera hora de inicio
+                            if (tmpl && Array.isArray(tmpl.timeSlots) && tmpl.timeSlots.length > 0) {
+                                const firstSlot = tmpl.timeSlots[0];
+                                if (firstSlot.startTime) {
+                                    timeStr = firstSlot.startTime;
+                                }
+                            }
+                            
+                            // Si el evento tiene una propiedad time o startTime, usarla
+                            if (event.time) {
+                                timeStr = event.time;
+                            } else if (event.startTime) {
+                                timeStr = event.startTime;
+                            }
+                            
+                            // Formatear la hora si existe
+                            if (timeStr) {
+                                const timeMatch = timeStr.match(/(\d{1,2}):(\d{2})/);
+                                if (timeMatch) {
+                                    const hours = parseInt(timeMatch[1]).toString().padStart(2, '0');
+                                    const minutes = timeMatch[2];
+                                    timeStr = `${hours}:${minutes}`;
+                                    eventText += (eventText ? ' ' : '') + timeStr;
+                                } else {
+                                    eventText += (eventText ? ' ' : '') + timeStr;
+                                }
+                            }
+                            
+                            eventDiv.textContent = eventText || 'Evento';
+                            item.appendChild(eventDiv);
+                        });
+                    } else {
+                        // Si no hay eventos, mostrar un mensaje genérico
+                        const eventDiv = document.createElement('div');
+                        eventDiv.className = 'result-event';
+                        eventDiv.textContent = 'Sin eventos';
+                        item.appendChild(eventDiv);
+                    }
+                    
+                    out.appendChild(item);
                 });
             }
             iconBtn.onclick=()=>{ saveFilters(); searchByIcon(); };
