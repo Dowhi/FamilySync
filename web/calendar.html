@@ -2,15 +2,26 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <!-- Meta tags iOS para modo standalone -->
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="FamilySync">
-    <meta name="theme-color" content="#1B5E20">
+    <meta name="apple-touch-fullscreen" content="yes">
     <meta name="mobile-web-app-capable" content="yes">
+    <meta name="theme-color" content="#1B5E20">
+    <meta name="format-detection" content="telephone=no">
+    <meta name="apple-touch-startup-image" content="icons/Icon-512.png">
+    
     <title>Calendario - FamilySync</title>
+    
+    <!-- Manifest para PWA -->
     <link rel="manifest" href="manifest.json">
+    
+    <!-- Iconos iOS -->
     <link rel="apple-touch-icon" href="icons/Icon-192.png">
+    <link rel="apple-touch-icon" sizes="192x192" href="icons/Icon-192.png">
+    <link rel="apple-touch-icon" sizes="512x512" href="icons/Icon-512.png">
     
     <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
@@ -1906,6 +1917,27 @@
     </div>
 
     <script>
+        // ============================================
+        // DETECCIÓN DE PLATAFORMA (CRÍTICO PARA iOS)
+        // ============================================
+        // Estas variables DEBEN estar al inicio para detectar iOS standalone correctamente
+        const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+        const isAndroid = /Android/i.test(navigator.userAgent);
+        
+        // Detectar si está en modo standalone (PWA instalada) - IMPORTANTE para iOS
+        // iOS usa window.navigator.standalone, Android usa display-mode
+        const isStandaloneMode = (window.navigator.standalone === true) ||
+                                window.matchMedia('(display-mode: standalone)').matches ||
+                                document.referrer.includes('android-app://');
+        
+        // Log para debugging
+        if (isIOS) {
+            console.log('📱 iOS detectado');
+            console.log('📱 Navigator standalone:', window.navigator.standalone);
+            console.log('📱 Modo standalone detectado:', isStandaloneMode);
+        }
+        
         // Estado global
         let currentDate = new Date();
         let currentUserId = 1;
@@ -2093,8 +2125,23 @@
         }
 
         // Inicializar
+        // Flag para evitar inicialización múltiple
+        let isInitialized = false;
+        
         async function init() {
+            // Evitar inicialización múltiple
+            if (isInitialized) {
+                console.log('⚠️ Calendario ya inicializado, omitiendo...');
+                return;
+            }
+            isInitialized = true;
+            window.calendarInitialized = true;
+            
             console.log('📅 Inicializando calendario...');
+            console.log('📱 Modo standalone:', isStandaloneMode);
+            console.log('📱 iOS detectado:', isIOS);
+            console.log('📱 Android detectado:', isAndroid);
+            
             // Aplicar tema y configuración persistida
             applySettings();
             
@@ -4161,11 +4208,6 @@
 
         // Variables para alarmas
         let alarms = [];
-        
-        // Detectar dispositivo móvil
-        const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
-        const isAndroid = /Android/i.test(navigator.userAgent);
 
         // Cargar alarmas desde Firebase
         async function loadAlarms() {
@@ -4526,7 +4568,7 @@
             });
             
             // Verificar si ya está instalada
-            if (window.matchMedia('(display-mode: standalone)').matches) {
+            if (isStandaloneMode || window.matchMedia('(display-mode: standalone)').matches) {
                 console.log('✅ App ya está instalada como PWA');
                 hideAndroidInstallButton();
             }
@@ -4597,8 +4639,9 @@
         // Verificar si la app está instalada como PWA
         function checkPWAInstallation() {
             // Verificar si se está ejecutando en modo standalone (PWA instalada)
-            const isStandalone = window.matchMedia('(display-mode: standalone)').matches ||
-                                window.navigator.standalone ||
+            const isStandalone = isStandaloneMode || 
+                                window.matchMedia('(display-mode: standalone)').matches ||
+                                (window.navigator.standalone === true) ||
                                 document.referrer.includes('android-app://');
             
             if (isStandalone) {
@@ -5237,8 +5280,13 @@
             await openDayModal(selectedDate); // Refrescar modal
         }
 
-        // Volver a selector de usuarios
+        // Volver a selector de usuarios (solo si NO está en modo standalone)
         function goBack() {
+            // En modo standalone de iOS, no redirigir (podría causar que se abra Safari)
+            if (isIOS && isStandaloneMode) {
+                console.log('⚠️ En modo standalone, no se puede redirigir a iphone.html');
+                return;
+            }
             window.location.href = 'iphone.html';
         }
 
@@ -5261,7 +5309,38 @@
         }
 
         // Inicializar cuando cargue la página
-        window.addEventListener('load', init);
+        // IMPORTANTE: Para iOS standalone, evitar cualquier retraso o redirección
+        // Verificar modo standalone ANTES de cualquier otra cosa
+        (function() {
+            // Si estamos en iOS standalone, inicializar inmediatamente
+            if (isIOS && (window.navigator.standalone === true)) {
+                console.log('🚀 iOS Standalone detectado - inicializando inmediatamente');
+                // Inicializar lo antes posible
+                if (document.readyState === 'loading') {
+                    document.addEventListener('DOMContentLoaded', () => {
+                        setTimeout(init, 0);
+                    });
+                } else {
+                    setTimeout(init, 0);
+                }
+                return;
+            }
+            
+            // Para otros casos, usar la inicialización normal
+            if (document.readyState === 'complete' || document.readyState === 'interactive') {
+                setTimeout(init, 0);
+            } else {
+                document.addEventListener('DOMContentLoaded', init);
+            }
+            
+            // También escuchar el evento load como backup
+            window.addEventListener('load', () => {
+                if (!window.calendarInitialized && !isInitialized) {
+                    window.calendarInitialized = true;
+                    init();
+                }
+            }, { once: true });
+        })();
 
         // Asegurar que los botones de acción sean visibles
         window.addEventListener('DOMContentLoaded', () => {

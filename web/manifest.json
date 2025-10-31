@@ -2,6 +2,20 @@
     "name": "Calendario Familiar",
     "short_name": "Calendario",
     "start_url": "./calendar.html",
+    "shortcuts": [
+        {
+            "name": "Calendario",
+            "short_name": "Calendario",
+            "description": "Abrir calendario",
+            "url": "./calendar.html",
+            "icons": [
+                {
+                    "src": "icons/Icon-192.png",
+                    "sizes": "192x192"
+                }
+            ]
+        }
+    ],
     "display": "standalone",
     "background_color": "#1B5E20",
     "theme_color": "#1B5E20",
