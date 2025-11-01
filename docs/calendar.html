@@ -201,15 +201,11 @@
         .calendar-grid {
             display: grid;
             grid-template-columns: repeat(7, 1fr);
+            grid-auto-rows: 1fr;
             gap: 0;
             margin-bottom: 0;
             flex: 1;
             height: 100%;
-        }
-
-        /* Celdas más altas cuando el mes sólo ocupa 5 semanas */
-        .calendar-grid.five-weeks .calendar-day {
-            height: calc((100vh - 145px) / 5);
         }
 
         .weekday-header {
@@ -218,7 +214,7 @@
             font-size: 10px;
             font-weight: 600;
             color: #666;
-            height: 18px;
+            min-height: 16px;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -236,7 +232,7 @@
             cursor: pointer;
             transition: all 0.2s;
             overflow: hidden;
-            height: calc((100vh - 145px) / 6);
+            /* Sin altura fija, usar flex */
             position: relative;
         }
 
@@ -3066,14 +3062,6 @@
             // Días del mes siguiente (completar sólo si necesitamos 6 semanas)
             const totalCellsUsed = adjustedStartDay + daysInMonth;
             const needsSixWeeks = totalCellsUsed > 35; // 5 semanas * 7 = 35
-
-            // Marcar el grid para ajustar alturas cuando son 5 semanas
-            const gridEl = document.getElementById('calendarGrid');
-            if (needsSixWeeks) {
-                gridEl.classList.remove('five-weeks');
-            } else {
-                gridEl.classList.add('five-weeks');
-            }
 
             if (needsSixWeeks) {
                 const remainingCells = 42 - totalCellsUsed; // completar a 6 semanas
