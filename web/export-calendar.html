@@ -290,26 +290,27 @@
             </div>
 
             <div class="export-option" onclick="selectFormat('google')">
-                <div class="export-icon">🔗</div>
+                <div class="export-icon">📥</div>
                 <div class="export-info">
-                    <div class="export-title">Google Calendar</div>
-                    <div class="export-desc">Agregar directamente a Google Calendar</div>
+                    <div class="export-title">Descargar y abrir Google Calendar</div>
+                    <div class="export-desc">Descarga .ics y abre Google Calendar</div>
                 </div>
             </div>
 
             <div class="export-option" onclick="selectFormat('outlook')">
-                <div class="export-icon">🔗</div>
+                <div class="export-icon">📥</div>
                 <div class="export-info">
-                    <div class="export-title">Outlook Web</div>
-                    <div class="export-desc">Agregar a Outlook.com</div>
+                    <div class="export-title">Descargar y abrir Outlook</div>
+                    <div class="export-desc">Descarga .ics y abre Outlook.com</div>
                 </div>
             </div>
 
             <div class="info-box" style="margin-top: 12px;">
-                <div class="info-box-title">💡 Tip</div>
-                <div class="info-box-text">
-                    El formato .ics es compatible con la mayoría de aplicaciones de calendario.
-                    Guarda el archivo y ábrelo con tu aplicación favorita.
+                <div class="info-box-title">📋 ¿Cómo importar?</div>
+                <div class="info-box-text" style="font-size: 11px; line-height: 1.5;">
+                    <strong>Google Calendar:</strong> Menú ⚙️ → "Importar y exportar" → Selecciona el archivo .ics<br>
+                    <strong>Outlook:</strong> "Agregar calendario" → "Subir desde archivo" → Selecciona el .ics<br>
+                    <strong>Apple Calendar:</strong> Doble clic en el archivo .ics descargado
                 </div>
             </div>
         </div>
@@ -429,11 +430,20 @@
 
             try {
                 if (selectedFormat === 'ics') {
-                    await exportICS(startDate, endDate);
+                    await exportICS(startDate, endDate, false);
                 } else if (selectedFormat === 'google') {
-                    window.open(`https://calendar.google.com/calendar/u/0/r/customday`);
+                    await exportICS(startDate, endDate, true);
+                    // Dar tiempo para descargar y luego abrir Google Calendar
+                    setTimeout(() => {
+                        window.open(`https://calendar.google.com/calendar/u/0`);
+                        alert('📥 1. Descarga el archivo .ics\n2. Abre Google Calendar\n3. Clic en "⚙️ Configuración" → "Importar y exportar"\n4. Selecciona el archivo descargado');
+                    }, 500);
                 } else if (selectedFormat === 'outlook') {
-                    window.open('https://outlook.live.com/calendar/0/addcalendar');
+                    await exportICS(startDate, endDate, true);
+                    setTimeout(() => {
+                        window.open('https://outlook.live.com/calendar');
+                        alert('📥 1. Descarga el archivo .ics\n2. Abre Outlook.com\n3. Clic en "Agregar calendario" → "Subir desde archivo"\n4. Selecciona el archivo descargado');
+                    }, 500);
                 }
             } catch (error) {
                 console.error('Error exportando:', error);
@@ -441,7 +451,7 @@
             }
         }
 
-        async function exportICS(startDate, endDate) {
+        async function exportICS(startDate, endDate, silent = false) {
             try {
                 const start = new Date(startDate + 'T00:00:00');
                 const end = new Date(endDate + 'T23:59:59');
@@ -511,7 +521,9 @@ END:VEVENT
                 document.body.removeChild(a);
                 URL.revokeObjectURL(url);
                 
-                alert('✅ Calendario exportado exitosamente');
+                if (!silent) {
+                    alert('✅ Calendario exportado exitosamente');
+                }
             } catch (error) {
                 console.error('Error generando .ics:', error);
                 alert('❌ Error al generar archivo .ics');
