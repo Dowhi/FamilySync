@@ -3005,7 +3005,14 @@
                             const lineUserColor = getUserColor(note.userId);
                             const noteTextEl = document.createElement('div');
                             noteTextEl.className = 'note-text';
-                            noteTextEl.textContent = line;
+                            
+                            // Agregar hora a la primera línea si existe
+                            let displayText = line;
+                            if (index === 0 && note.time) {
+                                displayText = `🕐 ${note.time} ${line}`;
+                            }
+                            
+                            noteTextEl.textContent = displayText;
                             // Usar el tamaño guardado en la nota o el por defecto
                             const noteFontSize = note.textSize || 11;
                             const fontSize = index === 0 ? noteFontSize : noteFontSize * 0.85;
@@ -3525,7 +3532,14 @@
                             const lineUserColor = getUserColor(note.userId);
                             const noteTextEl = document.createElement('div');
                             noteTextEl.className = 'note-text';
-                            noteTextEl.textContent = line;
+                            
+                            // Agregar hora a la primera línea si existe
+                            let displayText = line;
+                            if (index === 0 && note.time) {
+                                displayText = `🕐 ${note.time} ${line}`;
+                            }
+                            
+                            noteTextEl.textContent = displayText;
                             // Usar el tamaño guardado en la nota o el por defecto
                             const noteFontSize = note.textSize || 11;
                             const fontSize = index === 0 ? noteFontSize : noteFontSize * 0.85;
