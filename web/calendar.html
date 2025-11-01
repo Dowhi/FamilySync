@@ -3337,8 +3337,39 @@
                     `;
                     dayEl.appendChild(text2);
                     
+                } else if (shifts.length === 3) {
+                    // Tres turnos: dividir en tres bandas
+                    const [s1, s2, s3] = shifts;
+                    const t1 = getTemplateForEvent(s1);
+                    const t2 = getTemplateForEvent(s2);
+                    const t3 = getTemplateForEvent(s3);
+                    const c1 = t1 ? (t1.backgroundColor || t1.colorHex || t1.color) : (s1.userColor || getUserColor(s1.userId));
+                    const c2 = t2 ? (t2.backgroundColor || t2.colorHex || t2.color) : (s2.userColor || getUserColor(s2.userId));
+                    const c3 = t3 ? (t3.backgroundColor || t3.colorHex || t3.color) : (s3.userColor || getUserColor(s3.userId));
+                    
+                    dayEl.style.background = `linear-gradient(to bottom, ${c1} 33.333%, ${c2} 33.333% 66.666%, ${c3} 66.666%)`;
+                    
+                    // Número del día sin fondo, con sombra para contraste
+                    numberEl.style.backgroundColor = 'transparent';
+                    numberEl.style.padding = '0';
+                    numberEl.style.borderRadius = '0';
+                    numberEl.style.color = '#ffffff';
+                    numberEl.style.textShadow = '0 1px 3px rgba(0,0,0,0.6)';
+                    
+                    const mk = (txt, top, tmpl) => {
+                        const el = document.createElement('div');
+                        el.className = 'shift-text-third';
+                        el.textContent = txt;
+                        const fontSize = getShiftFontSize(tmpl, 11);
+                        el.style.cssText = `position:absolute; top:${top}%; left:50%; transform:translate(-50%,-50%); color:white; font-weight:700; font-size:${fontSize}px; white-space:nowrap; z-index:10;`;
+                        dayEl.appendChild(el);
+                    };
+                    mk(t1 ? (t1.abbreviation || t1.name) : s1.text, 16.5, t1);
+                    mk(t2 ? (t2.abbreviation || t2.name) : s2.text, 50, t2);
+                    mk(t3 ? (t3.abbreviation || t3.name) : s3.text, 83.5, t3);
+                    
                 } else {
-                    // Más de dos turnos: mostrar los primeros tres
+                    // Más de tres turnos: mostrar los primeros tres como badges
                     shifts.slice(0, 3).forEach((event, index) => {
                         const template = getTemplateForEvent(event);
                         const color = template ? (template.backgroundColor || template.colorHex || template.color) : 
