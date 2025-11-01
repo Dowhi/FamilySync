@@ -5361,7 +5361,7 @@
                     }
                 } else {
                     // Crear o actualizar la nota del usuario actual
-                    // Preservar textSize y alarmas existentes si existen
+                    // Preservar textSize, alarmas y hora existentes si existen
                     const existingNote = existingNoteIndex !== -1 ? existingEvents[existingNoteIndex] : null;
                     const noteEvent = {
                         text: mainText.trim(),
@@ -5374,7 +5374,9 @@
                         // Preservar textSize si existe, si no usar el por defecto
                         textSize: existingNote && existingNote.textSize ? existingNote.textSize : 11,
                         // Preservar alarmas si existen
-                        alarms: existingNote && existingNote.alarms && Array.isArray(existingNote.alarms) ? existingNote.alarms : []
+                        alarms: existingNote && existingNote.alarms && Array.isArray(existingNote.alarms) ? existingNote.alarms : [],
+                        // Preservar hora si existe
+                        time: existingNote && existingNote.time ? existingNote.time : undefined
                     };
                     
                     if (existingNoteIndex !== -1) {
