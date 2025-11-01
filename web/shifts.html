@@ -122,11 +122,30 @@
             align-items: center;
             gap: 16px;
             transition: all 0.2s;
+            cursor: move;
+            position: relative;
         }
 
         .shift-item:active {
             background: #3a3a3a;
             transform: scale(0.98);
+        }
+
+        .shift-item.dragging {
+            opacity: 0.5;
+        }
+
+        .drag-handle {
+            cursor: grab;
+            font-size: 20px;
+            color: #888;
+            padding: 4px;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        .drag-handle:active {
+            cursor: grabbing;
         }
 
         .shift-color {
@@ -433,6 +452,23 @@
                     const snapshot = await db.collection('shifts').get();
                     shifts = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                     
+                    // Asegurar que todos los turnos tengan un campo 'order'
+                    let needsUpdate = false;
+                    shifts.forEach((shift, index) => {
+                        if (typeof shift.order === 'undefined') {
+                            shift.order = index;
+                            needsUpdate = true;
+                        }
+                    });
+                    
+                    // Si faltaban orders, guardar actualizaciones
+                    if (needsUpdate) {
+                        await saveShiftsToFirebase();
+                    }
+                    
+                    // Ordenar por el campo 'order'
+                    shifts.sort((a, b) => (a.order || 0) - (b.order || 0));
+                    
                     if (shifts.length === 0) {
                         // Si no hay turnos en Firebase, usar los predefinidos
                         shifts = [...defaultShifts];
@@ -485,9 +521,14 @@
                 return;
             }
 
-            shifts.forEach(shift => {
+            shifts.forEach((shift, index) => {
                 const shiftEl = document.createElement('div');
                 shiftEl.className = 'shift-item';
+                shiftEl.draggable = true;
+                shiftEl.dataset.shiftId = shift.id;
+                shiftEl.dataset.index = index;
+                
+                // Click para editar
                 shiftEl.onclick = () => editShift(shift);
 
                 // Determinar el color del turno
@@ -503,6 +544,7 @@
                 }
 
                 shiftEl.innerHTML = `
+                    <div class="drag-handle">☰</div>
                     <div class="shift-color" style="background-color: ${backgroundColor}; color: ${shift.textColor || 'white'}; font-size: ${shift.textSize || '12'}px">
                         ${shift.abbreviation || shift.name || 'Turno'}
                     </div>
@@ -515,7 +557,70 @@
                     </button>
                 `;
 
+                // Event listeners para drag and drop
+                shiftEl.addEventListener('dragstart', (e) => handleDragStart(e, shiftEl));
+                shiftEl.addEventListener('dragover', (e) => handleDragOver(e, shiftEl));
+                shiftEl.addEventListener('drop', (e) => handleDrop(e, shiftEl));
+                shiftEl.addEventListener('dragend', (e) => handleDragEnd(e, shiftEl));
+
                 container.appendChild(shiftEl);
+            });
+        }
+
+        // Drag and Drop handlers
+        let draggedElement = null;
+        
+        function handleDragStart(e, element) {
+            draggedElement = element;
+            element.classList.add('dragging');
+            e.dataTransfer.effectAllowed = 'move';
+            e.dataTransfer.setData('text/html', element.innerHTML);
+        }
+        
+        function handleDragOver(e, element) {
+            if (e.preventDefault) {
+                e.preventDefault();
+            }
+            e.dataTransfer.dropEffect = 'move';
+            return false;
+        }
+        
+        function handleDrop(e, element) {
+            if (e.stopPropagation) {
+                e.stopPropagation();
+            }
+            
+            if (draggedElement !== element) {
+                const container = document.getElementById('shiftsContainer');
+                const allItems = Array.from(container.querySelectorAll('.shift-item'));
+                
+                const draggedIndex = allItems.indexOf(draggedElement);
+                const targetIndex = allItems.indexOf(element);
+                
+                // Reordenar array
+                const draggedShift = shifts[draggedIndex];
+                shifts.splice(draggedIndex, 1);
+                shifts.splice(targetIndex, 0, draggedShift);
+                
+                // Actualizar orders
+                shifts.forEach((shift, index) => {
+                    shift.order = index;
+                });
+                
+                // Guardar en Firebase
+                saveShiftsToFirebase();
+                
+                // Re-renderizar
+                renderShifts();
+            }
+            
+            return false;
+        }
+        
+        function handleDragEnd(e, element) {
+            const items = document.querySelectorAll('.shift-item');
+            items.forEach(item => {
+                item.classList.remove('dragging');
             });
         }
 
