@@ -1,0 +1,571 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="FamilySync">
+    <meta name="theme-color" content="#1B5E20">
+    <title>Vista Semanal - FamilySync</title>
+    <link rel="apple-touch-icon" href="icons/Icon-192.png">
+    
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: rgba(255, 255, 255, 0.2);
+        }
+
+        html, body {
+            height: 100%;
+            width: 100%;
+            overflow: hidden;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+        }
+
+        body {
+            background: #f5f5f5;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .header {
+            background: #1B5E20;
+            padding: 8px 12px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .nav-btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            color: white;
+            font-size: 20px;
+            cursor: pointer;
+            padding: 4px 8px;
+            border-radius: 6px;
+            transition: background 0.2s;
+        }
+
+        .nav-btn:active {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        .header-title {
+            font-size: 16px;
+            font-weight: bold;
+            color: white;
+            flex: 1;
+            text-align: center;
+        }
+
+        .view-selector {
+            background: #2196F3;
+            padding: 8px 12px;
+            display: flex;
+            gap: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .view-btn {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: white;
+            padding: 8px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .view-btn.active {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .content {
+            flex: 1;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        /* Vista de Grilla (Week Grid) */
+        .week-grid {
+            display: grid;
+            grid-template-columns: 60px repeat(7, 1fr);
+            gap: 0;
+            background: white;
+        }
+
+        .week-grid-header {
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            background: #f5f5f5;
+            border-bottom: 2px solid #ddd;
+        }
+
+        .time-column {
+            background: #f5f5f5;
+            border-right: 1px solid #ddd;
+            padding: 8px;
+            font-size: 11px;
+            color: #666;
+            text-align: center;
+        }
+
+        .day-column {
+            border-right: 1px solid #ddd;
+            padding: 4px;
+        }
+
+        .day-header {
+            background: #1B5E20;
+            color: white;
+            padding: 8px 4px;
+            text-align: center;
+            font-size: 12px;
+            font-weight: 600;
+            position: sticky;
+            top: 0;
+            z-index: 9;
+        }
+
+        .day-header.today {
+            background: #1976D2;
+        }
+
+        .day-number {
+            font-size: 14px;
+            display: block;
+        }
+
+        .day-name {
+            font-size: 10px;
+            opacity: 0.9;
+        }
+
+        .time-slot {
+            border-bottom: 1px solid #f0f0f0;
+            min-height: 50px;
+            position: relative;
+        }
+
+        .event-block {
+            position: absolute;
+            width: calc(100% - 4px);
+            left: 2px;
+            padding: 4px 6px;
+            border-radius: 4px;
+            font-size: 11px;
+            overflow: hidden;
+            cursor: pointer;
+            z-index: 1;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+        }
+
+        .event-block.shift {
+            background: linear-gradient(135deg, #4CAF50, #66BB6A);
+            color: white;
+        }
+
+        .event-block.note {
+            background: linear-gradient(135deg, #2196F3, #42A5F5);
+            color: white;
+        }
+
+        /* Vista de Lista (Agenda) */
+        .agenda-view {
+            display: none;
+        }
+
+        .agenda-view.show {
+            display: block;
+        }
+
+        .agenda-day {
+            margin-bottom: 24px;
+        }
+
+        .agenda-day-header {
+            background: white;
+            padding: 12px 16px;
+            font-size: 14px;
+            font-weight: 600;
+            color: #1B5E20;
+            border-bottom: 2px solid #1B5E20;
+            position: sticky;
+            top: 0;
+            z-index: 5;
+        }
+
+        .agenda-day-header.today {
+            background: #1976D2;
+            color: white;
+            border-bottom-color: #1976D2;
+        }
+
+        .agenda-event {
+            background: white;
+            padding: 12px 16px;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            gap: 12px;
+        }
+
+        .agenda-event:last-child {
+            border-bottom: none;
+        }
+
+        .agenda-time {
+            font-size: 13px;
+            font-weight: 600;
+            color: #666;
+            min-width: 60px;
+        }
+
+        .agenda-content {
+            flex: 1;
+        }
+
+        .agenda-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 4px;
+        }
+
+        .agenda-description {
+            font-size: 12px;
+            color: #666;
+        }
+
+        .agenda-badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 10px;
+            font-weight: 600;
+            margin-top: 4px;
+        }
+
+        .badge-shift {
+            background: #E8F5E9;
+            color: #2E7D32;
+        }
+
+        .badge-note {
+            background: #E3F2FD;
+            color: #1976D2;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: #999;
+            background: white;
+        }
+
+        .empty-state-icon {
+            font-size: 48px;
+            margin-bottom: 12px;
+        }
+
+        .empty-state-text {
+            font-size: 14px;
+        }
+
+        .stats-bar {
+            background: white;
+            padding: 8px 16px;
+            border-bottom: 1px solid #ddd;
+            font-size: 12px;
+            color: #666;
+            display: flex;
+            justify-content: space-between;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <div class="header">
+        <button class="nav-btn" onclick="previousWeek()">‹</button>
+        <div class="header-title" id="weekTitle"></div>
+        <button class="nav-btn" onclick="nextWeek()">›</button>
+    </div>
+
+    <!-- View Selector -->
+    <div class="view-selector">
+        <button class="view-btn active" onclick="switchView('grid')">📅 Grilla</button>
+        <button class="view-btn" onclick="switchView('agenda')">📋 Agenda</button>
+    </div>
+
+    <!-- Stats Bar -->
+    <div class="stats-bar" id="statsBar">
+        <span>Total: <strong id="totalEvents">0</strong> eventos</span>
+        <span id="weekRange"></span>
+    </div>
+
+    <!-- Content -->
+    <div class="content">
+        <!-- Vista de Grilla -->
+        <div id="weekGrid" class="week-grid"></div>
+
+        <!-- Vista de Agenda -->
+        <div id="agendaView" class="agenda-view"></div>
+    </div>
+
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyB5vvp7IQOZLO7LlsUY_Wq-H8M_5PH3ZQE",
+            authDomain: "apptaxi-f2190.firebaseapp.com",
+            projectId: "apptaxi-f2190",
+            storageBucket: "apptaxi-f2190.firebasestorage.app",
+            messagingSenderId: "804273724178",
+            appId: "1:804273724178:web:c5955a1f657884c0e7f1cb",
+            measurementId: "G-3D8R30TYTM"
+        };
+
+        let db;
+        let currentWeek = new Date();
+        let events = {};
+        let currentView = 'grid';
+
+        function init() {
+            try {
+                firebase.initializeApp(firebaseConfig);
+                db = firebase.firestore();
+                console.log('✅ Firebase inicializado');
+                
+                loadWeekEvents();
+                db.collection('calendar_events').onSnapshot(loadWeekEvents);
+            } catch (error) {
+                console.error('❌ Error inicializando Firebase:', error);
+            }
+        }
+
+        function switchView(view) {
+            currentView = view;
+            document.querySelectorAll('.view-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+            
+            document.getElementById('weekGrid').style.display = view === 'grid' ? 'grid' : 'none';
+            document.getElementById('agendaView').classList.toggle('show', view === 'agenda');
+            
+            renderView();
+        }
+
+        async function loadWeekEvents() {
+            try {
+                const snapshot = await db.collection('calendar_events').get();
+                events = {};
+                
+                snapshot.forEach(doc => {
+                    const data = doc.data();
+                    const dayEvents = data.events || [];
+                    events[doc.id] = dayEvents;
+                });
+                
+                renderView();
+            } catch (error) {
+                console.error('Error cargando eventos:', error);
+            }
+        }
+
+        function renderView() {
+            if (currentView === 'grid') {
+                renderGridView();
+            } else {
+                renderAgendaView();
+            }
+            updateWeekInfo();
+        }
+
+        function renderGridView() {
+            const container = document.getElementById('weekGrid');
+            
+            // Calcular días de la semana
+            const weekDays = getWeekDays(currentWeek);
+            const hours = Array.from({ length: 24 }, (_, i) => i);
+            
+            let html = '<div class="week-grid-header"></div>';
+            
+            // Headers de días
+            weekDays.forEach(day => {
+                const isToday = isSameDay(day, new Date());
+                html += `<div class="day-header ${isToday ? 'today' : ''}">
+                    <span class="day-number">${day.getDate()}</span>
+                    <span class="day-name">${getDayName(day)}</span>
+                </div>`;
+            });
+            
+            // Filas de horas
+            hours.forEach(hour => {
+                html += `<div class="time-column">${hour}:00</div>`;
+                
+                weekDays.forEach(day => {
+                    const dateKey = formatDateKey(day);
+                    const dayEvents = events[dateKey] || [];
+                    const hourEvents = dayEvents.filter(evt => {
+                        if (!evt.time) return false;
+                        const [h] = evt.time.split(':');
+                        return parseInt(h) === hour;
+                    });
+                    
+                    html += `<div class="time-slot">
+                        ${hourEvents.map(evt => `<div class="event-block ${evt.type}" style="top: ${calculateTop(evt.time)}px">
+                            ${evt.shiftName || evt.text?.substring(0, 15) || 'Evento'}
+                        </div>`).join('')}
+                    </div>`;
+                });
+            });
+            
+            container.innerHTML = html;
+        }
+
+        function renderAgendaView() {
+            const container = document.getElementById('agendaView');
+            const weekDays = getWeekDays(currentWeek);
+            
+            let html = '';
+            let totalEvents = 0;
+            
+            weekDays.forEach(day => {
+                const dateKey = formatDateKey(day);
+                const dayEvents = events[dateKey] || [];
+                const isToday = isSameDay(day, new Date());
+                
+                if (dayEvents.length === 0) return;
+                
+                totalEvents += dayEvents.length;
+                
+                html += `<div class="agenda-day">
+                    <div class="agenda-day-header ${isToday ? 'today' : ''}">
+                        ${formatDayHeader(day)}
+                    </div>`;
+                
+                dayEvents.forEach(evt => {
+                    const badgeClass = evt.type === 'shift' ? 'badge-shift' : 'badge-note';
+                    const timeDisplay = evt.time || 'Todo el día';
+                    const title = evt.shiftName || evt.text?.substring(0, 50) || 'Evento';
+                    
+                    html += `<div class="agenda-event">
+                        <div class="agenda-time">${timeDisplay}</div>
+                        <div class="agenda-content">
+                            <div class="agenda-title">${title}</div>
+                            ${evt.text ? `<div class="agenda-description">${evt.text.substring(0, 100)}</div>` : ''}
+                            <span class="agenda-badge ${badgeClass}">${evt.type === 'shift' ? 'Turno' : 'Nota'}</span>
+                        </div>
+                    </div>`;
+                });
+                
+                html += '</div>';
+            });
+            
+            if (html === '') {
+                html = `<div class="empty-state">
+                    <div class="empty-state-icon">📭</div>
+                    <div class="empty-state-text">No hay eventos esta semana</div>
+                </div>`;
+            }
+            
+            container.innerHTML = html;
+            document.getElementById('totalEvents').textContent = totalEvents;
+        }
+
+        function getWeekDays(weekStart) {
+            const days = [];
+            const start = new Date(weekStart);
+            start.setDate(start.getDate() - start.getDay()); // Domingo
+            
+            for (let i = 0; i < 7; i++) {
+                const day = new Date(start);
+                day.setDate(start.getDate() + i);
+                days.push(day);
+            }
+            
+            return days;
+        }
+
+        function formatDayHeader(date) {
+            const days = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
+            const months = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+            const isToday = isSameDay(date, new Date());
+            return `${days[date.getDay()]}, ${date.getDate()} ${months[date.getMonth()]} ${isToday ? '• HOY' : ''}`;
+        }
+
+        function getDayName(date) {
+            const names = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
+            return names[date.getDay()];
+        }
+
+        function formatDateKey(date) {
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        }
+
+        function isSameDay(d1, d2) {
+            return d1.getDate() === d2.getDate() &&
+                   d1.getMonth() === d2.getMonth() &&
+                   d1.getFullYear() === d2.getFullYear();
+        }
+
+        function calculateTop(time) {
+            if (!time) return 0;
+            const [hours, minutes] = time.split(':');
+            return (parseInt(hours) * 50) + (parseInt(minutes) * 50 / 60);
+        }
+
+        function previousWeek() {
+            currentWeek.setDate(currentWeek.getDate() - 7);
+            renderView();
+        }
+
+        function nextWeek() {
+            currentWeek.setDate(currentWeek.getDate() + 7);
+            renderView();
+        }
+
+        function updateWeekInfo() {
+            const weekDays = getWeekDays(currentWeek);
+            const start = weekDays[0];
+            const end = weekDays[6];
+            
+            document.getElementById('weekTitle').textContent = 
+                `${start.getDate()}/${start.getMonth()+1} - ${end.getDate()}/${end.getMonth()+1}`;
+            
+            document.getElementById('weekRange').textContent = 
+                `Semana ${getWeekNumber(currentWeek)}`;
+        }
+
+        function getWeekNumber(date) {
+            const d = new Date(date);
+            d.setHours(0, 0, 0, 0);
+            d.setDate(d.getDate() + 3 - (d.getDay() + 6) % 7);
+            const week1 = new Date(d.getFullYear(), 0, 4);
+            return 1 + Math.round(((d - week1) / 86400000 + week1.getDay() + 1) / 7);
+        }
+
+        function goBack() {
+            window.location.href = 'calendar.html';
+        }
+
+        init();
+    </script>
+</body>
+</html>
+
