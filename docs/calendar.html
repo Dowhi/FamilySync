@@ -1091,6 +1091,37 @@
             box-shadow: 0 2px 4px rgba(0,0,0,0.2);
         }
 
+        /* Campo de Hora */
+        .notes-time-container {
+            padding: 0 20px 16px;
+            background: white;
+            flex-shrink: 0;
+        }
+
+        .notes-time-label {
+            display: block;
+            font-size: 12px;
+            font-weight: 600;
+            color: #666;
+            margin-bottom: 8px;
+        }
+
+        .notes-time-input {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 14px;
+            font-family: inherit;
+            background: white;
+        }
+
+        .notes-time-input:focus {
+            outline: none;
+            border-color: #00BCD4;
+            box-shadow: 0 0 0 2px rgba(0, 188, 212, 0.1);
+        }
+
         /* Botones de formato */
         .notes-format-buttons {
             display: flex;
@@ -1898,6 +1929,12 @@
                     <span class="notes-text-size-value" id="notesTextSizeValue">11</span>
                     <input type="range" id="notesTextSizeSlider" min="8" max="16" value="11" step="1" oninput="updateNotesTextSize(this.value)" class="notes-text-size-slider">
                 </div>
+            </div>
+            
+            <!-- Campo de Hora (opcional) -->
+            <div class="notes-time-container">
+                <label class="notes-time-label">🕐 Hora del evento (opcional):</label>
+                <input type="time" id="notesTimeInput" class="notes-time-input" placeholder="HH:MM">
             </div>
             
             <!-- Botones de acción -->
@@ -4073,6 +4110,7 @@
         // Variables para el modal de notas
         let originalNoteText = '';
         let originalNoteTextSize = 11; // Tamaño por defecto
+        let originalNoteTime = '';
         let currentFormatState = {
             bold: false,
             italic: false,
@@ -4096,23 +4134,35 @@
                 notesTextarea.value = originalNoteText;
             }
             
-            // Cargar el tamaño de texto guardado si existe
+            // Cargar el tamaño de texto y hora guardados si existen
             if (selectedDate) {
                 try {
                     const events = await getEventsForDate(selectedDate);
                     // Buscar la nota del usuario actual
                     const note = events.find(event => event.type === 'note' && event.userId === currentUserId);
-                    if (note && note.textSize) {
-                        originalNoteTextSize = parseInt(note.textSize) || 11;
+                    if (note) {
+                        if (note.textSize) {
+                            originalNoteTextSize = parseInt(note.textSize) || 11;
+                        } else {
+                            originalNoteTextSize = 11; // Por defecto
+                        }
+                        if (note.time) {
+                            originalNoteTime = note.time;
+                        } else {
+                            originalNoteTime = '';
+                        }
                     } else {
-                        originalNoteTextSize = 11; // Por defecto
+                        originalNoteTextSize = 11;
+                        originalNoteTime = '';
                     }
                 } catch (error) {
-                    console.error('Error cargando tamaño de texto:', error);
+                    console.error('Error cargando datos de nota:', error);
                     originalNoteTextSize = 11;
+                    originalNoteTime = '';
                 }
             } else {
                 originalNoteTextSize = 11;
+                originalNoteTime = '';
             }
             
             // Actualizar el slider y el valor mostrado
@@ -4122,6 +4172,13 @@
                 slider.value = originalNoteTextSize;
                 valueDisplay.textContent = originalNoteTextSize;
                 console.log('📏 Tamaño de texto cargado:', originalNoteTextSize);
+            }
+            
+            // Actualizar el campo de hora
+            const timeInput = document.getElementById('notesTimeInput');
+            if (timeInput) {
+                timeInput.value = originalNoteTime;
+                console.log('🕐 Hora cargada:', originalNoteTime);
             }
             
             // Resetear formato
@@ -4165,11 +4222,15 @@
                 newText = notesTextarea.value || '';
             }
             
-            // Obtener el tamaño de texto seleccionado
+            // Obtener el tamaño de texto y hora seleccionados
             const slider = document.getElementById('notesTextSizeSlider');
             const textSize = slider ? parseInt(slider.value) || 11 : 11;
             
+            const timeInput = document.getElementById('notesTimeInput');
+            const noteTime = timeInput ? timeInput.value.trim() : '';
+            
             console.log('📏 Tamaño de texto seleccionado:', textSize);
+            console.log('🕐 Hora seleccionada:', noteTime);
             
             // Actualizar el textarea principal del modal de día
             document.getElementById('mainTextarea').value = newText.trim();
@@ -4195,6 +4256,7 @@
                         const noteEvent = {
                             text: newText.trim(),
                             textSize: textSize, // Guardar el tamaño del texto
+                            time: noteTime || undefined, // Guardar la hora si existe
                             userId: currentUserId,
                             userColor: getUserColor(currentUserId),
                             createdAt: existingNoteIndex !== -1 ? existingEvents[existingNoteIndex].createdAt : new Date().toISOString(),
