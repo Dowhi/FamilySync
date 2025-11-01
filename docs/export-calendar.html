@@ -470,18 +470,23 @@
                         dayEvents.forEach(evt => {
                             if (evt.type === 'shift' || evt.type === 'note') {
                                 const eventDate = new Date(docDate);
+                                let hasTime = false;
                                 
                                 // Si hay hora específica
-                                if (evt.time) {
+                                if (evt.time && evt.time.trim() !== '') {
                                     const [hours, minutes] = evt.time.split(':');
-                                    eventDate.setHours(parseInt(hours), parseInt(minutes), 0);
+                                    if (!isNaN(hours) && !isNaN(minutes)) {
+                                        eventDate.setHours(parseInt(hours), parseInt(minutes), 0);
+                                        hasTime = true;
+                                    }
                                 }
                                 
                                 events.push({
                                     start: eventDate,
-                                    end: new Date(eventDate.getTime() + 60 * 60 * 1000), // +1 hora
+                                    end: hasTime ? new Date(eventDate.getTime() + 60 * 60 * 1000) : eventDate,
                                     title: evt.shiftName || evt.text || 'Evento',
-                                    description: evt.text || ''
+                                    description: evt.text || '',
+                                    allDay: !hasTime
                                 });
                             }
                         });
@@ -499,9 +504,23 @@ METHOD:PUBLISH
                 events.forEach(evt => {
                     icsContent += `BEGIN:VEVENT
 UID:${generateUID()}
-DTSTAMP:${formatICSDate(new Date())}
+DTSTAMP:${formatICSDate(new Date())}`;
+                    
+                    if (evt.allDay) {
+                        // Evento de todo el día
+                        const nextDay = new Date(evt.start);
+                        nextDay.setDate(nextDay.getDate() + 1);
+                        icsContent += `
+DTSTART;VALUE=DATE:${formatICSDateOnly(evt.start)}
+DTEND;VALUE=DATE:${formatICSDateOnly(nextDay)}`;
+                    } else {
+                        // Evento con hora específica
+                        icsContent += `
 DTSTART:${formatICSDate(evt.start)}
-DTEND:${formatICSDate(evt.end)}
+DTEND:${formatICSDate(evt.end)}`;
+                    }
+                    
+                    icsContent += `
 SUMMARY:${escapeICS(evt.title)}
 ${evt.description ? `DESCRIPTION:${escapeICS(evt.description)}` : ''}
 END:VEVENT
@@ -538,6 +557,13 @@ END:VEVENT
             const minutes = String(date.getUTCMinutes()).padStart(2, '0');
             const seconds = String(date.getUTCSeconds()).padStart(2, '0');
             return `${year}${month}${day}T${hours}${minutes}${seconds}Z`;
+        }
+
+        function formatICSDateOnly(date) {
+            const year = date.getUTCFullYear();
+            const month = String(date.getUTCMonth() + 1).padStart(2, '0');
+            const day = String(date.getUTCDate()).padStart(2, '0');
+            return `${year}${month}${day}`;
         }
 
         function escapeICS(text) {
