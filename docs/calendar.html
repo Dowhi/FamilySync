@@ -52,18 +52,18 @@
         .header {
             background: #1B5E20;
             color: white;
-            padding: 8px 12px;
-            padding-top: max(8px, calc(env(safe-area-inset-top) + 8px));
+            padding: 4px 12px;
+            padding-top: max(4px, calc(env(safe-area-inset-top) + 4px));
             display: flex;
             align-items: center;
             justify-content: space-between;
             box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
             flex-shrink: 0;
-            min-height: 44px;
+            min-height: 36px;
         }
 
         .header-title {
-            font-size: 16px;
+            font-size: 14px;
             font-weight: 600;
         }
 
@@ -77,9 +77,9 @@
             background: rgba(255, 255, 255, 0.2);
             border: none;
             border-radius: 6px;
-            padding: 6px 10px;
+            padding: 4px 8px;
             color: white;
-            font-size: 12px;
+            font-size: 11px;
             cursor: pointer;
             transition: background 0.2s;
         }
@@ -92,16 +92,16 @@
             background: rgba(255, 255, 255, 0.2);
             border: none;
             border-radius: 6px;
-            padding: 6px;
+            padding: 4px;
             color: white;
-            font-size: 16px;
+            font-size: 14px;
             cursor: pointer;
             transition: background 0.2s;
             display: flex;
             align-items: center;
             justify-content: center;
-            width: 32px;
-            height: 32px;
+            width: 28px;
+            height: 28px;
         }
 
         .menu-btn:active {
@@ -113,7 +113,7 @@
             background: #1976D2;
             display: flex;
             flex-shrink: 0;
-            min-height: 36px;
+            min-height: 32px;
         }
 
         .tab-btn {
@@ -121,8 +121,8 @@
             background: transparent;
             border: none;
             color: white;
-            padding: 8px 6px;
-            font-size: 12px;
+            padding: 6px 4px;
+            font-size: 11px;
             font-weight: 600;
             cursor: pointer;
             transition: background 0.2s;
@@ -140,12 +140,12 @@
         /* Month Navigation */
         .month-nav {
             background: #2196F3;
-            padding: 6px 12px;
+            padding: 4px 12px;
             display: flex;
             align-items: center;
             justify-content: space-between;
             flex-shrink: 0;
-            min-height: 32px;
+            min-height: 28px;
         }
 
         .month-nav button {
@@ -168,7 +168,7 @@
         }
 
         .month-title {
-            font-size: 14px;
+            font-size: 12px;
             font-weight: 600;
             color: white;
         }
@@ -209,7 +209,7 @@
 
         /* Celdas más altas cuando el mes sólo ocupa 5 semanas */
         .calendar-grid.five-weeks .calendar-day {
-            height: calc((100vh - 190px) / 5);
+            height: calc((100vh - 145px) / 5);
         }
 
         .weekday-header {
@@ -236,7 +236,7 @@
             cursor: pointer;
             transition: all 0.2s;
             overflow: hidden;
-            height: calc((100vh - 190px) / 6);
+            height: calc((100vh - 145px) / 6);
             position: relative;
         }
 
@@ -285,13 +285,13 @@
         }
 
         .category-icon {
-            font-size: 11px;
+            font-size: 9px;
             line-height: 1;
             opacity: 1;
             background: rgba(255, 255, 255, 0.95);
-            border-radius: 3px;
-            padding: 2px 4px;
-            border: 2px solid;
+            border-radius: 2px;
+            padding: 1px 3px;
+            border: 1px solid;
             font-weight: 600;
             box-shadow: 0 1px 2px rgba(0,0,0,0.2);
         }
