@@ -317,6 +317,18 @@
             grid-template-columns: repeat(2, 1fr);
             gap: 8px;
             padding: 8px;
+            overflow-y: auto;
+            flex: 1;
+            -webkit-overflow-scrolling: touch;
+        }
+        
+        /* Vista anual permitir scroll */
+        #yearView {
+            overflow: hidden !important;
+        }
+        
+        #yearView .year-grid {
+            overflow-y: auto;
         }
         .year-month {
             background: #f5f5f5;
