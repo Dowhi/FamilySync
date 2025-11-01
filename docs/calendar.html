@@ -201,7 +201,7 @@
         .calendar-grid {
             display: grid;
             grid-template-columns: repeat(7, 1fr);
-            grid-auto-rows: 1fr;
+            /* grid-template-rows se establece dinámicamente en JS según 5 o 6 semanas */
             gap: 0;
             margin-bottom: 0;
             flex: 1;
@@ -3082,6 +3082,11 @@
                     }
                 }
             }
+            
+            // Ajustar grid-template-rows según número de semanas
+            // 7 headers + (5 o 6 semanas de días)
+            const numWeeks = needsSixWeeks ? 6 : 5;
+            container.style.gridTemplateRows = `12px repeat(${numWeeks}, 1fr)`;
             
             isRendering = false;
             
