@@ -299,8 +299,15 @@
 <body>
     <!-- Header -->
     <div class="header">
-        <button class="nav-btn" onclick="previousWeek()">‹</button>
+        <button class="nav-btn" onclick="goBack()" style="font-size: 16px;">◀ Volver</button>
         <div class="header-title" id="weekTitle"></div>
+        <div style="width: 80px;"></div>
+    </div>
+    
+    <!-- Navigation Arrows -->
+    <div class="header" style="padding: 4px 12px; background: #2196F3; justify-content: center;">
+        <button class="nav-btn" onclick="previousWeek()">‹</button>
+        <div style="flex: 1;"></div>
         <button class="nav-btn" onclick="nextWeek()">›</button>
     </div>
 
@@ -340,6 +347,7 @@
         let currentWeek = new Date();
         let events = {};
         let currentView = 'grid';
+        let shiftTemplates = [];
 
         function init() {
             try {
@@ -347,10 +355,24 @@
                 db = firebase.firestore();
                 console.log('✅ Firebase inicializado');
                 
+                loadShiftTemplates();
                 loadWeekEvents();
                 db.collection('calendar_events').onSnapshot(loadWeekEvents);
             } catch (error) {
                 console.error('❌ Error inicializando Firebase:', error);
+            }
+        }
+
+        async function loadShiftTemplates() {
+            try {
+                const snapshot = await db.collection('shifts').get();
+                shiftTemplates = snapshot.docs.map(doc => ({
+                    id: doc.id,
+                    ...doc.data()
+                }));
+                console.log('✅ Turnos cargados:', shiftTemplates.length);
+            } catch (error) {
+                console.error('Error cargando turnos:', error);
             }
         }
 
@@ -459,7 +481,17 @@
                 dayEvents.forEach(evt => {
                     const badgeClass = evt.type === 'shift' ? 'badge-shift' : 'badge-note';
                     const timeDisplay = evt.time || 'Todo el día';
-                    const title = evt.shiftName || evt.text?.substring(0, 50) || 'Evento';
+                    
+                    // Buscar nombre completo del turno si existe
+                    let title = evt.text?.substring(0, 50) || 'Evento';
+                    if (evt.type === 'shift' || evt.shiftId) {
+                        const shift = shiftTemplates.find(s => s.id === evt.shiftId);
+                        if (shift && shift.name) {
+                            title = shift.name;
+                        } else if (evt.shiftName) {
+                            title = evt.shiftName;
+                        }
+                    }
                     
                     html += `<div class="agenda-event">
                         <div class="agenda-time">${timeDisplay}</div>
