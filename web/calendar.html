@@ -2069,17 +2069,28 @@
                     id: doc.id,
                     ...doc.data()
                 }));
+                
+                // Asegurar que todos los turnos tengan un campo 'order'
+                shiftTemplates.forEach((shift, index) => {
+                    if (typeof shift.order === 'undefined') {
+                        shift.order = index;
+                    }
+                });
+                
+                // Ordenar por el campo 'order'
+                shiftTemplates.sort((a, b) => (a.order || 0) - (b.order || 0));
+                
                 console.log('✅ Shift templates cargados:', shiftTemplates.length);
             } catch (error) {
                 console.error('❌ Error cargando shift templates:', error);
                 // Usar templates por defecto si falla
                 shiftTemplates = [
-                    { id: '1', name: 'D1', colorHex: '#FF5722', abbreviation: 'D1' },
-                    { id: '2', name: 'D2', colorHex: '#4CAF50', abbreviation: 'D2' },
-                    { id: '3', name: 'N1', colorHex: '#9C27B0', abbreviation: 'N1' },
-                    { id: '4', name: 'Libre', colorHex: '#607D8B', abbreviation: 'Lib' },
-                    { id: '5', name: 'Tarde', colorHex: '#FF9800', abbreviation: 'T' },
-                    { id: '6', name: 'Mañana', colorHex: '#2196F3', abbreviation: 'M' }
+                    { id: '1', name: 'D1', colorHex: '#FF5722', abbreviation: 'D1', order: 0 },
+                    { id: '2', name: 'D2', colorHex: '#4CAF50', abbreviation: 'D2', order: 1 },
+                    { id: '3', name: 'N1', colorHex: '#9C27B0', abbreviation: 'N1', order: 2 },
+                    { id: '4', name: 'Libre', colorHex: '#607D8B', abbreviation: 'Lib', order: 3 },
+                    { id: '5', name: 'Tarde', colorHex: '#FF9800', abbreviation: 'T', order: 4 },
+                    { id: '6', name: 'Mañana', colorHex: '#2196F3', abbreviation: 'M', order: 5 }
                 ];
             }
         }
@@ -2115,6 +2126,17 @@
                     id: doc.id,
                     ...doc.data()
                 }));
+                
+                // Asegurar que todos los turnos tengan un campo 'order'
+                shiftTemplates.forEach((shift, index) => {
+                    if (typeof shift.order === 'undefined') {
+                        shift.order = index;
+                    }
+                });
+                
+                // Ordenar por el campo 'order'
+                shiftTemplates.sort((a, b) => (a.order || 0) - (b.order || 0));
+                
                 scheduleRenderCalendar();
             }, (error) => {
                 console.error('❌ Error en listener de shifts:', error);
