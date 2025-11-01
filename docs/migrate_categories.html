@@ -66,10 +66,11 @@
 <body>
     <div class="container">
         <h1>🔄 Migración de Categorías</h1>
-        <p>Este script actualiza las categorías antiguas en Firebase:</p>
+        <p>Este script actualiza todas las categorías e iconos antiguos en Firebase:</p>
         <ul>
-            <li><strong>"Ingreso"</strong> → <strong>"Pago"</strong> (💳)</li>
-            <li><strong>"Mascota"</strong> → <strong>"Cumpleaños"</strong> (🎂)</li>
+            <li><strong>"Ingreso"</strong> → <strong>"Pago"</strong> ($ → 💳)</li>
+            <li><strong>"Mascota"</strong> → <strong>"Cumpleaños"</strong> (🐱 → 🎂)</li>
+            <li>Iconos actualizados: 🔄→🔀, ⚠️→🔔, ☀️→🎉, 🩺→💊, ⭐→🔖, 🚗→🚙</li>
         </ul>
         
         <div>
@@ -162,22 +163,48 @@
                                 for (const category of categories) {
                                     const categoryCopy = Object.assign({}, category);
                                     const categoryText = category.text;
+                                    const oldIcon = category.icon;
                                     
-                                    // Reemplazar "Ingreso" por "Pago"
-                                    if (categoryText === 'Ingreso') {
-                                        categoryCopy.text = 'Pago';
-                                        categoryCopy.icon = '💳';
-                                        needsUpdate = true;
+                                    let newIcon = oldIcon;
+                                    let categoryChanged = false;
+                                    
+                                    // Mapa completo de migraciones de categorías
+                                    const categoryMigrations = {
+                                        'Ingreso': { text: 'Pago', icon: '💳' },
+                                        'Mascota': { text: 'Cumpleaños', icon: '🎂' }
+                                    };
+                                    
+                                    // Verificar si la categoría necesita migración
+                                    if (categoryMigrations[categoryText]) {
+                                        categoryCopy.text = categoryMigrations[categoryText].text;
+                                        categoryCopy.icon = categoryMigrations[categoryText].icon;
+                                        categoryChanged = true;
                                         totalCategories++;
-                                        log(`  ✏️ "Ingreso" → "Pago" en ${doc.id}`, 'success');
+                                        log(`  ✏️ "${categoryText}" → "${categoryMigrations[categoryText].text}" en ${doc.id}`, 'success');
                                     }
-                                    // Reemplazar "Mascota" por "Cumpleaños"
-                                    else if (categoryText === 'Mascota') {
-                                        categoryCopy.text = 'Cumpleaños';
-                                        categoryCopy.icon = '🎂';
+                                    
+                                    // Migrar iconos antiguos a nuevos (independientemente del texto)
+                                    const iconMigrations = {
+                                        '🔄': '🔀', // Cambio de turno
+                                        '$': '💳',  // Pago
+                                        '⚠️': '🔔', // Importante
+                                        '☀️': '🎉', // Festivo
+                                        '🩺': '💊', // Médico
+                                        '🐱': '🎂', // Cumpleaños
+                                        '⭐': '🔖', // Favorito
+                                        '🚗': '🚙'  // Coche
+                                    };
+                                    
+                                    if (iconMigrations[oldIcon] && oldIcon !== iconMigrations[oldIcon]) {
+                                        categoryCopy.icon = iconMigrations[oldIcon];
+                                        if (!categoryChanged) {
+                                            totalCategories++;
+                                            log(`  ✏️ Icono actualizado: ${oldIcon} → ${iconMigrations[oldIcon]} en ${doc.id}`, 'success');
+                                        }
+                                    }
+                                    
+                                    if (categoryChanged || categoryCopy.icon !== oldIcon) {
                                         needsUpdate = true;
-                                        totalCategories++;
-                                        log(`  ✏️ "Mascota" → "Cumpleaños" en ${doc.id}`, 'success');
                                     }
                                     
                                     updatedCategories.push(categoryCopy);
