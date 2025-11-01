@@ -3009,7 +3009,8 @@
                             // Agregar hora a la primera línea si existe
                             let displayText = line;
                             if (index === 0 && note.time) {
-                                displayText = `🕐 ${note.time} ${line}`;
+                                displayText = `${line} 🕐 ${note.time}`;
+                                console.log('📅 Renderizando nota con hora:', displayText);
                             }
                             
                             noteTextEl.textContent = displayText;
@@ -3536,7 +3537,8 @@
                             // Agregar hora a la primera línea si existe
                             let displayText = line;
                             if (index === 0 && note.time) {
-                                displayText = `🕐 ${note.time} ${line}`;
+                                displayText = `${line} 🕐 ${note.time}`;
+                                console.log('📅 Renderizando nota con hora:', displayText);
                             }
                             
                             noteTextEl.textContent = displayText;
@@ -4152,8 +4154,10 @@
             if (selectedDate) {
                 try {
                     const events = await getEventsForDate(selectedDate);
+                    console.log('📋 Eventos cargados:', JSON.stringify(events));
                     // Buscar la nota del usuario actual
                     const note = events.find(event => event.type === 'note' && event.userId === currentUserId);
+                    console.log('📝 Nota encontrada:', JSON.stringify(note));
                     if (note) {
                         if (note.textSize) {
                             originalNoteTextSize = parseInt(note.textSize) || 11;
@@ -4162,12 +4166,15 @@
                         }
                         if (note.time) {
                             originalNoteTime = note.time;
+                            console.log('✅ Hora encontrada en nota:', note.time);
                         } else {
                             originalNoteTime = '';
+                            console.log('⚠️ No hay hora en la nota');
                         }
                     } else {
                         originalNoteTextSize = 11;
                         originalNoteTime = '';
+                        console.log('⚠️ No se encontró nota para el usuario');
                     }
                 } catch (error) {
                     console.error('Error cargando datos de nota:', error);
@@ -4192,7 +4199,9 @@
             const timeInput = document.getElementById('notesTimeInput');
             if (timeInput) {
                 timeInput.value = originalNoteTime;
-                console.log('🕐 Hora cargada:', originalNoteTime);
+                console.log('🕐 Hora cargada en input:', originalNoteTime);
+            } else {
+                console.error('❌ No se encontró el elemento notesTimeInput');
             }
             
             // Resetear formato
