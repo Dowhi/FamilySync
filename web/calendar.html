@@ -191,9 +191,10 @@
         /* Calendar */
         .calendar-container {
             flex: 1;
-            overflow-y: auto;
-            -webkit-overflow-scrolling: touch;
+            overflow: hidden;
             padding: 0;
+            display: flex;
+            flex-direction: column;
         }
 
         .calendar-grid {
@@ -201,12 +202,13 @@
             grid-template-columns: repeat(7, 1fr);
             gap: 0;
             margin-bottom: 0;
+            flex: 1;
             height: 100%;
         }
 
         /* Celdas más altas cuando el mes sólo ocupa 5 semanas */
         .calendar-grid.five-weeks .calendar-day {
-            min-height: calc((100vh - 160px) / 5);
+            height: calc((100vh - 190px) / 5);
         }
 
         .weekday-header {
@@ -233,7 +235,7 @@
             cursor: pointer;
             transition: all 0.2s;
             overflow: hidden;
-            min-height: calc((100vh - 160px) / 6);
+            height: calc((100vh - 190px) / 6);
             position: relative;
         }
 
@@ -1711,36 +1713,36 @@
                                 <div class="dropdown-option-icon"></div>
                                 <div class="dropdown-option-text">Ninguno</div>
                             </div>
-                            <div class="dropdown-option" onclick="selectCategory(0, 'Cambio de turno', '🔄')">
-                                <div class="dropdown-option-icon">🔄</div>
+                            <div class="dropdown-option" onclick="selectCategory(0, 'Cambio de turno', '🔀')">
+                                <div class="dropdown-option-icon">🔀</div>
                                 <div class="dropdown-option-text">Cambio de turno</div>
                             </div>
-                            <div class="dropdown-option" onclick="selectCategory(0, 'Ingreso', '$')">
-                                <div class="dropdown-option-icon">$</div>
-                                <div class="dropdown-option-text">Ingreso</div>
+                            <div class="dropdown-option" onclick="selectCategory(0, 'Pago', '💳')">
+                                <div class="dropdown-option-icon">💳</div>
+                                <div class="dropdown-option-text">Pago</div>
                             </div>
-                            <div class="dropdown-option" onclick="selectCategory(0, 'Importante', '⚠️')">
-                                <div class="dropdown-option-icon">⚠️</div>
+                            <div class="dropdown-option" onclick="selectCategory(0, 'Importante', '🔔')">
+                                <div class="dropdown-option-icon">🔔</div>
                                 <div class="dropdown-option-text">Importante</div>
                             </div>
-                            <div class="dropdown-option" onclick="selectCategory(0, 'Festivo', '☀️')">
-                                <div class="dropdown-option-icon">☀️</div>
+                            <div class="dropdown-option" onclick="selectCategory(0, 'Festivo', '🎉')">
+                                <div class="dropdown-option-icon">🎉</div>
                                 <div class="dropdown-option-text">Festivo</div>
                             </div>
-                            <div class="dropdown-option" onclick="selectCategory(0, 'Médico', '🩺')">
-                                <div class="dropdown-option-icon">🩺</div>
+                            <div class="dropdown-option" onclick="selectCategory(0, 'Médico', '💊')">
+                                <div class="dropdown-option-icon">💊</div>
                                 <div class="dropdown-option-text">Médico</div>
                             </div>
-                            <div class="dropdown-option" onclick="selectCategory(0, 'Mascota', '🐱')">
-                                <div class="dropdown-option-icon">🐱</div>
-                                <div class="dropdown-option-text">Mascota</div>
+                            <div class="dropdown-option" onclick="selectCategory(0, 'Cumpleaños', '🎂')">
+                                <div class="dropdown-option-icon">🎂</div>
+                                <div class="dropdown-option-text">Cumpleaños</div>
                             </div>
-                            <div class="dropdown-option" onclick="selectCategory(0, 'Favorito', '⭐')">
-                                <div class="dropdown-option-icon">⭐</div>
+                            <div class="dropdown-option" onclick="selectCategory(0, 'Favorito', '🔖')">
+                                <div class="dropdown-option-icon">🔖</div>
                                 <div class="dropdown-option-text">Favorito</div>
                             </div>
-                            <div class="dropdown-option" onclick="selectCategory(0, 'Coche', '🚗')">
-                                <div class="dropdown-option-icon">🚗</div>
+                            <div class="dropdown-option" onclick="selectCategory(0, 'Coche', '🚙')">
+                                <div class="dropdown-option-icon">🚙</div>
                                 <div class="dropdown-option-text">Coche</div>
                             </div>
                         </div>
@@ -1754,36 +1756,36 @@
                                 <div class="dropdown-option-icon"></div>
                                 <div class="dropdown-option-text">Ninguno</div>
                             </div>
-                            <div class="dropdown-option" onclick="selectCategory(1, 'Cambio de turno', '🔄')">
-                                <div class="dropdown-option-icon">🔄</div>
+                            <div class="dropdown-option" onclick="selectCategory(1, 'Cambio de turno', '🔀')">
+                                <div class="dropdown-option-icon">🔀</div>
                                 <div class="dropdown-option-text">Cambio de turno</div>
                             </div>
-                            <div class="dropdown-option" onclick="selectCategory(1, 'Ingreso', '$')">
-                                <div class="dropdown-option-icon">$</div>
-                                <div class="dropdown-option-text">Ingreso</div>
+                            <div class="dropdown-option" onclick="selectCategory(1, 'Pago', '💳')">
+                                <div class="dropdown-option-icon">💳</div>
+                                <div class="dropdown-option-text">Pago</div>
                             </div>
-                            <div class="dropdown-option" onclick="selectCategory(1, 'Importante', '⚠️')">
-                                <div class="dropdown-option-icon">⚠️</div>
+                            <div class="dropdown-option" onclick="selectCategory(1, 'Importante', '🔔')">
+                                <div class="dropdown-option-icon">🔔</div>
                                 <div class="dropdown-option-text">Importante</div>
                             </div>
-                            <div class="dropdown-option" onclick="selectCategory(1, 'Festivo', '☀️')">
-                                <div class="dropdown-option-icon">☀️</div>
+                            <div class="dropdown-option" onclick="selectCategory(1, 'Festivo', '🎉')">
+                                <div class="dropdown-option-icon">🎉</div>
                                 <div class="dropdown-option-text">Festivo</div>
                             </div>
-                            <div class="dropdown-option" onclick="selectCategory(1, 'Médico', '🩺')">
-                                <div class="dropdown-option-icon">🩺</div>
+                            <div class="dropdown-option" onclick="selectCategory(1, 'Médico', '💊')">
+                                <div class="dropdown-option-icon">💊</div>
                                 <div class="dropdown-option-text">Médico</div>
                             </div>
-                            <div class="dropdown-option" onclick="selectCategory(1, 'Mascota', '🐱')">
-                                <div class="dropdown-option-icon">🐱</div>
-                                <div class="dropdown-option-text">Mascota</div>
+                            <div class="dropdown-option" onclick="selectCategory(1, 'Cumpleaños', '🎂')">
+                                <div class="dropdown-option-icon">🎂</div>
+                                <div class="dropdown-option-text">Cumpleaños</div>
                             </div>
-                            <div class="dropdown-option" onclick="selectCategory(1, 'Favorito', '⭐')">
-                                <div class="dropdown-option-icon">⭐</div>
+                            <div class="dropdown-option" onclick="selectCategory(1, 'Favorito', '🔖')">
+                                <div class="dropdown-option-icon">🔖</div>
                                 <div class="dropdown-option-text">Favorito</div>
                             </div>
-                            <div class="dropdown-option" onclick="selectCategory(1, 'Coche', '🚗')">
-                                <div class="dropdown-option-icon">🚗</div>
+                            <div class="dropdown-option" onclick="selectCategory(1, 'Coche', '🚙')">
+                                <div class="dropdown-option-icon">🚙</div>
                                 <div class="dropdown-option-text">Coche</div>
                             </div>
                         </div>
@@ -1797,36 +1799,36 @@
                                 <div class="dropdown-option-icon"></div>
                                 <div class="dropdown-option-text">Ninguno</div>
                             </div>
-                            <div class="dropdown-option" onclick="selectCategory(2, 'Cambio de turno', '🔄')">
-                                <div class="dropdown-option-icon">🔄</div>
+                            <div class="dropdown-option" onclick="selectCategory(2, 'Cambio de turno', '🔀')">
+                                <div class="dropdown-option-icon">🔀</div>
                                 <div class="dropdown-option-text">Cambio de turno</div>
                             </div>
-                            <div class="dropdown-option" onclick="selectCategory(2, 'Ingreso', '$')">
-                                <div class="dropdown-option-icon">$</div>
-                                <div class="dropdown-option-text">Ingreso</div>
+                            <div class="dropdown-option" onclick="selectCategory(2, 'Pago', '💳')">
+                                <div class="dropdown-option-icon">💳</div>
+                                <div class="dropdown-option-text">Pago</div>
                             </div>
-                            <div class="dropdown-option" onclick="selectCategory(2, 'Importante', '⚠️')">
-                                <div class="dropdown-option-icon">⚠️</div>
+                            <div class="dropdown-option" onclick="selectCategory(2, 'Importante', '🔔')">
+                                <div class="dropdown-option-icon">🔔</div>
                                 <div class="dropdown-option-text">Importante</div>
                             </div>
-                            <div class="dropdown-option" onclick="selectCategory(2, 'Festivo', '☀️')">
-                                <div class="dropdown-option-icon">☀️</div>
+                            <div class="dropdown-option" onclick="selectCategory(2, 'Festivo', '🎉')">
+                                <div class="dropdown-option-icon">🎉</div>
                                 <div class="dropdown-option-text">Festivo</div>
                             </div>
-                            <div class="dropdown-option" onclick="selectCategory(2, 'Médico', '🩺')">
-                                <div class="dropdown-option-icon">🩺</div>
+                            <div class="dropdown-option" onclick="selectCategory(2, 'Médico', '💊')">
+                                <div class="dropdown-option-icon">💊</div>
                                 <div class="dropdown-option-text">Médico</div>
                             </div>
-                            <div class="dropdown-option" onclick="selectCategory(2, 'Mascota', '🐱')">
-                                <div class="dropdown-option-icon">🐱</div>
-                                <div class="dropdown-option-text">Mascota</div>
+                            <div class="dropdown-option" onclick="selectCategory(2, 'Cumpleaños', '🎂')">
+                                <div class="dropdown-option-icon">🎂</div>
+                                <div class="dropdown-option-text">Cumpleaños</div>
                             </div>
-                            <div class="dropdown-option" onclick="selectCategory(2, 'Favorito', '⭐')">
-                                <div class="dropdown-option-icon">⭐</div>
+                            <div class="dropdown-option" onclick="selectCategory(2, 'Favorito', '🔖')">
+                                <div class="dropdown-option-icon">🔖</div>
                                 <div class="dropdown-option-text">Favorito</div>
                             </div>
-                            <div class="dropdown-option" onclick="selectCategory(2, 'Coche', '🚗')">
-                                <div class="dropdown-option-icon">🚗</div>
+                            <div class="dropdown-option" onclick="selectCategory(2, 'Coche', '🚙')">
+                                <div class="dropdown-option-icon">🚙</div>
                                 <div class="dropdown-option-text">Coche</div>
                             </div>
                         </div>
@@ -2087,6 +2089,25 @@
         // Configurar listener en tiempo real
         function setupRealtimeListener() {
             if (!isFirebaseConnected) return;
+            
+            // Listener para usuarios: actualizar colores si cambian
+            db.collection('users').onSnapshot((snapshot) => {
+                console.log('🔄 Cambios detectados en users');
+                const updatedUsers = snapshot.docs.map(doc => {
+                    const data = doc.data();
+                    return {
+                        id: parseInt(data.id) || parseInt(doc.id),
+                        name: data.name || `Usuario ${doc.id}`,
+                        color: data.color || '#9E9E9E'
+                    };
+                });
+                users = updatedUsers;
+                console.log('✅ Usuarios actualizados:', users);
+                // Re-renderizar el calendario para aplicar nuevos colores
+                scheduleRenderCalendar();
+            }, (error) => {
+                console.error('❌ Error en listener de users:', error);
+            });
             
             // Listener SOLO para shifts: si se edita un turno (nombre/color/abreviatura),
             // actualizamos plantillas y re-renderizamos el calendario.
@@ -2864,63 +2885,87 @@
             }
             
             // Agregar iconos de categoría con el color del usuario
-            const note = events.find(event => event.type === 'note');
-            if (note) {
-                // Obtener el color del usuario que creó la nota
-                const userColor = note.userColor || getUserColor(note.userId);
-                console.log('🎨 Color de nota:', userColor, 'userId:', note.userId, 'userId type:', typeof note.userId, 'users:', users.map(u => ({id: u.id, idType: typeof u.id, name: u.name, color: u.color})));
-                
-                // Si hay nota con texto, ocultar los textos de los turnos para evitar superposición
-                if (note.text && note.text.trim() !== '') {
+            // Obtener todas las notas (múltiples usuarios pueden tener notas)
+            const notes = events.filter(event => event.type === 'note');
+            
+            if (notes.length > 0) {
+                // Si hay al menos una nota con texto, ocultar los textos de los turnos para evitar superposición
+                const hasAnyNoteText = notes.some(note => note.text && note.text.trim() !== '');
+                if (hasAnyNoteText) {
                     const shiftTexts = cell.querySelectorAll('.shift-text-full, .shift-text-half, .shift-text-third, .event-badge');
                     shiftTexts.forEach(el => el.style.display = 'none');
                 }
                 
-                // Agregar texto de la nota si existe
-                if (note.text && note.text.trim() !== '') {
-                    const noteTextEl = document.createElement('div');
-                    noteTextEl.className = 'note-text';
-                    noteTextEl.textContent = note.text;
-                    // Usar el tamaño guardado en la nota o el por defecto
-                    const noteFontSize = note.textSize || 11;
-                    noteTextEl.style.cssText = `
-                        position: absolute;
-                        top: 20px;
-                        left: 50%;
-                        transform: translateX(-50%);
-                        color: ${userColor};
-                        font-weight: 700;
-                        font-size: ${noteFontSize}px;
-                        white-space: nowrap;
-                        overflow: hidden;
-                        text-overflow: ellipsis;
-                        max-width: calc(100% - 8px);
-                        z-index: 15;
-                    `;
-                    cell.appendChild(noteTextEl);
+                // Crear un contenedor para todas las notas
+                const allNotesContainer = document.createElement('div');
+                allNotesContainer.style.cssText = `
+                    position: absolute;
+                    top: 20px;
+                    left: 2px;
+                    right: 2px;
+                    display: flex;
+                    flex-direction: column;
+                    gap: 2px;
+                    z-index: 15;
+                `;
+                
+                // Renderizar cada nota
+                notes.forEach(note => {
+                    if (note.text && note.text.trim() !== '') {
+                        // Dividir el texto por saltos de línea para renderizar cada línea con su color
+                        const noteLines = note.text.split('\n').filter(line => line.trim() !== '');
+                        
+                        noteLines.forEach((line, index) => {
+                            // Usar el color del usuario que creó la nota (ya no necesitamos heurística por contenido)
+                            const lineUserColor = getUserColor(note.userId);
+                            const noteTextEl = document.createElement('div');
+                            noteTextEl.className = 'note-text';
+                            noteTextEl.textContent = line;
+                            // Usar el tamaño guardado en la nota o el por defecto
+                            const noteFontSize = note.textSize || 11;
+                            const fontSize = index === 0 ? noteFontSize : noteFontSize * 0.85;
+                            const fontWeight = index === 0 ? '700' : 'normal';
+                            noteTextEl.style.cssText = `
+                                color: ${lineUserColor};
+                                font-weight: ${fontWeight};
+                                font-size: ${fontSize}px;
+                                white-space: normal;
+                                word-wrap: break-word;
+                                overflow-wrap: break-word;
+                            `;
+                            allNotesContainer.appendChild(noteTextEl);
+                        });
+                    }
+                });
+                
+                if (allNotesContainer.children.length > 0) {
+                    cell.appendChild(allNotesContainer);
                 }
                 
-                // Agregar iconos de categoría si existen
-                if (note.categories && note.categories.length > 0) {
-                    const categoriesEl = document.createElement('div');
-                    categoriesEl.className = 'category-icons';
-                    
-                    note.categories.forEach(category => {
-                        if (category.icon && category.icon.trim() !== '') {
-                            const iconEl = document.createElement('span');
-                            iconEl.className = 'category-icon';
-                            iconEl.textContent = category.icon;
-                            iconEl.title = category.text;
-                            // Aplicar el color del usuario al icono
-                            iconEl.style.color = userColor;
-                            iconEl.style.borderColor = userColor;
-                            categoriesEl.appendChild(iconEl);
-                        }
-                    });
-                    
-                    if (categoriesEl.children.length > 0) {
-                        cell.appendChild(categoriesEl);
+                // Agregar iconos de categoría de todas las notas
+                const allCategoriesEl = document.createElement('div');
+                allCategoriesEl.className = 'category-icons';
+                
+                notes.forEach(note => {
+                    if (note.categories && note.categories.length > 0) {
+                        note.categories.forEach(category => {
+                            if (category.icon && category.icon.trim() !== '') {
+                                const iconEl = document.createElement('span');
+                                iconEl.className = 'category-icon';
+                                iconEl.textContent = category.icon;
+                                iconEl.title = category.text;
+                                // Aplicar el color del usuario que creó la nota al icono
+                                const noteUserColor = getUserColor(note.userId);
+                                iconEl.style.color = noteUserColor;
+                                iconEl.style.borderColor = noteUserColor;
+                                allCategoriesEl.appendChild(iconEl);
+                            }
+                        });
                     }
+                });
+                
+                if (allCategoriesEl.children.length > 0) {
+                    cell.appendChild(allCategoriesEl);
                 }
             }
         }
@@ -3332,64 +3377,87 @@
             }
 
             // Agregar texto de nota e iconos de categorías
-            const note = events.find(event => event.type === 'note');
-            if (note) {
-                // Obtener el color del usuario que creó la nota
-                const userColor = note.userColor || getUserColor(note.userId);
-                console.log('🎨 Color de nota (renderDay):', userColor, 'userId:', note.userId, 'userId type:', typeof note.userId, 'users:', users.map(u => ({id: u.id, idType: typeof u.id, name: u.name, color: u.color})));
-                
-                // Si hay nota con texto, ocultar los textos de los turnos para evitar superposición
-                if (note.text && note.text.trim() !== '') {
+            // Obtener todas las notas (múltiples usuarios pueden tener notas)
+            const notes = events.filter(event => event.type === 'note');
+            
+            if (notes.length > 0) {
+                // Si hay al menos una nota con texto, ocultar los textos de los turnos para evitar superposición
+                const hasAnyNoteText = notes.some(note => note.text && note.text.trim() !== '');
+                if (hasAnyNoteText) {
                     const shiftTexts = dayEl.querySelectorAll('.shift-text-full, .shift-text-half, .shift-text-third, .event-badge');
                     shiftTexts.forEach(el => el.style.display = 'none');
                 }
                 
-                // Agregar texto de la nota si existe
-                if (note.text && note.text.trim() !== '') {
-                    const noteTextEl = document.createElement('div');
-                    noteTextEl.className = 'note-text';
-                    noteTextEl.textContent = note.text;
-                    // Usar el tamaño guardado en la nota o el por defecto
-                    const noteFontSize = note.textSize || 11;
-                    noteTextEl.style.cssText = `
-                        position: absolute;
-                        top: 20px;
-                        left: 50%;
-                        transform: translateX(-50%);
-                        color: ${resolveNoteColor(userColor, shifts)};
-                        font-weight: 700;
-                        font-size: ${noteFontSize}px;
-                        white-space: nowrap;
-                        overflow: hidden;
-                        text-overflow: ellipsis;
-                        max-width: calc(100% - 8px);
-                        z-index: 15;
-                        text-shadow: 0 1px 2px rgba(0,0,0,0.25);
-                    `;
-                    dayEl.appendChild(noteTextEl);
+                // Crear un contenedor para todas las notas
+                const allNotesContainer = document.createElement('div');
+                allNotesContainer.style.cssText = `
+                    position: absolute;
+                    top: 20px;
+                    left: 2px;
+                    right: 2px;
+                    display: flex;
+                    flex-direction: column;
+                    gap: 2px;
+                    z-index: 15;
+                `;
+                
+                // Renderizar cada nota
+                notes.forEach(note => {
+                    if (note.text && note.text.trim() !== '') {
+                        // Dividir el texto por saltos de línea para renderizar cada línea con su color
+                        const noteLines = note.text.split('\n').filter(line => line.trim() !== '');
+                        
+                        noteLines.forEach((line, index) => {
+                            // Usar el color del usuario que creó la nota (ya no necesitamos heurística por contenido)
+                            const lineUserColor = getUserColor(note.userId);
+                            const noteTextEl = document.createElement('div');
+                            noteTextEl.className = 'note-text';
+                            noteTextEl.textContent = line;
+                            // Usar el tamaño guardado en la nota o el por defecto
+                            const noteFontSize = note.textSize || 11;
+                            const fontSize = index === 0 ? noteFontSize : noteFontSize * 0.85;
+                            const fontWeight = index === 0 ? '700' : 'normal';
+                            noteTextEl.style.cssText = `
+                                color: ${lineUserColor};
+                                font-weight: ${fontWeight};
+                                font-size: ${fontSize}px;
+                                white-space: normal;
+                                word-wrap: break-word;
+                                overflow-wrap: break-word;
+                            `;
+                            allNotesContainer.appendChild(noteTextEl);
+                        });
+                    }
+                });
+                
+                if (allNotesContainer.children.length > 0) {
+                    dayEl.appendChild(allNotesContainer);
                 }
                 
-                // Agregar iconos de categoría si existen
-                if (note.categories && note.categories.length > 0) {
-                    const categoriesEl = document.createElement('div');
-                    categoriesEl.className = 'category-icons';
-                    
-                    note.categories.forEach(category => {
-                        if (category.icon && category.icon.trim() !== '') {
-                            const iconEl = document.createElement('span');
-                            iconEl.className = 'category-icon';
-                            iconEl.textContent = category.icon;
-                            iconEl.title = category.text;
-                            // Aplicar el color del usuario al icono
-                            iconEl.style.color = userColor;
-                            iconEl.style.borderColor = userColor;
-                            categoriesEl.appendChild(iconEl);
-                        }
-                    });
-                    
-                    if (categoriesEl.children.length > 0) {
-                        dayEl.appendChild(categoriesEl);
+                // Agregar iconos de categoría de todas las notas
+                const allCategoriesEl = document.createElement('div');
+                allCategoriesEl.className = 'category-icons';
+                
+                notes.forEach(note => {
+                    if (note.categories && note.categories.length > 0) {
+                        note.categories.forEach(category => {
+                            if (category.icon && category.icon.trim() !== '') {
+                                const iconEl = document.createElement('span');
+                                iconEl.className = 'category-icon';
+                                iconEl.textContent = category.icon;
+                                iconEl.title = category.text;
+                                // Aplicar el color del usuario que creó la nota al icono
+                                const noteUserColor = getUserColor(note.userId);
+                                iconEl.style.color = noteUserColor;
+                                iconEl.style.borderColor = noteUserColor;
+                                allCategoriesEl.appendChild(iconEl);
+                            }
+                        });
                     }
+                });
+                
+                if (allCategoriesEl.children.length > 0) {
+                    dayEl.appendChild(allCategoriesEl);
                 }
             }
 
@@ -3795,8 +3863,8 @@
                 // Obtener eventos del día
                 const events = await getEventsForDate(date);
                 
-                // Buscar la nota del día (debería haber solo una)
-                const note = events.find(event => event.type === 'note');
+                // Buscar la nota del usuario actual (cada usuario tiene su propia nota)
+                const note = events.find(event => event.type === 'note' && event.userId === currentUserId);
                 
                 if (note) {
                     // Mostrar la nota en el textarea
@@ -3809,12 +3877,12 @@
                         resetCategories();
                     }
                     
-                    console.log('✅ Nota cargada para el día:', note.text);
+                    console.log('✅ Nota del usuario actual cargada para el día:', note.text);
                 } else {
                     // Limpiar textarea si no hay nota
                     document.getElementById('mainTextarea').value = '';
                     resetCategories();
-                    console.log('ℹ️ No hay nota para este día');
+                    console.log('ℹ️ No hay nota del usuario actual para este día');
                 }
                 
             } catch (error) {
@@ -3956,7 +4024,8 @@
             if (selectedDate) {
                 try {
                     const events = await getEventsForDate(selectedDate);
-                    const note = events.find(event => event.type === 'note');
+                    // Buscar la nota del usuario actual
+                    const note = events.find(event => event.type === 'note' && event.userId === currentUserId);
                     if (note && note.textSize) {
                         originalNoteTextSize = parseInt(note.textSize) || 11;
                     } else {
@@ -4033,15 +4102,16 @@
             if (selectedDate) {
                 try {
                     const existingEvents = await getEventsForDate(selectedDate);
-                    const existingNoteIndex = existingEvents.findIndex(event => event.type === 'note');
+                    // Buscar la nota del usuario actual (no la primera nota general)
+                    const existingNoteIndex = existingEvents.findIndex(event => event.type === 'note' && event.userId === currentUserId);
                     
-                    console.log('📝 Nota existente encontrada:', existingNoteIndex !== -1);
+                    console.log('📝 Nota existente del usuario actual encontrada:', existingNoteIndex !== -1);
                     if (existingNoteIndex !== -1) {
                         console.log('📝 Nota existente antes de actualizar:', JSON.stringify(existingEvents[existingNoteIndex]));
                     }
                     
                     if (newText.trim() === '') {
-                        // Si no hay texto, eliminar la nota existente
+                        // Si no hay texto, eliminar la nota existente del usuario actual
                         if (existingNoteIndex !== -1) {
                             existingEvents.splice(existingNoteIndex, 1);
                         }
@@ -4061,10 +4131,10 @@
                         
                         if (existingNoteIndex !== -1) {
                             existingEvents[existingNoteIndex] = noteEvent;
-                            console.log('✏️ Nota actualizada en índice:', existingNoteIndex);
+                            console.log('✏️ Nota del usuario actual actualizada en índice:', existingNoteIndex);
                         } else {
                             existingEvents.push(noteEvent);
-                            console.log('📝 Nueva nota agregada');
+                            console.log('📝 Nueva nota del usuario actual agregada');
                         }
                     }
                     
@@ -4073,11 +4143,11 @@
                     
                     // Verificar que se guardó correctamente
                     const verifyEvents = await getEventsForDate(selectedDate);
-                    const verifyNote = verifyEvents.find(event => event.type === 'note');
+                    const verifyNote = verifyEvents.find(event => event.type === 'note' && event.userId === currentUserId);
                     if (verifyNote) {
-                        console.log('✅ Verificación: Nota guardada con textSize:', verifyNote.textSize);
+                        console.log('✅ Verificación: Nota del usuario actual guardada con textSize:', verifyNote.textSize);
                     } else {
-                        console.warn('⚠️ Verificación: No se encontró la nota después de guardar');
+                        console.warn('⚠️ Verificación: No se encontró la nota del usuario actual después de guardar');
                     }
                     
                     // Refrescar el calendario para mostrar el nuevo tamaño
@@ -4218,18 +4288,19 @@
             
             try {
                 const events = await getEventsForDate(selectedDate);
-                const note = events.find(event => event.type === 'note');
+                // Buscar la nota del usuario actual
+                const note = events.find(event => event.type === 'note' && event.userId === currentUserId);
                 
                 if (note && note.alarms && Array.isArray(note.alarms)) {
                     alarms = note.alarms;
-                    console.log(`✅ Alarmas cargadas: ${alarms.length} alarmas para ${formatDateKey(selectedDate)}`);
+                    console.log(`✅ Alarmas del usuario actual cargadas: ${alarms.length} alarmas para ${formatDateKey(selectedDate)}`);
                     console.log('📋 Contenido de alarmas cargadas:', JSON.stringify(alarms));
                 } else {
                     alarms = [];
                     if (note) {
-                        console.log(`ℹ️ Nota encontrada pero sin alarmas para ${formatDateKey(selectedDate)}`);
+                        console.log(`ℹ️ Nota del usuario actual encontrada pero sin alarmas para ${formatDateKey(selectedDate)}`);
                     } else {
-                        console.log(`ℹ️ No se encontró nota para ${formatDateKey(selectedDate)}`);
+                        console.log(`ℹ️ No se encontró nota del usuario actual para ${formatDateKey(selectedDate)}`);
                     }
                 }
                 updateAlarmCount();
@@ -4367,7 +4438,8 @@
             
             try {
                 const existingEvents = await getEventsForDate(selectedDate);
-                const existingNoteIndex = existingEvents.findIndex(event => event.type === 'note');
+                // Buscar la nota del usuario actual
+                const existingNoteIndex = existingEvents.findIndex(event => event.type === 'note' && event.userId === currentUserId);
                 
                 if (existingNoteIndex !== -1) {
                     // Actualizar nota existente con alarmas, preservando todos los demás campos
@@ -4377,7 +4449,7 @@
                         alarms: alarms,
                         updatedAt: new Date().toISOString()
                     };
-                    console.log('✅ Nota actualizada con alarmas:', alarms.length, 'alarmas');
+                    console.log('✅ Nota del usuario actual actualizada con alarmas:', alarms.length, 'alarmas');
                     console.log('📋 Contenido de alarmas:', JSON.stringify(alarms));
                 } else {
                     // Crear nota con alarmas
@@ -4393,7 +4465,7 @@
                         textSize: 11 // Tamaño por defecto
                     };
                     existingEvents.push(noteEvent);
-                    console.log('✅ Nueva nota creada con alarmas:', alarms.length, 'alarmas');
+                    console.log('✅ Nueva nota del usuario actual creada con alarmas:', alarms.length, 'alarmas');
                 }
                 
                 await saveEvents(selectedDate, existingEvents);
@@ -4401,12 +4473,12 @@
                 
                 // Verificar que se guardaron correctamente
                 const verifyEvents = await getEventsForDate(selectedDate);
-                const verifyNote = verifyEvents.find(event => event.type === 'note');
+                const verifyNote = verifyEvents.find(event => event.type === 'note' && event.userId === currentUserId);
                 if (verifyNote && verifyNote.alarms) {
                     console.log('✅ Verificación: Alarmas guardadas correctamente:', verifyNote.alarms.length);
                     console.log('📋 Alarmas verificadas:', JSON.stringify(verifyNote.alarms));
                 } else {
-                    console.warn('⚠️ Advertencia: No se encontraron alarmas después de guardar');
+                    console.warn('⚠️ Advertencia: No se encontraron alarmas del usuario actual después de guardar');
                 }
                 
                 // Guardar también en localStorage para verificación local (especialmente iOS)
@@ -4441,57 +4513,60 @@
                     
                     try {
                         const events = await getEventsForDate(checkDate);
-                        const note = events.find(event => event.type === 'note');
+                        // Obtener todas las notas (múltiples usuarios pueden tener notas)
+                        const notes = events.filter(event => event.type === 'note');
                         
-                        if (note && note.alarms && Array.isArray(note.alarms)) {
-                            note.alarms.forEach(alarm => {
-                                const alarmDate = new Date(alarm.dateTime);
-                                const timeUntilAlarm = alarmDate.getTime() - now.getTime();
-                                
-                                // Solo programar alarmas futuras (próximas 30 días)
-                                if (timeUntilAlarm > 0 && timeUntilAlarm <= 30 * 24 * 60 * 60 * 1000) {
-                                    const alarmDateStr = alarmDate.toISOString().split('T')[0];
-                                    const alarmTimeStr = alarmDate.toTimeString().split(' ')[0].slice(0, 5);
-                                    const noteText = note.text || '';
-                                    const currentUser = users.find(u => u.id === currentUserId);
-                                    const userName = currentUser ? currentUser.name : 'Usuario';
+                        notes.forEach(note => {
+                            if (note && note.alarms && Array.isArray(note.alarms)) {
+                                note.alarms.forEach(alarm => {
+                                    const alarmDate = new Date(alarm.dateTime);
+                                    const timeUntilAlarm = alarmDate.getTime() - now.getTime();
                                     
-                                    // Enviar mensaje al Service Worker para programar la alarma
-                                    const message = {
-                                        type: 'SCHEDULE_ALARM',
-                                        alarmDate: alarmDateStr,
-                                        alarmTime: alarmTimeStr,
-                                        noteText: noteText,
-                                        userName: userName,
-                                        alarmId: alarm.id
-                                    };
-                                    
-                                    if (registration.active) {
-                                        registration.active.postMessage(message);
-                                    } else if (registration.waiting) {
-                                        registration.waiting.postMessage(message);
-                                        // Activar el SW waiting si es posible
-                                        registration.waiting.addEventListener('statechange', function() {
-                                            if (registration.waiting.state === 'activated') {
-                                                registration.waiting.postMessage(message);
-                                            }
-                                        });
-                                    } else {
-                                        // Si no hay SW activo, guardar el mensaje para cuando esté listo
-                                        registration.addEventListener('updatefound', () => {
-                                            const newWorker = registration.installing;
-                                            if (newWorker) {
-                                                newWorker.addEventListener('statechange', () => {
-                                                    if (newWorker.state === 'activated' && navigator.serviceWorker.controller) {
-                                                        navigator.serviceWorker.controller.postMessage(message);
-                                                    }
-                                                });
-                                            }
-                                        });
+                                    // Solo programar alarmas futuras (próximas 30 días)
+                                    if (timeUntilAlarm > 0 && timeUntilAlarm <= 30 * 24 * 60 * 60 * 1000) {
+                                        const alarmDateStr = alarmDate.toISOString().split('T')[0];
+                                        const alarmTimeStr = alarmDate.toTimeString().split(' ')[0].slice(0, 5);
+                                        const noteText = note.text || '';
+                                        const noteUser = users.find(u => u.id === note.userId);
+                                        const userName = noteUser ? noteUser.name : 'Usuario';
+                                        
+                                        // Enviar mensaje al Service Worker para programar la alarma
+                                        const message = {
+                                            type: 'SCHEDULE_ALARM',
+                                            alarmDate: alarmDateStr,
+                                            alarmTime: alarmTimeStr,
+                                            noteText: noteText,
+                                            userName: userName,
+                                            alarmId: alarm.id
+                                        };
+                                        
+                                        if (registration.active) {
+                                            registration.active.postMessage(message);
+                                        } else if (registration.waiting) {
+                                            registration.waiting.postMessage(message);
+                                            // Activar el SW waiting si es posible
+                                            registration.waiting.addEventListener('statechange', function() {
+                                                if (registration.waiting.state === 'activated') {
+                                                    registration.waiting.postMessage(message);
+                                                }
+                                            });
+                                        } else {
+                                            // Si no hay SW activo, guardar el mensaje para cuando esté listo
+                                            registration.addEventListener('updatefound', () => {
+                                                const newWorker = registration.installing;
+                                                if (newWorker) {
+                                                    newWorker.addEventListener('statechange', () => {
+                                                        if (newWorker.state === 'activated' && navigator.serviceWorker.controller) {
+                                                            navigator.serviceWorker.controller.postMessage(message);
+                                                        }
+                                                    });
+                                                }
+                                            });
+                                        }
                                     }
-                                }
-                            });
-                        }
+                                });
+                            }
+                        });
                     } catch (error) {
                         // Continuar con el siguiente día si hay error
                         continue;
@@ -4705,25 +4780,29 @@
                     
                     try {
                         const events = await getEventsForDate(checkDate);
-                        const note = events.find(event => event.type === 'note');
+                        // Obtener todas las notas (múltiples usuarios)
+                        const notes = events.filter(event => event.type === 'note');
                         
-                        if (note && note.alarms && Array.isArray(note.alarms)) {
-                            note.alarms.forEach(alarm => {
-                                const alarmDate = new Date(alarm.dateTime);
-                                const timeUntilAlarm = alarmDate.getTime() - now.getTime();
-                                
-                                // Solo programar alarmas futuras
-                                if (timeUntilAlarm > 0) {
-                                    scheduledAlarms.push({
-                                        id: alarm.id,
-                                        dateTime: alarm.dateTime,
-                                        date: alarmDate.toISOString().split('T')[0],
-                                        time: alarmDate.toTimeString().split(' ')[0].slice(0, 5),
-                                        noteText: note.text || ''
-                                    });
-                                }
-                            });
-                        }
+                        notes.forEach(note => {
+                            if (note && note.alarms && Array.isArray(note.alarms)) {
+                                note.alarms.forEach(alarm => {
+                                    const alarmDate = new Date(alarm.dateTime);
+                                    const timeUntilAlarm = alarmDate.getTime() - now.getTime();
+                                    
+                                    // Solo programar alarmas futuras
+                                    if (timeUntilAlarm > 0) {
+                                        scheduledAlarms.push({
+                                            id: alarm.id,
+                                            dateTime: alarm.dateTime,
+                                            date: alarmDate.toISOString().split('T')[0],
+                                            time: alarmDate.toTimeString().split(' ')[0].slice(0, 5),
+                                            noteText: note.text || '',
+                                            userId: note.userId
+                                        });
+                                    }
+                                });
+                            }
+                        });
                     } catch (error) {
                         continue;
                     }
@@ -4767,33 +4846,36 @@
                     
                     try {
                         const events = await getEventsForDate(checkDate);
-                        const note = events.find(event => event.type === 'note');
+                        // Obtener todas las notas (múltiples usuarios)
+                        const notes = events.filter(event => event.type === 'note');
                         
-                        if (note && note.alarms && Array.isArray(note.alarms)) {
-                            note.alarms.forEach(alarm => {
-                                if (checkedAlarmIds.has(alarm.id)) return;
-                                checkedAlarmIds.add(alarm.id);
-                                
-                                const alarmDate = new Date(alarm.dateTime);
-                                const diff = alarmDate.getTime() - now.getTime();
-                                
-                                // Si la alarma era en el pasado (se perdió mientras la app estaba cerrada)
-                                // Verificar desde la última verificación o máximo 30 minutos atrás
-                                const maxTimeBack = lastCheckTime ? 
-                                    (now - lastCheckTime) : (30 * 60 * 1000); // 30 minutos por defecto
-                                
-                                if (diff < 0 && diff > -maxTimeBack) {
-                                    console.log(`🔔 Alarma perdida detectada: ${alarm.id} (hace ${Math.round(-diff/1000)}s)`);
-                                    foundAlarms = true;
-                                    const noteText = note.text || '';
+                        notes.forEach(note => {
+                            if (note && note.alarms && Array.isArray(note.alarms)) {
+                                note.alarms.forEach(alarm => {
+                                    if (checkedAlarmIds.has(alarm.id)) return;
+                                    checkedAlarmIds.add(alarm.id);
                                     
-                                    // Mostrar notificación inmediatamente
-                                    setTimeout(() => {
-                                        showAlarmNotification(alarm, noteText);
-                                    }, 100);
-                                }
-                            });
-                        }
+                                    const alarmDate = new Date(alarm.dateTime);
+                                    const diff = alarmDate.getTime() - now.getTime();
+                                    
+                                    // Si la alarma era en el pasado (se perdió mientras la app estaba cerrada)
+                                    // Verificar desde la última verificación o máximo 30 minutos atrás
+                                    const maxTimeBack = lastCheckTime ? 
+                                        (now - lastCheckTime) : (30 * 60 * 1000); // 30 minutos por defecto
+                                    
+                                    if (diff < 0 && diff > -maxTimeBack) {
+                                        console.log(`🔔 Alarma perdida detectada: ${alarm.id} (hace ${Math.round(-diff/1000)}s)`);
+                                        foundAlarms = true;
+                                        const noteText = note.text || '';
+                                        
+                                        // Mostrar notificación inmediatamente
+                                        setTimeout(() => {
+                                            showAlarmNotification(alarm, noteText);
+                                        }, 100);
+                                    }
+                                });
+                            }
+                        });
                     } catch (error) {
                         continue;
                     }
@@ -4876,30 +4958,33 @@
                     
                     try {
                         const events = await getEventsForDate(checkDate);
-                        const note = events.find(event => event.type === 'note');
+                        // Obtener todas las notas (múltiples usuarios)
+                        const notes = events.filter(event => event.type === 'note');
                         
-                        if (note && note.alarms && Array.isArray(note.alarms)) {
-                            console.log(`🔍 Verificando ${note.alarms.length} alarmas para ${dateKey}`);
-                            
-                            note.alarms.forEach(alarm => {
-                                // Evitar verificar la misma alarma dos veces
-                                if (checkedAlarmIds.has(alarm.id)) return;
-                                checkedAlarmIds.add(alarm.id);
-                                totalAlarmsChecked++;
+                        notes.forEach(note => {
+                            if (note && note.alarms && Array.isArray(note.alarms)) {
+                                console.log(`🔍 Verificando ${note.alarms.length} alarmas para ${dateKey}`);
                                 
-                                const alarmDate = new Date(alarm.dateTime);
-                                const diff = alarmDate.getTime() - now.getTime();
-                                
-                                console.log(`⏰ Alarma ${alarm.id}: fecha=${alarmDate.toISOString()}, diff=${Math.round(diff/1000)}s`);
-                                
-                                // Si la alarma es ahora o en los próximos 60 segundos
-                                if (diff >= 0 && diff <= 60000) {
-                                    console.log(`🔔 ¡ALARMA ACTIVADA! ${alarm.id} - Diferencia: ${Math.round(diff/1000)}s`);
-                                    const noteText = note.text || '';
-                                    showAlarmNotification(alarm, noteText);
-                                }
-                            });
-                        }
+                                note.alarms.forEach(alarm => {
+                                    // Evitar verificar la misma alarma dos veces
+                                    if (checkedAlarmIds.has(alarm.id)) return;
+                                    checkedAlarmIds.add(alarm.id);
+                                    totalAlarmsChecked++;
+                                    
+                                    const alarmDate = new Date(alarm.dateTime);
+                                    const diff = alarmDate.getTime() - now.getTime();
+                                    
+                                    console.log(`⏰ Alarma ${alarm.id}: fecha=${alarmDate.toISOString()}, diff=${Math.round(diff/1000)}s`);
+                                    
+                                    // Si la alarma es ahora o en los próximos 60 segundos
+                                    if (diff >= 0 && diff <= 60000) {
+                                        console.log(`🔔 ¡ALARMA ACTIVADA! ${alarm.id} - Diferencia: ${Math.round(diff/1000)}s`);
+                                        const noteText = note.text || '';
+                                        showAlarmNotification(alarm, noteText);
+                                    }
+                                });
+                            }
+                        });
                     } catch (error) {
                         console.error(`Error verificando alarmas para ${dateKey}:`, error);
                         // Continuar con el siguiente día si hay error
@@ -5104,17 +5189,17 @@
                 // Obtener eventos existentes del día
                 const existingEvents = await getEventsForDate(selectedDate);
                 
-                // Buscar si ya existe una nota para este día
-                const existingNoteIndex = existingEvents.findIndex(event => event.type === 'note');
+                // Buscar si ya existe una nota del usuario actual para este día
+                const existingNoteIndex = existingEvents.findIndex(event => event.type === 'note' && event.userId === currentUserId);
                 
                 if (mainText.trim() === '') {
-                    // Si no hay texto, eliminar la nota existente
+                    // Si no hay texto, eliminar la nota existente del usuario actual
                     if (existingNoteIndex !== -1) {
                         existingEvents.splice(existingNoteIndex, 1);
-                        console.log('🗑️ Nota eliminada');
+                        console.log('🗑️ Nota del usuario actual eliminada');
                     }
                 } else {
-                    // Crear o actualizar la nota
+                    // Crear o actualizar la nota del usuario actual
                     // Preservar textSize y alarmas existentes si existen
                     const existingNote = existingNoteIndex !== -1 ? existingEvents[existingNoteIndex] : null;
                     const noteEvent = {
@@ -5132,13 +5217,13 @@
                     };
                     
                     if (existingNoteIndex !== -1) {
-                        // Actualizar nota existente
+                        // Actualizar nota existente del usuario actual
                         existingEvents[existingNoteIndex] = noteEvent;
-                        console.log('✏️ Nota actualizada con textSize:', noteEvent.textSize, 'y alarmas:', noteEvent.alarms.length);
+                        console.log('✏️ Nota del usuario actual actualizada con textSize:', noteEvent.textSize, 'y alarmas:', noteEvent.alarms.length);
                     } else {
-                        // Crear nueva nota
+                        // Crear nueva nota del usuario actual
                         existingEvents.push(noteEvent);
-                        console.log('📝 Nueva nota creada con textSize:', noteEvent.textSize);
+                        console.log('📝 Nueva nota del usuario actual creada con textSize:', noteEvent.textSize);
                     }
                 }
                 
@@ -5203,22 +5288,22 @@
                 const existingEvents = await getEventsForDate(selectedDate);
                 console.log('📅 Eventos existentes:', existingEvents);
                 
-                // Buscar si ya existe una nota para este día
-                const existingNoteIndex = existingEvents.findIndex(event => event.type === 'note');
-                console.log('🔍 Índice de nota existente:', existingNoteIndex);
+                // Buscar si ya existe una nota del usuario actual para este día
+                const existingNoteIndex = existingEvents.findIndex(event => event.type === 'note' && event.userId === currentUserId);
+                console.log('🔍 Índice de nota del usuario actual existente:', existingNoteIndex);
                 
                 if (existingNoteIndex !== -1) {
-                    // Actualizar categorías de la nota existente
+                    // Actualizar categorías de la nota existente del usuario actual
                     existingEvents[existingNoteIndex].categories = selectedCategories;
                     existingEvents[existingNoteIndex].updatedAt = new Date().toISOString();
                     
-                    console.log('✏️ Actualizando nota existente con categorías:', existingEvents[existingNoteIndex]);
+                    console.log('✏️ Actualizando nota del usuario actual existente con categorías:', existingEvents[existingNoteIndex]);
                     
                     // Guardar en Firebase
                     await saveEvents(selectedDate, existingEvents);
                     console.log('✅ Categorías guardadas en Firebase inmediatamente');
                 } else {
-                    // Si no hay nota, crear una temporal solo con categorías
+                    // Si no hay nota del usuario actual, crear una temporal solo con categorías
                     const noteEvent = {
                         text: '', // Nota vacía
                         userId: currentUserId,
@@ -5228,11 +5313,11 @@
                         type: 'note'
                     };
                     
-                    console.log('📝 Creando nueva nota con categorías:', noteEvent);
+                    console.log('📝 Creando nueva nota del usuario actual con categorías:', noteEvent);
                     
                     existingEvents.push(noteEvent);
                     await saveEvents(selectedDate, existingEvents);
-                    console.log('✅ Categorías guardadas en Firebase (nota temporal creada)');
+                    console.log('✅ Categorías guardadas en Firebase (nota temporal del usuario actual creada)');
                 }
                 
             } catch (error) {

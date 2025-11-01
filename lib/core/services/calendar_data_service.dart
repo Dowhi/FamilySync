@@ -1309,9 +1309,12 @@ class CalendarDataService extends ChangeNotifier {
   Future<String?> getExistingNoteId(DateTime date) async {
     try {
       final dateKey = _formatDate(date);
+      // Obtener el userId del usuario actual
+      final currentUserId = _ref.read(currentUserIdProvider);
       final snapshot = await _firestore
           .collection('notes')
           .where('date', isEqualTo: dateKey)
+          .where('userId', isEqualTo: currentUserId) // Filtrar por usuario actual
           // Sin filtro familyId
           .get();
       
@@ -1845,7 +1848,7 @@ class CalendarDataService extends ChangeNotifier {
     
     _dayCategories['2025-10-12'] = {
       'category1': 'Cambio de turno',
-      'category2': 'Ingreso',
+      'category2': 'Pago',
     };
     _dayCategories['2025-10-15'] = {
       'category1': 'Importante',

@@ -31,37 +31,37 @@ class _DayDetailScreenState extends ConsumerState<DayDetailScreen> {
   // Lista de categorías con iconos nativos de Flutter
   final List<Map<String, dynamic>> _categories1 = [
     {'name': 'Ninguno', 'icon': Icons.not_interested},
-    {'name': 'Cambio de turno', 'icon': Icons.swap_horiz},
-    {'name': 'Ingreso', 'icon': Icons.euro_symbol},
-    {'name': 'Importante', 'icon': Icons.warning},
-    {'name': 'Festivo', 'icon': Icons.wb_sunny},
-    {'name': 'Médico', 'icon': Icons.medical_services},
-    {'name': 'Cumpleaños', 'icon': Icons.pets},
-    {'name': 'Favorito', 'icon': Icons.star},
+    {'name': 'Cambio de turno', 'icon': Icons.shuffle},
+    {'name': 'Pago', 'icon': Icons.credit_card},
+    {'name': 'Importante', 'icon': Icons.notifications},
+    {'name': 'Festivo', 'icon': Icons.celebration},
+    {'name': 'Médico', 'icon': Icons.medication},
+    {'name': 'Cumpleaños', 'icon': Icons.cake},
+    {'name': 'Favorito', 'icon': Icons.bookmark},
     {'name': 'Coche', 'icon': Icons.directions_car},
   ];
   
   final List<Map<String, dynamic>> _categories2 = [
     {'name': 'Ninguno', 'icon': Icons.not_interested},
-    {'name': 'Cambio de turno', 'icon': Icons.swap_horiz},
-    {'name': 'Ingreso', 'icon': Icons.euro_symbol},
-    {'name': 'Importante', 'icon': Icons.warning},
-    {'name': 'Festivo', 'icon': Icons.wb_sunny},
-    {'name': 'Médico', 'icon': Icons.medical_services},
-    {'name': 'Cumpleaños', 'icon': Icons.pets},
-    {'name': 'Favorito', 'icon': Icons.star},
+    {'name': 'Cambio de turno', 'icon': Icons.shuffle},
+    {'name': 'Pago', 'icon': Icons.credit_card},
+    {'name': 'Importante', 'icon': Icons.notifications},
+    {'name': 'Festivo', 'icon': Icons.celebration},
+    {'name': 'Médico', 'icon': Icons.medication},
+    {'name': 'Cumpleaños', 'icon': Icons.cake},
+    {'name': 'Favorito', 'icon': Icons.bookmark},
     {'name': 'Coche', 'icon': Icons.directions_car},
   ];
   
   final List<Map<String, dynamic>> _categories3 = [
     {'name': 'Ninguno', 'icon': Icons.not_interested},
-    {'name': 'Cambio de turno', 'icon': Icons.swap_horiz},
-    {'name': 'Ingreso', 'icon': Icons.euro_symbol},
-    {'name': 'Importante', 'icon': Icons.warning},
-    {'name': 'Festivo', 'icon': Icons.wb_sunny},
-    {'name': 'Médico', 'icon': Icons.medical_services},
-    {'name': 'Cumpleaños', 'icon': Icons.pets},
-    {'name': 'Favorito', 'icon': Icons.star},
+    {'name': 'Cambio de turno', 'icon': Icons.shuffle},
+    {'name': 'Pago', 'icon': Icons.credit_card},
+    {'name': 'Importante', 'icon': Icons.notifications},
+    {'name': 'Festivo', 'icon': Icons.celebration},
+    {'name': 'Médico', 'icon': Icons.medication},
+    {'name': 'Cumpleaños', 'icon': Icons.cake},
+    {'name': 'Favorito', 'icon': Icons.bookmark},
     {'name': 'Coche', 'icon': Icons.directions_car},
   ];
 

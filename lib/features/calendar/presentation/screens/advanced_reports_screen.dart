@@ -49,7 +49,7 @@ class _AdvancedReportsScreenState extends ConsumerState<AdvancedReportsScreen> {
   List<String> get _categories => [
     'Todas',
     'Cambio de turno',
-    'Ingreso',
+    'Pago',
     'Importante',
     'Festivo',
     'Médico',

@@ -29,19 +29,19 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
   IconData? _getCategoryIcon(String? category) {
     switch (category) {
       case 'Cambio de turno':
-        return Icons.swap_horiz;
-      case 'Ingreso':
-        return Icons.attach_money;
+        return Icons.shuffle;
+      case 'Pago':
+        return Icons.credit_card;
       case 'Importante':
-        return Icons.priority_high;
+        return Icons.notifications;
       case 'Festivo':
         return Icons.celebration;
       case 'Médico':
-        return Icons.medical_services;
-      case 'Mascota':
-        return Icons.pets;
+        return Icons.medication;
+      case 'Cumpleaños':
+        return Icons.cake;
       case 'Favorito':
-        return Icons.favorite;
+        return Icons.bookmark;
       case 'Coche':
         return Icons.directions_car;
       default:
@@ -392,7 +392,6 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                       return Expanded(
                         child: Container(
                           margin: const EdgeInsets.all(0.5),
-                          constraints: const BoxConstraints(minHeight: 80),
                           decoration: BoxDecoration(
                             color: Colors.grey[100],
                             border: Border.all(color: Colors.grey[300]!),
@@ -471,7 +470,6 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
       },
       child: Container(
         margin: const EdgeInsets.all(0.5),
-        constraints: const BoxConstraints(minHeight: 80),
         decoration: BoxDecoration(
           color: Colors.white,
           border: Border.all(

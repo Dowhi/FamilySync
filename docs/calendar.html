@@ -2,12 +2,26 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <!-- Meta tags iOS para modo standalone -->
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="FamilySync">
+    <meta name="apple-touch-fullscreen" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="theme-color" content="#1B5E20">
+    <meta name="format-detection" content="telephone=no">
+    <meta name="apple-touch-startup-image" content="icons/Icon-512.png">
+    
     <title>Calendario - FamilySync</title>
+    
+    <!-- Manifest para PWA -->
+    <link rel="manifest" href="manifest.json">
+    
+    <!-- Iconos iOS -->
     <link rel="apple-touch-icon" href="icons/Icon-192.png">
+    <link rel="apple-touch-icon" sizes="192x192" href="icons/Icon-192.png">
+    <link rel="apple-touch-icon" sizes="512x512" href="icons/Icon-512.png">
     
     <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
@@ -158,12 +172,29 @@
             color: white;
         }
 
+        /* Settings Modal */
+        .settings-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.4); display: none; align-items: flex-end; justify-content: center; z-index: 3000; }
+        .settings-backdrop.show { display: flex; }
+        .settings-panel { background: #ffffff; width: 100%; max-width: 520px; border-top-left-radius: 16px; border-top-right-radius: 16px; box-shadow: 0 -8px 24px rgba(0,0,0,0.2); padding: 16px; }
+        .settings-header { display:flex; align-items:center; justify-content: space-between; margin-bottom: 8px; }
+        .settings-title { font-size:16px; font-weight:700; }
+        .settings-group { margin: 12px 0; padding: 12px; background:#f7f7f7; border-radius: 12px; }
+        .settings-row { display:flex; align-items:center; justify-content: space-between; gap: 12px; padding: 8px 0; }
+        .settings-row + .settings-row { border-top: 1px solid #eaeaea; }
+        .settings-label { font-size:14px; font-weight:600; color:#333; }
+        .settings-select, .settings-checkbox { margin-left: auto; }
+        .settings-actions { display:flex; gap:8px; margin-top: 8px; }
+        .btn { border:none; padding:10px 12px; border-radius:10px; font-weight:700; cursor:pointer; }
+        .btn-primary { background:#2a7ade; color:#fff; }
+        .btn-secondary { background:#e9e9e9; color:#333; }
+
         /* Calendar */
         .calendar-container {
             flex: 1;
-            overflow-y: auto;
-            -webkit-overflow-scrolling: touch;
+            overflow: hidden;
             padding: 0;
+            display: flex;
+            flex-direction: column;
         }
 
         .calendar-grid {
@@ -171,7 +202,13 @@
             grid-template-columns: repeat(7, 1fr);
             gap: 0;
             margin-bottom: 0;
+            flex: 1;
             height: 100%;
+        }
+
+        /* Celdas más altas cuando el mes sólo ocupa 5 semanas */
+        .calendar-grid.five-weeks .calendar-day {
+            height: calc((100vh - 190px) / 5);
         }
 
         .weekday-header {
@@ -198,7 +235,7 @@
             cursor: pointer;
             transition: all 0.2s;
             overflow: hidden;
-            min-height: calc((100vh - 160px) / 6);
+            height: calc((100vh - 190px) / 6);
             position: relative;
         }
 
@@ -215,6 +252,14 @@
         .calendar-day.today {
             border: 2px solid #1B5E20;
             background: #f1f8e9;
+        }
+
+        /* Estilo específico para el número del día de hoy */
+        .calendar-day.today .day-number {
+            background: #FF1744; /* rojo fluorescente */
+            color: #ffffff !important;
+            border-radius: 50%;
+            padding: 2px 6px;
         }
 
         .day-number {
@@ -249,6 +294,63 @@
             font-weight: 600;
             box-shadow: 0 1px 2px rgba(0,0,0,0.2);
         }
+
+        /* Year view */
+        .year-nav {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 8px 12px;
+            background: #2e7d32;
+            color: white;
+        }
+        .year-nav .title { font-weight: 700; }
+        .year-nav button {
+            width: 40px;
+            height: 28px;
+            color: white;
+            background: rgba(255,255,255,0.15);
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+        .year-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 8px;
+            padding: 8px;
+        }
+        .year-month {
+            background: #f5f5f5;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        .year-month-header {
+            background: #4da3ff;
+            color: #fff;
+            text-align: center;
+            font-weight: 700;
+            font-size: 12px;
+            padding: 6px 0;
+        }
+        .year-month-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+        }
+        .year-weekday {
+            text-align: center;
+            font-size: 10px;
+            color: #666;
+            padding: 3px 0;
+            background: #eaeaea;
+            border-bottom: 1px solid #ddd;
+        }
+        .year-day { position: relative; height: 22px; border-right: 1px solid #eee; border-bottom: 1px solid #eee; background: #fff; }
+        .year-day.other-month { background: #fafafa; }
+        .year-day-number { position: absolute; top: 2px; left: 2px; font-size: 10px; color: #333; z-index: 2; }
+
+        /* (Revertido) estilos de vista anual eliminados */
 
         .day-events {
             flex: 1;
@@ -313,10 +415,10 @@
         .modal-header-blue {
             background: #2196F3;
             color: white;
-            padding: 16px 20px;
+            padding: 10px 20px;
             display: flex;
             align-items: center;
-            justify-content: space-between;
+            justify-content: center;
         }
 
         .back-arrow {
@@ -388,6 +490,12 @@
             align-items: center;
             gap: 12px;
             border-bottom: 1px solid #f0f0f0;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .alarm-section:active {
+            background-color: #f5f5f5;
         }
 
         .alarm-icon {
@@ -413,6 +521,139 @@
             justify-content: center;
             font-weight: bold;
             font-size: 14px;
+        }
+
+        /* Modal de configuración de alarma */
+        .alarm-modal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 2000;
+            align-items: center;
+            justify-content: center;
+            padding: 10px;
+        }
+
+        .alarm-modal.show {
+            display: flex;
+        }
+
+        .alarm-modal-content {
+            background: white;
+            width: 100%;
+            max-width: 400px;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .alarm-modal-header {
+            background: #FF9800;
+            padding: 16px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-radius: 16px 16px 0 0;
+        }
+
+        .alarm-modal-title {
+            color: white;
+            font-size: 18px;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+
+        .alarm-modal-close {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 24px;
+            cursor: pointer;
+            padding: 0;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .alarm-modal-body {
+            padding: 20px;
+        }
+
+        .alarm-input-group {
+            margin-bottom: 20px;
+        }
+
+        .alarm-input-label {
+            display: block;
+            font-size: 14px;
+            font-weight: 600;
+            color: #666;
+            margin-bottom: 8px;
+        }
+
+        .alarm-input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+            font-family: inherit;
+            outline: none;
+        }
+
+        .alarm-input:focus {
+            border-color: #FF9800;
+        }
+
+        .alarm-list {
+            margin-top: 20px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .alarm-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .alarm-item:last-child {
+            border-bottom: none;
+        }
+
+        .alarm-item-info {
+            flex: 1;
+        }
+
+        .alarm-item-date {
+            font-weight: 600;
+            color: #333;
+            font-size: 14px;
+        }
+
+        .alarm-item-time {
+            color: #666;
+            font-size: 12px;
+            margin-top: 4px;
+        }
+
+        .alarm-item-delete {
+            background: #f44336;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 16px;
         }
 
         /* Day Shifts Section */
@@ -657,6 +898,319 @@
             }
         }
 
+        /* Modal de Notas - Réplica exacta de la imagen */
+        .notes-modal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 2000;
+            align-items: center;
+            justify-content: center;
+            padding: 10px;
+        }
+
+        .notes-modal:not(.show) {
+            pointer-events: none;
+        }
+
+        .notes-modal.show {
+            display: flex;
+        }
+
+        .notes-modal-content {
+            background: white;
+            width: 100%;
+            max-width: 400px;
+            max-height: 90vh;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+            position: relative;
+            z-index: 1;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        /* Contenedor scrollable para el contenido */
+        .notes-modal-scrollable {
+            overflow-y: auto;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Cerrar modal al hacer clic fuera */
+        .notes-modal.show .notes-modal-content {
+            pointer-events: auto;
+        }
+
+        .notes-modal.show::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            z-index: 0;
+        }
+
+        /* Header rojo */
+        .notes-header {
+            background: #f44336;
+            padding: 16px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-radius: 16px 16px 0 0;
+        }
+
+        .notes-title {
+            color: white;
+            font-size: 18px;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .notes-share-icon {
+            color: white;
+            font-size: 20px;
+            cursor: pointer;
+        }
+
+        /* Campo de texto */
+        .notes-input-container {
+            padding: 20px;
+            background: white;
+            flex-shrink: 0;
+        }
+
+        .notes-textarea {
+            width: 100%;
+            min-height: 150px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 12px;
+            font-size: 16px;
+            font-family: inherit;
+            resize: none;
+            outline: none;
+            background: white;
+        }
+
+        /* Div editable para formato de texto */
+        .notes-content-editable {
+            width: 100%;
+            min-height: 150px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 12px;
+            font-size: 16px;
+            font-family: inherit;
+            outline: none;
+            background: white;
+            overflow-y: auto;
+            word-wrap: break-word;
+            white-space: pre-wrap;
+        }
+
+        .notes-content-editable:empty:before {
+            content: attr(data-placeholder);
+            color: #999;
+        }
+
+        .notes-content-editable:focus {
+            border-color: #2196F3;
+        }
+
+        /* Control de tamaño de texto */
+        .notes-text-size-container {
+            padding: 0 20px 16px;
+            background: white;
+            flex-shrink: 0;
+        }
+
+        .notes-text-size-label {
+            display: block;
+            font-size: 12px;
+            font-weight: 600;
+            color: #666;
+            margin-bottom: 8px;
+        }
+
+        .notes-text-size-control {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .notes-text-size-value {
+            font-size: 14px;
+            font-weight: bold;
+            color: #333;
+            min-width: 30px;
+            text-align: center;
+        }
+
+        .notes-text-size-slider {
+            flex: 1;
+            height: 6px;
+            border-radius: 3px;
+            background: #e0e0e0;
+            outline: none;
+            -webkit-appearance: none;
+            appearance: none;
+        }
+
+        .notes-text-size-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: #00BCD4;
+            cursor: pointer;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .notes-text-size-slider::-moz-range-thumb {
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: #00BCD4;
+            cursor: pointer;
+            border: none;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+
+        /* Botones de formato */
+        .notes-format-buttons {
+            display: flex;
+            gap: 12px;
+            padding: 0 20px 16px;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .format-btn {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            border: 1px solid #00BCD4;
+            background: white;
+            color: #333;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+
+        .format-btn.active {
+            background: #00BCD4;
+            color: white;
+            border-color: #00BCD4;
+        }
+
+        .format-btn:active {
+            transform: scale(0.95);
+        }
+
+        /* Botones de acción */
+        .notes-action-buttons {
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            flex-shrink: 0;
+            background: white;
+            border-top: 1px solid #f0f0f0;
+        }
+
+        .action-buttons-row {
+            display: flex;
+            gap: 12px;
+        }
+
+        .action-btn {
+            padding: 12px 20px;
+            border: 2px solid;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s;
+            flex: 1;
+        }
+
+        .delete-btn {
+            background: white;
+            border: 2px solid #333;
+            color: #333;
+            width: 100%;
+            display: block;
+            font-weight: bold;
+        }
+
+        .delete-btn:hover {
+            background: #f5f5f5;
+        }
+
+        .delete-btn:active {
+            background: #333;
+            color: white;
+        }
+
+        .cancel-btn {
+            background: white;
+            border: 2px solid #f44336;
+            color: #f44336;
+            display: block;
+            min-width: 100px;
+            font-weight: bold;
+        }
+
+        .cancel-btn:hover {
+            background: #f44336;
+            color: white;
+        }
+
+        .cancel-btn:active {
+            background: #d32f2f;
+            border-color: #d32f2f;
+            color: white;
+        }
+
+        .accept-btn {
+            background: white;
+            border: 2px solid #4CAF50;
+            color: #4CAF50;
+            display: block;
+            min-width: 100px;
+            font-weight: bold;
+        }
+
+        .accept-btn:hover {
+            background: #4CAF50;
+            color: white;
+        }
+
+        .accept-btn:active {
+            background: #388E3C;
+            border-color: #388E3C;
+            color: white;
+        }
+
+        .action-buttons-row {
+            display: flex;
+            gap: 12px;
+            width: 100%;
+        }
+
+        .action-buttons-row .action-btn {
+            flex: 1;
+        }
+
         .modal-content {
             background: white;
             border-radius: 16px;
@@ -843,6 +1397,7 @@
             font-weight: 600;
             z-index: 1000;
             transition: all 0.3s;
+            display: none !important;
         }
 
         .connection-status.connected {
@@ -995,15 +1550,14 @@
     </style>
 </head>
 <body>
-    <!-- Connection Status -->
-    <div class="connection-status" id="connectionStatus">Conectando...</div>
+    
 
     <!-- Header -->
     <div class="header">
         <div class="header-title">My Calendar</div>
         <div class="header-actions">
             <button class="header-btn" onclick="goBack()">👤</button>
-            <button class="menu-btn" onclick="openMenu()">⚙️</button>
+            <button class="menu-btn" onclick="openSettings()">⚙️</button>
         </div>
     </div>
 
@@ -1028,6 +1582,18 @@
         </div>
     </div>
 
+        <!-- Year View (anual) -->
+        <div class="calendar-container" id="yearView" style="display: none;">
+            <div class="year-nav">
+                <button onclick="changeYear(-1)">‹</button>
+                <div class="title" id="yearTitle">2025</div>
+                <button onclick="changeYear(1)">›</button>
+            </div>
+            <div class="year-grid" id="yearGrid"></div>
+        </div>
+
+        
+
     <!-- Bottom Info -->
     <div class="bottom-info" style="display: none;">
         <div class="current-user-info" id="currentUserInfo"></div>
@@ -1038,6 +1604,62 @@
         <button class="action-btn pintar" onclick="activatePaintMode()">PINTAR</button>
         <button class="action-btn editar" onclick="activateEditMode()">EDITAR</button>
         <button class="action-btn turnos" onclick="showShifts()">TURNOS</button>
+    </div>
+
+    <!-- Settings Modal -->
+    <div class="settings-backdrop" id="settingsModal">
+        <div class="settings-panel" onclick="event.stopPropagation()">
+            <div class="settings-header">
+                <div class="settings-title">Configuración</div>
+                <button class="btn btn-secondary" onclick="closeSettings()">Cerrar</button>
+            </div>
+            <div class="settings-group">
+                <div class="settings-row">
+                    <div class="settings-label">Tema</div>
+                    <select id="stTheme" class="settings-select">
+                        <option value="system">Sistema</option>
+                        <option value="light">Claro</option>
+                        <option value="dark">Oscuro</option>
+                    </select>
+                </div>
+                <div class="settings-row">
+                    <div class="settings-label">Inicio de semana</div>
+                    <select id="stWeekStart" class="settings-select">
+                        <option value="monday">Lunes</option>
+                        <option value="sunday">Domingo</option>
+                    </select>
+                </div>
+                <div class="settings-row">
+                    <div class="settings-label">Resaltar día de hoy en rojo</div>
+                    <input id="stHighlightToday" type="checkbox" class="settings-checkbox" />
+                </div>
+                <div class="settings-row">
+                    <div class="settings-label">Sexta semana solo si es necesaria</div>
+                    <input id="stSmartWeeks" type="checkbox" class="settings-checkbox" />
+                </div>
+            </div>
+            <div class="settings-group">
+                <div class="settings-row">
+                    <div class="settings-label">Abrir Resumen</div>
+                    <button class="btn btn-secondary" onclick="window.location.href='summary.html'">Ir</button>
+                </div>
+                <div class="settings-row">
+                    <div class="settings-label">Abrir 2025</div>
+                    <button class="btn btn-secondary" onclick="showTab('year')">Ir</button>
+                </div>
+                <div class="settings-row">
+                    <div class="settings-label">Copias de seguridad</div>
+                    <div class="settings-actions">
+                        <button class="btn btn-secondary" onclick="window.location.href='firestore_backup.html'">Backup</button>
+                        <button class="btn btn-secondary" onclick="window.location.href='firestore_cleanup.html'">Herramientas</button>
+                    </div>
+                </div>
+            </div>
+            <div class="settings-actions">
+                <button class="btn btn-primary" onclick="saveSettings()">Guardar</button>
+                <button class="btn btn-secondary" onclick="resetSettings()">Restablecer</button>
+            </div>
+        </div>
     </div>
 
     <!-- Pop-up de Selección de Turnos para Pintar -->
@@ -1053,22 +1675,20 @@
         <div class="modal-content-exact">
             <!-- Top Blue Header -->
             <div class="modal-header-blue">
-                <button class="back-arrow" onclick="closeModal()">←</button>
                 <div class="header-date" id="modalDate">8/10/25</div>
-                <div class="header-spacer"></div>
             </div>
 
             <!-- Main Content Card -->
             <div class="main-content-card">
                 <div class="document-icon">📄+</div>
-                <textarea class="main-textarea" placeholder="Añadir nota..." id="mainTextarea"></textarea>
+                <textarea class="main-textarea" placeholder="Añadir nota..." id="mainTextarea" onclick="openNotesPopup()" style="cursor: pointer;"></textarea>
             </div>
 
             <!-- Alarm Section -->
-            <div class="alarm-section">
+            <div class="alarm-section" onclick="openAlarmModal()">
                 <div class="alarm-icon">🔔</div>
                 <div class="alarm-text">Aviso de Alarma</div>
-                <div class="alarm-number" id="alarmNumber">8</div>
+                <div class="alarm-number" id="alarmNumber">0</div>
             </div>
 
             <!-- Day Shifts Section -->
@@ -1093,36 +1713,36 @@
                                 <div class="dropdown-option-icon"></div>
                                 <div class="dropdown-option-text">Ninguno</div>
                             </div>
-                            <div class="dropdown-option" onclick="selectCategory(0, 'Cambio de turno', '🔄')">
-                                <div class="dropdown-option-icon">🔄</div>
+                            <div class="dropdown-option" onclick="selectCategory(0, 'Cambio de turno', '🔀')">
+                                <div class="dropdown-option-icon">🔀</div>
                                 <div class="dropdown-option-text">Cambio de turno</div>
                             </div>
-                            <div class="dropdown-option" onclick="selectCategory(0, 'Ingreso', '$')">
-                                <div class="dropdown-option-icon">$</div>
-                                <div class="dropdown-option-text">Ingreso</div>
+                            <div class="dropdown-option" onclick="selectCategory(0, 'Pago', '💳')">
+                                <div class="dropdown-option-icon">💳</div>
+                                <div class="dropdown-option-text">Pago</div>
                             </div>
-                            <div class="dropdown-option" onclick="selectCategory(0, 'Importante', '⚠️')">
-                                <div class="dropdown-option-icon">⚠️</div>
+                            <div class="dropdown-option" onclick="selectCategory(0, 'Importante', '🔔')">
+                                <div class="dropdown-option-icon">🔔</div>
                                 <div class="dropdown-option-text">Importante</div>
                             </div>
-                            <div class="dropdown-option" onclick="selectCategory(0, 'Festivo', '☀️')">
-                                <div class="dropdown-option-icon">☀️</div>
+                            <div class="dropdown-option" onclick="selectCategory(0, 'Festivo', '🎉')">
+                                <div class="dropdown-option-icon">🎉</div>
                                 <div class="dropdown-option-text">Festivo</div>
                             </div>
-                            <div class="dropdown-option" onclick="selectCategory(0, 'Médico', '🩺')">
-                                <div class="dropdown-option-icon">🩺</div>
+                            <div class="dropdown-option" onclick="selectCategory(0, 'Médico', '💊')">
+                                <div class="dropdown-option-icon">💊</div>
                                 <div class="dropdown-option-text">Médico</div>
                             </div>
-                            <div class="dropdown-option" onclick="selectCategory(0, 'Mascota', '🐱')">
-                                <div class="dropdown-option-icon">🐱</div>
-                                <div class="dropdown-option-text">Mascota</div>
+                            <div class="dropdown-option" onclick="selectCategory(0, 'Cumpleaños', '🎂')">
+                                <div class="dropdown-option-icon">🎂</div>
+                                <div class="dropdown-option-text">Cumpleaños</div>
                             </div>
-                            <div class="dropdown-option" onclick="selectCategory(0, 'Favorito', '⭐')">
-                                <div class="dropdown-option-icon">⭐</div>
+                            <div class="dropdown-option" onclick="selectCategory(0, 'Favorito', '🔖')">
+                                <div class="dropdown-option-icon">🔖</div>
                                 <div class="dropdown-option-text">Favorito</div>
                             </div>
-                            <div class="dropdown-option" onclick="selectCategory(0, 'Coche', '🚗')">
-                                <div class="dropdown-option-icon">🚗</div>
+                            <div class="dropdown-option" onclick="selectCategory(0, 'Coche', '🚙')">
+                                <div class="dropdown-option-icon">🚙</div>
                                 <div class="dropdown-option-text">Coche</div>
                             </div>
                         </div>
@@ -1136,36 +1756,36 @@
                                 <div class="dropdown-option-icon"></div>
                                 <div class="dropdown-option-text">Ninguno</div>
                             </div>
-                            <div class="dropdown-option" onclick="selectCategory(1, 'Cambio de turno', '🔄')">
-                                <div class="dropdown-option-icon">🔄</div>
+                            <div class="dropdown-option" onclick="selectCategory(1, 'Cambio de turno', '🔀')">
+                                <div class="dropdown-option-icon">🔀</div>
                                 <div class="dropdown-option-text">Cambio de turno</div>
                             </div>
-                            <div class="dropdown-option" onclick="selectCategory(1, 'Ingreso', '$')">
-                                <div class="dropdown-option-icon">$</div>
-                                <div class="dropdown-option-text">Ingreso</div>
+                            <div class="dropdown-option" onclick="selectCategory(1, 'Pago', '💳')">
+                                <div class="dropdown-option-icon">💳</div>
+                                <div class="dropdown-option-text">Pago</div>
                             </div>
-                            <div class="dropdown-option" onclick="selectCategory(1, 'Importante', '⚠️')">
-                                <div class="dropdown-option-icon">⚠️</div>
+                            <div class="dropdown-option" onclick="selectCategory(1, 'Importante', '🔔')">
+                                <div class="dropdown-option-icon">🔔</div>
                                 <div class="dropdown-option-text">Importante</div>
                             </div>
-                            <div class="dropdown-option" onclick="selectCategory(1, 'Festivo', '☀️')">
-                                <div class="dropdown-option-icon">☀️</div>
+                            <div class="dropdown-option" onclick="selectCategory(1, 'Festivo', '🎉')">
+                                <div class="dropdown-option-icon">🎉</div>
                                 <div class="dropdown-option-text">Festivo</div>
                             </div>
-                            <div class="dropdown-option" onclick="selectCategory(1, 'Médico', '🩺')">
-                                <div class="dropdown-option-icon">🩺</div>
+                            <div class="dropdown-option" onclick="selectCategory(1, 'Médico', '💊')">
+                                <div class="dropdown-option-icon">💊</div>
                                 <div class="dropdown-option-text">Médico</div>
                             </div>
-                            <div class="dropdown-option" onclick="selectCategory(1, 'Mascota', '🐱')">
-                                <div class="dropdown-option-icon">🐱</div>
-                                <div class="dropdown-option-text">Mascota</div>
+                            <div class="dropdown-option" onclick="selectCategory(1, 'Cumpleaños', '🎂')">
+                                <div class="dropdown-option-icon">🎂</div>
+                                <div class="dropdown-option-text">Cumpleaños</div>
                             </div>
-                            <div class="dropdown-option" onclick="selectCategory(1, 'Favorito', '⭐')">
-                                <div class="dropdown-option-icon">⭐</div>
+                            <div class="dropdown-option" onclick="selectCategory(1, 'Favorito', '🔖')">
+                                <div class="dropdown-option-icon">🔖</div>
                                 <div class="dropdown-option-text">Favorito</div>
                             </div>
-                            <div class="dropdown-option" onclick="selectCategory(1, 'Coche', '🚗')">
-                                <div class="dropdown-option-icon">🚗</div>
+                            <div class="dropdown-option" onclick="selectCategory(1, 'Coche', '🚙')">
+                                <div class="dropdown-option-icon">🚙</div>
                                 <div class="dropdown-option-text">Coche</div>
                             </div>
                         </div>
@@ -1179,36 +1799,36 @@
                                 <div class="dropdown-option-icon"></div>
                                 <div class="dropdown-option-text">Ninguno</div>
                             </div>
-                            <div class="dropdown-option" onclick="selectCategory(2, 'Cambio de turno', '🔄')">
-                                <div class="dropdown-option-icon">🔄</div>
+                            <div class="dropdown-option" onclick="selectCategory(2, 'Cambio de turno', '🔀')">
+                                <div class="dropdown-option-icon">🔀</div>
                                 <div class="dropdown-option-text">Cambio de turno</div>
                             </div>
-                            <div class="dropdown-option" onclick="selectCategory(2, 'Ingreso', '$')">
-                                <div class="dropdown-option-icon">$</div>
-                                <div class="dropdown-option-text">Ingreso</div>
+                            <div class="dropdown-option" onclick="selectCategory(2, 'Pago', '💳')">
+                                <div class="dropdown-option-icon">💳</div>
+                                <div class="dropdown-option-text">Pago</div>
                             </div>
-                            <div class="dropdown-option" onclick="selectCategory(2, 'Importante', '⚠️')">
-                                <div class="dropdown-option-icon">⚠️</div>
+                            <div class="dropdown-option" onclick="selectCategory(2, 'Importante', '🔔')">
+                                <div class="dropdown-option-icon">🔔</div>
                                 <div class="dropdown-option-text">Importante</div>
                             </div>
-                            <div class="dropdown-option" onclick="selectCategory(2, 'Festivo', '☀️')">
-                                <div class="dropdown-option-icon">☀️</div>
+                            <div class="dropdown-option" onclick="selectCategory(2, 'Festivo', '🎉')">
+                                <div class="dropdown-option-icon">🎉</div>
                                 <div class="dropdown-option-text">Festivo</div>
                             </div>
-                            <div class="dropdown-option" onclick="selectCategory(2, 'Médico', '🩺')">
-                                <div class="dropdown-option-icon">🩺</div>
+                            <div class="dropdown-option" onclick="selectCategory(2, 'Médico', '💊')">
+                                <div class="dropdown-option-icon">💊</div>
                                 <div class="dropdown-option-text">Médico</div>
                             </div>
-                            <div class="dropdown-option" onclick="selectCategory(2, 'Mascota', '🐱')">
-                                <div class="dropdown-option-icon">🐱</div>
-                                <div class="dropdown-option-text">Mascota</div>
+                            <div class="dropdown-option" onclick="selectCategory(2, 'Cumpleaños', '🎂')">
+                                <div class="dropdown-option-icon">🎂</div>
+                                <div class="dropdown-option-text">Cumpleaños</div>
                             </div>
-                            <div class="dropdown-option" onclick="selectCategory(2, 'Favorito', '⭐')">
-                                <div class="dropdown-option-icon">⭐</div>
+                            <div class="dropdown-option" onclick="selectCategory(2, 'Favorito', '🔖')">
+                                <div class="dropdown-option-icon">🔖</div>
                                 <div class="dropdown-option-text">Favorito</div>
                             </div>
-                            <div class="dropdown-option" onclick="selectCategory(2, 'Coche', '🚗')">
-                                <div class="dropdown-option-icon">🚗</div>
+                            <div class="dropdown-option" onclick="selectCategory(2, 'Coche', '🚙')">
+                                <div class="dropdown-option-icon">🚙</div>
                                 <div class="dropdown-option-text">Coche</div>
                             </div>
                         </div>
@@ -1224,7 +1844,102 @@
         </div>
     </div>
 
+    <!-- Modal de Notas - Réplica exacta de la imagen -->
+    <div class="notes-modal" id="notesModal" onclick="handleNotesModalClick(event)">
+        <div class="notes-modal-content" onclick="event.stopPropagation()">
+            <!-- Header rojo -->
+            <div class="notes-header">
+                <div class="notes-title">NOTAS</div>
+                <div class="notes-share-icon">🔗</div>
+            </div>
+            
+            <!-- Campo de texto -->
+            <div class="notes-input-container">
+                <div class="notes-content-editable" id="notesTextarea" contenteditable="true" data-placeholder="Notas del día..."></div>
+            </div>
+            
+            <!-- Botones de formato -->
+            <div class="notes-format-buttons">
+                <button class="format-btn" id="formatBold" onclick="toggleFormat('bold')">B</button>
+                <button class="format-btn" id="formatItalic" onclick="toggleFormat('italic')">I</button>
+                <button class="format-btn" id="formatUnderline" onclick="toggleFormat('underline')">U</button>
+            </div>
+            
+            <!-- Control de tamaño de texto -->
+            <div class="notes-text-size-container">
+                <label class="notes-text-size-label">Tamaño del texto en celdas:</label>
+                <div class="notes-text-size-control">
+                    <span class="notes-text-size-value" id="notesTextSizeValue">11</span>
+                    <input type="range" id="notesTextSizeSlider" min="8" max="16" value="11" step="1" oninput="updateNotesTextSize(this.value)" class="notes-text-size-slider">
+                </div>
+            </div>
+            
+            <!-- Botones de acción -->
+            <div class="notes-action-buttons">
+                <button class="action-btn delete-btn" onclick="deleteNote()">BORRAR</button>
+                <div class="action-buttons-row" style="display: flex !important; gap: 12px; width: 100%;">
+                    <button class="action-btn cancel-btn" onclick="cancelNotesPopup()" style="flex: 1; background: white; border: 2px solid #f44336; color: #f44336; padding: 12px 20px; border-radius: 8px; font-weight: bold; cursor: pointer;">CANCELAR</button>
+                    <button class="action-btn accept-btn" onclick="acceptNotesPopup()" style="flex: 1; background: white; border: 2px solid #4CAF50; color: #4CAF50; padding: 12px 20px; border-radius: 8px; font-weight: bold; cursor: pointer;">ACEPTAR</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Configuración de Alarma -->
+    <div class="alarm-modal" id="alarmModal" onclick="handleAlarmModalClick(event)">
+        <div class="alarm-modal-content" onclick="event.stopPropagation()">
+            <!-- Header naranja -->
+            <div class="alarm-modal-header">
+                <div class="alarm-modal-title">Configurar Alarma</div>
+                <button class="alarm-modal-close" onclick="closeAlarmModal()">×</button>
+            </div>
+            
+            <!-- Contenido -->
+            <div class="alarm-modal-body">
+                <div class="alarm-input-group">
+                    <label class="alarm-input-label">Fecha:</label>
+                    <input type="date" id="alarmDateInput" class="alarm-input" />
+                </div>
+                
+                <div class="alarm-input-group">
+                    <label class="alarm-input-label">Hora:</label>
+                    <input type="time" id="alarmTimeInput" class="alarm-input" />
+                </div>
+                
+                <div class="action-buttons-row" style="display: flex !important; gap: 12px; width: 100%; margin-top: 20px;">
+                    <button class="action-btn accept-btn" onclick="addAlarm()" style="flex: 1; background: white; border: 2px solid #4CAF50; color: #4CAF50; padding: 12px 20px; border-radius: 8px; font-weight: bold; cursor: pointer;">AGREGAR</button>
+                </div>
+                
+                <!-- Lista de alarmas existentes -->
+                <div class="alarm-list" id="alarmList">
+                    <!-- Las alarmas se cargarán aquí -->
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script>
+        // ============================================
+        // DETECCIÓN DE PLATAFORMA (CRÍTICO PARA iOS)
+        // ============================================
+        // Estas variables DEBEN estar al inicio para detectar iOS standalone correctamente
+        const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+        const isAndroid = /Android/i.test(navigator.userAgent);
+        
+        // Detectar si está en modo standalone (PWA instalada) - IMPORTANTE para iOS
+        // iOS usa window.navigator.standalone, Android usa display-mode
+        const isStandaloneMode = (window.navigator.standalone === true) ||
+                                window.matchMedia('(display-mode: standalone)').matches ||
+                                document.referrer.includes('android-app://');
+        
+        // Log para debugging
+        if (isIOS) {
+            console.log('📱 iOS detectado');
+            console.log('📱 Navigator standalone:', window.navigator.standalone);
+            console.log('📱 Modo standalone detectado:', isStandaloneMode);
+        }
+        
         // Estado global
         let currentDate = new Date();
         let currentUserId = 1;
@@ -1250,7 +1965,8 @@
             'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
         ];
 
-        const weekDays = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
+        // Días de la semana (se obtiene dinámicamente según configuración)
+        function weekDays(){ return getWeekDays(); }
 
         // Variables globales
         let isRendering = false;
@@ -1258,12 +1974,7 @@
         let lastRenderTime = 0;
         let eventsCache = {}; // Cache de eventos para evitar múltiples llamadas a Firebase
 
-        // Actualizar estado de conexión
-        function updateConnectionStatus(status, message) {
-            const statusEl = document.getElementById('connectionStatus');
-            statusEl.className = `connection-status ${status}`;
-            statusEl.textContent = message;
-        }
+        
 
         // Inicializar Firebase
         async function initFirebase() {
@@ -1273,7 +1984,7 @@
                 db = firebase.firestore();
                 isFirebaseConnected = true;
                 console.log('✅ Firebase conectado correctamente');
-                updateConnectionStatus('connected', '🟢 Sincronizado');
+                
                 
                 // Cargar usuarios desde Firebase
                 await loadUsersFromFirebase();
@@ -1288,7 +1999,7 @@
             } catch (error) {
                 console.error('❌ Error conectando Firebase:', error);
                 isFirebaseConnected = false;
-                updateConnectionStatus('error', '❌ Error Firebase');
+                
                 // Usar usuarios por defecto si Firebase falla
                 loadDefaultUsers();
                 return false;
@@ -1379,35 +2090,82 @@
         function setupRealtimeListener() {
             if (!isFirebaseConnected) return;
             
-            // Desactivados los listeners para mejorar rendimiento
-            // Los cambios se reflejan localmente al pintar días
-            /*
-            // Escuchar cambios en eventos del calendario
-            db.collection('calendar_events').onSnapshot((snapshot) => {
-                console.log('🔄 Cambios detectados en Firestore');
-                scheduleRenderCalendar(); // Refrescar calendario cuando hay cambios (con debounce)
+            // Listener para usuarios: actualizar colores si cambian
+            db.collection('users').onSnapshot((snapshot) => {
+                console.log('🔄 Cambios detectados en users');
+                const updatedUsers = snapshot.docs.map(doc => {
+                    const data = doc.data();
+                    return {
+                        id: parseInt(data.id) || parseInt(doc.id),
+                        name: data.name || `Usuario ${doc.id}`,
+                        color: data.color || '#9E9E9E'
+                    };
+                });
+                users = updatedUsers;
+                console.log('✅ Usuarios actualizados:', users);
+                // Re-renderizar el calendario para aplicar nuevos colores
+                scheduleRenderCalendar();
             }, (error) => {
-                console.error('❌ Error en listener de Firestore:', error);
+                console.error('❌ Error en listener de users:', error);
             });
-
-            // Escuchar cambios en shifts
+            
+            // Listener SOLO para shifts: si se edita un turno (nombre/color/abreviatura),
+            // actualizamos plantillas y re-renderizamos el calendario.
             db.collection('shifts').onSnapshot((snapshot) => {
                 console.log('🔄 Cambios detectados en shifts');
                 shiftTemplates = snapshot.docs.map(doc => ({
                     id: doc.id,
                     ...doc.data()
                 }));
-                scheduleRenderCalendar(); // Refrescar calendario cuando cambien los shifts (con debounce)
+                scheduleRenderCalendar();
             }, (error) => {
                 console.error('❌ Error en listener de shifts:', error);
             });
-            */
+
+            // Listener para eventos del calendario: actualizar caché por doc cambiado
+            db.collection('calendar_events').onSnapshot((snapshot) => {
+                if (!eventsCache.events) eventsCache.events = {};
+                snapshot.docChanges().forEach(change => {
+                    const id = change.doc.id; // dateKey YYYY-MM-DD
+                    const data = change.doc.data();
+                    if (change.type === 'removed') {
+                        eventsCache.events[id] = [];
+                    } else {
+                        eventsCache.events[id] = data?.events || [];
+                    }
+                });
+                // Refrescar vistas activas
+                scheduleRenderCalendar();
+                const yearView = document.getElementById('yearView');
+                if (yearView && yearView.style.display !== 'none') {
+                    renderYear();
+                }
+            }, (error) => {
+                console.error('❌ Error en listener de calendar_events:', error);
+            });
         }
 
         // Inicializar
+        // Flag para evitar inicialización múltiple
+        let isInitialized = false;
+        
         async function init() {
+            // Evitar inicialización múltiple
+            if (isInitialized) {
+                console.log('⚠️ Calendario ya inicializado, omitiendo...');
+                return;
+            }
+            isInitialized = true;
+            window.calendarInitialized = true;
+            
             console.log('📅 Inicializando calendario...');
-            updateConnectionStatus('disconnected', '🟡 Conectando...');
+            console.log('📱 Modo standalone:', isStandaloneMode);
+            console.log('📱 iOS detectado:', isIOS);
+            console.log('📱 Android detectado:', isAndroid);
+            
+            // Aplicar tema y configuración persistida
+            applySettings();
+            
             
             // Cargar usuario guardado
             const savedUserId = localStorage.getItem('current_user_id');
@@ -1417,39 +2175,232 @@
 
             // Intentar conectar Firebase
             if (!(await initFirebase())) {
-                updateConnectionStatus('disconnected', '🟠 Solo Local');
+                
             }
 
             // Agregar algunos eventos de prueba
             addTestEvents();
 
+            // Soporte de salto desde Resumen: ajustar mes/día si hay 'jump_to_date'
+            const jump = localStorage.getItem('jump_to_date');
+            if (jump) {
+                try {
+                    const [y,m,d]=jump.split('-').map(Number);
+                    currentDate = new Date(y, m-1, d);
+                } catch(e) { console.warn('jump_to_date inválido', e); }
+                localStorage.removeItem('jump_to_date');
+            }
+
+            // Asegurar que el tab de calendario esté activo al iniciar
+            ensureCalendarTabActive();
+            
             // Renderizar calendario solo una vez
             setTimeout(() => {
                 renderCalendar();
                 updateCurrentUserInfo();
+                // Abrir modal si se solicitó salto exacto a día
+                if (jump) {
+                    const [y,m,d]=jump.split('-').map(Number);
+                    const dt = new Date(y, m-1, d);
+                    setTimeout(()=>openDayModal(dt), 300);
+                }
             }, 100);
+            
+            // Solicitar permiso para notificaciones al iniciar
+            if ('Notification' in window && Notification.permission === 'default') {
+                Notification.requestPermission().then(permission => {
+                    console.log('📱 Permiso de notificaciones:', permission);
+                });
+            }
+            
+            // Registrar Service Workers
+            if ('serviceWorker' in navigator) {
+                // Primero registrar Service Worker principal para PWA (requerido para instalación)
+                navigator.serviceWorker.register('sw.js')
+                    .then((registration) => {
+                        console.log('✅ Service Worker principal registrado:', registration.scope);
+                        
+                        // Luego registrar Service Worker de alarmas (solo si no es iOS)
+                        if (!isIOS) {
+                            return navigator.serviceWorker.register('sw-alarm.js');
+                        }
+                    })
+                    .then((registration) => {
+                        if (registration) {
+                            console.log('✅ Service Worker de alarmas registrado:', registration.scope);
+                        }
+                    })
+                    .catch((error) => {
+                        console.error('❌ Error registrando Service Worker:', error);
+                        // Si falla sw.js, intentar solo sw-alarm.js en Android
+                        if (isAndroid && !isIOS) {
+                            navigator.serviceWorker.register('sw-alarm.js')
+                                .then((reg) => console.log('✅ Service Worker de alarmas registrado:', reg.scope))
+                                .catch((err) => console.error('❌ Error registrando SW de alarmas:', err));
+                        }
+                    });
+            } else if (isIOS) {
+                console.log('ℹ️ iOS detectado: Service Worker tiene limitaciones, usando verificación local');
+            }
+            
+            // Escuchar mensajes del Service Worker
+            if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+                navigator.serviceWorker.controller.addEventListener('message', (event) => {
+                    if (event.data && event.data.type === 'OPEN_ALARM') {
+                        window.location.href = event.data.url;
+                    } else if (event.data && event.data.type === 'SHOW_ALARM') {
+                        // Mostrar la pantalla de alarma cuando el Service Worker no puede abrir ventana
+                        const { url, date, time, note, user } = event.data;
+                        openAlarmNotificationPage(date, time, note);
+                    }
+                });
+            }
+            
+            // Guardar alarmas en localStorage para verificación cuando la app se abre (especialmente para iOS)
+            saveAlarmsToLocalStorage();
+            
+            // Verificar alarmas pendientes al abrir la app
+            checkPendingAlarmsOnStart();
+            
+            // Detectar cuando la app vuelve al primer plano (importante para iOS)
+            setupVisibilityChangeListener();
+            
+            // Detectar cuando la app se convierte en PWA instalada
+            checkPWAInstallation();
+            
+            // Mostrar botón de instalación en Android si no está instalada
+            if (isAndroid) {
+                setupAndroidInstallPrompt();
+            }
+            
+            // Iniciar verificación de alarmas después de un breve delay
+            setTimeout(() => {
+                setupAlarmNotifications();
+                if (!isIOS) {
+                    scheduleAllAlarms(); // Programar todas las alarmas existentes en Service Worker
+                } else {
+                    // En iOS, programar alarmas en localStorage para verificación periódica
+                    scheduleAlarmsForIOS();
+                }
+            }, 2000);
         }
 
-        // Abrir menú (función placeholder)
-        function openMenu() {
-            alert('Funcionalidad de menú próximamente...\n\nPuedes agregar aquí:\n- Configuración\n- Estadísticas\n- Exportar calendario\n- Etc.');
+        // Configuración
+        const SETTINGS_KEY = 'app_settings_v1';
+        function loadSettings(){
+            try { return JSON.parse(localStorage.getItem(SETTINGS_KEY)) || { theme:'system', weekStart:'monday', highlightToday:true, smartWeeks:true }; } catch(e){ return { theme:'system', weekStart:'monday', highlightToday:true, smartWeeks:true }; }
+        }
+        function saveSettings(){
+            const st = loadSettings();
+            st.theme = document.getElementById('stTheme').value;
+            st.weekStart = document.getElementById('stWeekStart').value;
+            st.highlightToday = document.getElementById('stHighlightToday').checked;
+            st.smartWeeks = document.getElementById('stSmartWeeks').checked;
+            localStorage.setItem(SETTINGS_KEY, JSON.stringify(st));
+            applySettings();
+            closeSettings();
+            // Re-render para aplicar semana y estilos
+            renderCalendar(true);
+        }
+        function resetSettings(){ localStorage.removeItem(SETTINGS_KEY); applySettings(); closeSettings(); renderCalendar(true); }
+        function openSettings(){
+            const st = loadSettings();
+            document.getElementById('stTheme').value = st.theme||'system';
+            document.getElementById('stWeekStart').value = st.weekStart||'monday';
+            document.getElementById('stHighlightToday').checked = st.highlightToday!==false;
+            document.getElementById('stSmartWeeks').checked = st.smartWeeks!==false;
+            document.getElementById('settingsModal').classList.add('show');
+        }
+        function closeSettings(ev){ if (ev && ev.target && !ev.target.classList){} document.getElementById('settingsModal').classList.remove('show'); }
+        function applySettings(){
+            const st = loadSettings();
+            // Tema
+            if (st.theme==='dark') document.documentElement.style.colorScheme='dark';
+            else if (st.theme==='light') document.documentElement.style.colorScheme='light';
+            else document.documentElement.style.colorScheme='normal';
+        }
+        // Utilidad: días de la semana según configuración
+        function getWeekDays(){
+            const st = loadSettings();
+            const base = ['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'];
+            if (st.weekStart==='sunday') return ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
+            return base;
         }
 
+        // Asegurar que el tab de calendario esté activo
+        function ensureCalendarTabActive() {
+            // Verificar parámetros de URL que puedan cambiar el tab
+            const urlParams = new URLSearchParams(window.location.search);
+            const tabParam = urlParams.get('tab');
+            
+            // Si hay un parámetro tab=summary, eliminarlo y quedarse en calendario
+            if (tabParam === 'summary') {
+                // Limpiar parámetro y redirigir a calendario limpio
+                const newUrl = window.location.pathname;
+                window.history.replaceState({}, '', newUrl);
+            }
+            
+            // Asegurar que el tab de calendario esté visible
+            const calendarBtn = document.querySelector('.tab-btn[onclick*="calendar"]');
+            const yearBtn = document.querySelector('.tab-btn[onclick*="year"]');
+            const summaryBtn = document.querySelector('.tab-btn[onclick*="summary"]');
+            
+            // Remover active de todos
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            
+            // Activar solo el de calendario
+            if (calendarBtn) {
+                calendarBtn.classList.add('active');
+            }
+            
+            // Mostrar calendario y ocultar año
+            const mainGridContainer = document.querySelector('.calendar-container');
+            const yearView = document.getElementById('yearView');
+            const monthNav = document.querySelector('.month-nav');
+            
+            if (monthNav) monthNav.style.display = 'flex';
+            if (yearView) yearView.style.display = 'none';
+            if (mainGridContainer) mainGridContainer.style.display = 'block';
+        }
+        
         // Mostrar tabs
         function showTab(tab) {
             // Remover active de todos los botones
             document.querySelectorAll('.tab-btn').forEach(btn => {
                 btn.classList.remove('active');
             });
-
+            
             // Agregar active al botón clickeado
-            event.target.classList.add('active');
-
-            // Por ahora solo mostrar alert para tabs no implementados
+            if (event && event.target) {
+                event.target.classList.add('active');
+            } else {
+                // Si no hay event, activar el botón correspondiente
+                const targetBtn = document.querySelector(`.tab-btn[onclick*="${tab}"]`);
+                if (targetBtn) targetBtn.classList.add('active');
+            }
+            
+            // Mostrar/ocultar vistas
+            const mainGridContainer = document.querySelector('.calendar-container');
+            const yearView = document.getElementById('yearView');
+            const monthNav = document.querySelector('.month-nav');
+            
             if (tab === 'year') {
-                alert('📅 Vista Anual 2025\n\nPróximamente verás una vista completa del año con todos los eventos y turnos.');
+                if (monthNav) monthNav.style.display = 'none';
+                mainGridContainer.style.display = 'none';
+                yearView.style.display = 'block';
+                updateYearNav();
+                renderYear();
+                // Precarga en segundo plano para que aparezcan todos los turnos del año
+                const yr = yearViewYear ?? currentDate.getFullYear();
+                preloadYearEvents(yr);
+            } else if (tab === 'calendar') {
+                if (monthNav) monthNav.style.display = 'flex';
+                yearView.style.display = 'none';
+                mainGridContainer.style.display = 'block';
             } else if (tab === 'summary') {
-                alert('📊 Resumen\n\nPróximamente verás:\n- Estadísticas de eventos\n- Resumen de turnos\n- Análisis mensual');
+                window.location.href = 'summary.html';
             }
         }
 
@@ -1591,6 +2542,17 @@
             const dayCells = document.querySelectorAll('.calendar-day');
             dayCells.forEach(cell => {
                 cell.style.cursor = '';
+                // Restaurar handler por defecto: abrir modal del día
+                const dateStr = cell.dataset.date;
+                if (dateStr) {
+                    const dateObj = new Date(dateStr);
+                    cell.onclick = (e) => {
+                        e.stopPropagation();
+                        openDayModal(dateObj);
+                    };
+                } else {
+                    cell.onclick = null;
+                }
             });
             
             console.log('✅ Modo pintura desactivado');
@@ -1651,6 +2613,10 @@
         async function paintDay(cell, shift) {
             const dateStr = cell.dataset.date;
             if (!dateStr) return;
+            if (!shift) {
+                console.warn('⚠️ paintDay llamado sin shift válido');
+                return;
+            }
 
             const date = new Date(dateStr);
             const dateKey = formatDateKey(date);
@@ -1662,8 +2628,8 @@
                 const existingEvents = await getEventsForDate(date);
                 
                 // Verificar si ya existe este turno
-                const shiftText = shift.abbreviation || shift.name;
-                const exists = existingEvents.some(evt => evt.text === shiftText);
+                const shiftText = (shift && (shift.abbreviation || shift.name)) || 'Turno';
+                const exists = existingEvents.some(evt => (evt.shiftId && evt.shiftId === shift.id) || evt.text === shiftText);
                 
                 if (exists) {
                     console.log('⚠️ Ya existe un evento para este día con este turno');
@@ -1673,6 +2639,7 @@
                 // Crear nuevo evento
                 const newEvent = {
                     text: shiftText,
+                    shiftId: shift.id,
                     userId: currentUserId,
                     userColor: shift.backgroundColor || shift.colorHex || shift.color,
                     createdAt: new Date().toISOString(),
@@ -1714,7 +2681,9 @@
             eventsCache.events[dateKey] = events;
             
             // Filtrar solo turnos (excluir notas)
-            const shifts = events.filter(event => event.type !== 'note');
+            const shifts = events
+                .filter(event => event.type !== 'note')
+                .map(e => normalizeShiftEvent(e));
             
             // Obtener el número del día
             const dayNumber = cell.querySelector('.day-number');
@@ -1757,12 +2726,16 @@
             dayNumber.style.fontSize = '11px';
             
             if (shifts.length > 0) {
+                if (cell.classList.contains('other-month')) {
+                    cell.classList.remove('other-month');
+                    cell.style.opacity = '1';
+                }
                 
                 if (shifts.length === 1) {
                     // Un solo turno: pintar toda la celda
-                    const template = shiftTemplates.find(t => t.name === shifts[0].text || t.abbreviation === shifts[0].text);
+                    const template = getTemplateForEvent(shifts[0]);
                     const color = template ? (template.backgroundColor || template.colorHex || template.color) : 
-                                  (shifts[0].userColor || getUserColor(shifts[0].userId));
+                                  (shifts[0].backgroundColor || shifts[0].colorHex || shifts[0].color || shifts[0].userColor || getUserColor(shifts[0].userId));
                     
                     cell.style.backgroundColor = color;
                     
@@ -1777,6 +2750,7 @@
                     const shiftText = document.createElement('div');
                     shiftText.className = 'shift-text-full';
                     shiftText.textContent = template ? (template.abbreviation || template.name) : shifts[0].text;
+                    const fontSize = getShiftFontSize(template, 13);
                     shiftText.style.cssText = `
                         position: absolute;
                         top: 50%;
@@ -1784,7 +2758,7 @@
                         transform: translate(-50%, -50%);
                         color: white;
                         font-weight: 700;
-                        font-size: 13px;
+                        font-size: ${fontSize}px;
                         white-space: nowrap;
                         z-index: 10;
                     `;
@@ -1795,13 +2769,13 @@
                     const shift1 = shifts[0];
                     const shift2 = shifts[1];
                     
-                    const template1 = shiftTemplates.find(t => t.name === shift1.text || t.abbreviation === shift1.text);
-                    const template2 = shiftTemplates.find(t => t.name === shift2.text || t.abbreviation === shift2.text);
+                    const template1 = getTemplateForEvent(shift1);
+                    const template2 = getTemplateForEvent(shift2);
                     
                     const color1 = template1 ? (template1.backgroundColor || template1.colorHex || template1.color) : 
-                                   (shift1.userColor || getUserColor(shift1.userId));
+                                   (shift1.backgroundColor || shift1.colorHex || shift1.color || shift1.userColor || getUserColor(shift1.userId));
                     const color2 = template2 ? (template2.backgroundColor || template2.colorHex || template2.color) : 
-                                   (shift2.userColor || getUserColor(shift2.userId));
+                                   (shift2.backgroundColor || shift2.colorHex || shift2.color || shift2.userColor || getUserColor(shift2.userId));
                     
                     // Usar gradiente lineal para dividir en dos
                     cell.style.background = `linear-gradient(to bottom, ${color1} 50%, ${color2} 50%)`;
@@ -1817,6 +2791,7 @@
                     const text1 = document.createElement('div');
                     text1.className = 'shift-text-half';
                     text1.textContent = template1 ? (template1.abbreviation || template1.name) : shift1.text;
+                    const fontSize1 = getShiftFontSize(template1, 12);
                     text1.style.cssText = `
                         position: absolute;
                         top: 25%;
@@ -1824,7 +2799,7 @@
                         transform: translate(-50%, -50%);
                         color: white;
                         font-weight: 700;
-                        font-size: 12px;
+                        font-size: ${fontSize1}px;
                         white-space: nowrap;
                         z-index: 10;
                     `;
@@ -1833,6 +2808,7 @@
                     const text2 = document.createElement('div');
                     text2.className = 'shift-text-half';
                     text2.textContent = template2 ? (template2.abbreviation || template2.name) : shift2.text;
+                    const fontSize2 = getShiftFontSize(template2, 12);
                     text2.style.cssText = `
                         position: absolute;
                         top: 75%;
@@ -1840,7 +2816,7 @@
                         transform: translate(-50%, -50%);
                         color: white;
                         font-weight: 700;
-                        font-size: 12px;
+                        font-size: ${fontSize2}px;
                         white-space: nowrap;
                         z-index: 10;
                     `;
@@ -1861,26 +2837,28 @@
                     dayNumber.style.color = '#ffffff';
                     dayNumber.style.textShadow = '0 0 3px rgba(0,0,0,0.7)';
 
-                    const mk = (txt, top) => {
+                    const mk = (txt, top, tmpl) => {
                         const el = document.createElement('div');
                         el.className = 'shift-text-third';
                         el.textContent = txt;
-                        el.style.cssText = `position:absolute; top:${top}%; left:50%; transform:translate(-50%,-50%); color:white; font-weight:700; font-size:11px; white-space:nowrap; z-index:10;`;
+                        const fontSize = getShiftFontSize(tmpl, 11);
+                        el.style.cssText = `position:absolute; top:${top}%; left:50%; transform:translate(-50%,-50%); color:white; font-weight:700; font-size:${fontSize}px; white-space:nowrap; z-index:10;`;
                         cell.appendChild(el);
                     };
-                    mk(t1 ? (t1.abbreviation || t1.name) : s1.text, 16.5);
-                    mk(t2 ? (t2.abbreviation || t2.name) : s2.text, 50);
-                    mk(t3 ? (t3.abbreviation || t3.name) : s3.text, 83.5);
+                    mk(t1 ? (t1.abbreviation || t1.name) : s1.text, 16.5, t1);
+                    mk(t2 ? (t2.abbreviation || t2.name) : s2.text, 50, t2);
+                    mk(t3 ? (t3.abbreviation || t3.name) : s3.text, 83.5, t3);
                     
                 } else {
                     // Más de dos turnos: mostrar los primeros tres
                     shifts.slice(0, 3).forEach((event, index) => {
-                        const template = shiftTemplates.find(t => t.name === event.text || t.abbreviation === event.text);
+                        const template = getTemplateForEvent(event);
                         const color = template ? (template.backgroundColor || template.colorHex || template.color) : 
-                                      (event.userColor || getUserColor(event.userId));
+                                      (event.backgroundColor || event.colorHex || event.color || event.userColor || getUserColor(event.userId));
                         
                         const eventEl = document.createElement('div');
                         eventEl.className = 'event-badge';
+                        const fontSize = getShiftFontSize(template, 10);
                         eventEl.style.cssText = `
                             position: absolute;
                             top: ${20 + index * 30}%;
@@ -1890,7 +2868,7 @@
                             color: white;
                             padding: 2px 6px;
                             border-radius: 4px;
-                            font-size: 10px;
+                            font-size: ${fontSize}px;
                             font-weight: 600;
                             z-index: 10;
                         `;
@@ -1907,61 +2885,87 @@
             }
             
             // Agregar iconos de categoría con el color del usuario
-            const note = events.find(event => event.type === 'note');
-            if (note) {
-                // Obtener el color del usuario que creó la nota
-                const userColor = note.userColor || getUserColor(note.userId);
-                console.log('🎨 Color de nota:', userColor, 'userId:', note.userId, 'userId type:', typeof note.userId, 'users:', users.map(u => ({id: u.id, idType: typeof u.id, name: u.name, color: u.color})));
-                
-                // Si hay nota con texto, ocultar los textos de los turnos para evitar superposición
-                if (note.text && note.text.trim() !== '') {
+            // Obtener todas las notas (múltiples usuarios pueden tener notas)
+            const notes = events.filter(event => event.type === 'note');
+            
+            if (notes.length > 0) {
+                // Si hay al menos una nota con texto, ocultar los textos de los turnos para evitar superposición
+                const hasAnyNoteText = notes.some(note => note.text && note.text.trim() !== '');
+                if (hasAnyNoteText) {
                     const shiftTexts = cell.querySelectorAll('.shift-text-full, .shift-text-half, .shift-text-third, .event-badge');
                     shiftTexts.forEach(el => el.style.display = 'none');
                 }
                 
-                // Agregar texto de la nota si existe
-                if (note.text && note.text.trim() !== '') {
-                    const noteTextEl = document.createElement('div');
-                    noteTextEl.className = 'note-text';
-                    noteTextEl.textContent = note.text;
-                    noteTextEl.style.cssText = `
-                        position: absolute;
-                        top: 20px;
-                        left: 50%;
-                        transform: translateX(-50%);
-                        color: ${userColor};
-                        font-weight: 700;
-                        font-size: 11px;
-                        white-space: nowrap;
-                        overflow: hidden;
-                        text-overflow: ellipsis;
-                        max-width: calc(100% - 8px);
-                        z-index: 15;
-                    `;
-                    cell.appendChild(noteTextEl);
+                // Crear un contenedor para todas las notas
+                const allNotesContainer = document.createElement('div');
+                allNotesContainer.style.cssText = `
+                    position: absolute;
+                    top: 20px;
+                    left: 2px;
+                    right: 2px;
+                    display: flex;
+                    flex-direction: column;
+                    gap: 2px;
+                    z-index: 15;
+                `;
+                
+                // Renderizar cada nota
+                notes.forEach(note => {
+                    if (note.text && note.text.trim() !== '') {
+                        // Dividir el texto por saltos de línea para renderizar cada línea con su color
+                        const noteLines = note.text.split('\n').filter(line => line.trim() !== '');
+                        
+                        noteLines.forEach((line, index) => {
+                            // Usar el color del usuario que creó la nota (ya no necesitamos heurística por contenido)
+                            const lineUserColor = getUserColor(note.userId);
+                            const noteTextEl = document.createElement('div');
+                            noteTextEl.className = 'note-text';
+                            noteTextEl.textContent = line;
+                            // Usar el tamaño guardado en la nota o el por defecto
+                            const noteFontSize = note.textSize || 11;
+                            const fontSize = index === 0 ? noteFontSize : noteFontSize * 0.85;
+                            const fontWeight = index === 0 ? '700' : 'normal';
+                            noteTextEl.style.cssText = `
+                                color: ${lineUserColor};
+                                font-weight: ${fontWeight};
+                                font-size: ${fontSize}px;
+                                white-space: normal;
+                                word-wrap: break-word;
+                                overflow-wrap: break-word;
+                            `;
+                            allNotesContainer.appendChild(noteTextEl);
+                        });
+                    }
+                });
+                
+                if (allNotesContainer.children.length > 0) {
+                    cell.appendChild(allNotesContainer);
                 }
                 
-                // Agregar iconos de categoría si existen
-                if (note.categories && note.categories.length > 0) {
-                    const categoriesEl = document.createElement('div');
-                    categoriesEl.className = 'category-icons';
-                    
-                    note.categories.forEach(category => {
-                        if (category.icon && category.icon.trim() !== '') {
-                            const iconEl = document.createElement('span');
-                            iconEl.className = 'category-icon';
-                            iconEl.textContent = category.icon;
-                            iconEl.title = category.text;
-                            // Aplicar el color del usuario al icono
-                            iconEl.style.color = userColor;
-                            iconEl.style.borderColor = userColor;
-                            categoriesEl.appendChild(iconEl);
-                        }
-                    });
-                    
-                    if (categoriesEl.children.length > 0) {
-                        cell.appendChild(categoriesEl);
+                // Agregar iconos de categoría de todas las notas
+                const allCategoriesEl = document.createElement('div');
+                allCategoriesEl.className = 'category-icons';
+                
+                notes.forEach(note => {
+                    if (note.categories && note.categories.length > 0) {
+                        note.categories.forEach(category => {
+                            if (category.icon && category.icon.trim() !== '') {
+                                const iconEl = document.createElement('span');
+                                iconEl.className = 'category-icon';
+                                iconEl.textContent = category.icon;
+                                iconEl.title = category.text;
+                                // Aplicar el color del usuario que creó la nota al icono
+                                const noteUserColor = getUserColor(note.userId);
+                                iconEl.style.color = noteUserColor;
+                                iconEl.style.borderColor = noteUserColor;
+                                allCategoriesEl.appendChild(iconEl);
+                            }
+                        });
                     }
+                });
+                
+                if (allCategoriesEl.children.length > 0) {
+                    cell.appendChild(allCategoriesEl);
                 }
             }
         }
@@ -2019,7 +3023,7 @@
                 `${monthNames[currentDate.getMonth()]} ${currentDate.getFullYear()}`;
 
             // Headers de días de la semana
-            weekDays.forEach(day => {
+            weekDays().forEach(day => {
                 const header = document.createElement('div');
                 header.className = 'weekday-header';
                 header.textContent = day;
@@ -2048,25 +3052,44 @@
                 for (let i = adjustedStartDay - 1; i >= 0; i--) {
                     const day = prevMonthLastDay - i;
                     const date = new Date(year, month - 1, day);
-                    await renderDay(container, date, true);
+                    renderDay(container, date, true);
                 }
             }
 
             // Días del mes actual
             for (let day = 1; day <= daysInMonth; day++) {
                 const date = new Date(year, month, day);
-                await renderDay(container, date, false);
+                renderDay(container, date, false);
             }
 
-            // Días del mes siguiente (solo los necesarios para completar las 6 semanas)
+            // Días del mes siguiente (completar sólo si necesitamos 6 semanas)
             const totalCellsUsed = adjustedStartDay + daysInMonth;
-            const remainingCells = 42 - totalCellsUsed; // 6 semanas * 7 días = 42 celdas
-            
-            // Solo agregar días si realmente necesitamos completar la grilla
-            if (remainingCells > 0) {
-                for (let day = 1; day <= remainingCells; day++) {
-                    const date = new Date(year, month + 1, day);
-                    await renderDay(container, date, true);
+            const needsSixWeeks = totalCellsUsed > 35; // 5 semanas * 7 = 35
+
+            // Marcar el grid para ajustar alturas cuando son 5 semanas
+            const gridEl = document.getElementById('calendarGrid');
+            if (needsSixWeeks) {
+                gridEl.classList.remove('five-weeks');
+            } else {
+                gridEl.classList.add('five-weeks');
+            }
+
+            if (needsSixWeeks) {
+                const remainingCells = 42 - totalCellsUsed; // completar a 6 semanas
+                if (remainingCells > 0) {
+                    for (let day = 1; day <= remainingCells; day++) {
+                        const date = new Date(year, month + 1, day);
+                        renderDay(container, date, true);
+                    }
+                }
+            } else {
+                // Completar la última semana hasta 5 semanas (35 celdas)
+                const remainingToFiveWeeks = 35 - totalCellsUsed;
+                if (remainingToFiveWeeks > 0) {
+                    for (let day = 1; day <= remainingToFiveWeeks; day++) {
+                        const date = new Date(year, month + 1, day);
+                        renderDay(container, date, true);
+                    }
                 }
             }
             
@@ -2080,7 +3103,10 @@
                 dayCells.forEach(cell => {
                     const paintOnclick = (e) => {
                         e.stopPropagation();
-                        paintDay(cell, selectedShiftForPainting);
+                        // Capturar referencia actual de turno; si fuese null, salir sin error
+                        const shiftRef = selectedShiftForPainting;
+                        if (!shiftRef) return exitPaintMode();
+                        paintDay(cell, shiftRef);
                     };
                     cell.onclick = paintOnclick;
                     cell.style.cursor = 'pointer';
@@ -2134,8 +3160,50 @@
             }
         }
 
+        // Añadir eventos de un mes al caché SIN resetear el resto
+        async function loadEventsForMonthIntoCache(year, month) {
+            if (!isFirebaseConnected) return;
+            if (!eventsCache.events) eventsCache.events = {};
+            try {
+                const firstDay = new Date(year, month, 1);
+                const lastDay = new Date(year, month + 1, 0);
+                const daysInMonth = lastDay.getDate();
+                const ops = [];
+                for (let day = 1; day <= daysInMonth; day++) {
+                    const date = new Date(year, month, day);
+                    const dateKey = formatDateKey(date);
+                    ops.push(
+                        db.collection('calendar_events').doc(dateKey).get().then(doc => {
+                            eventsCache.events[dateKey] = doc.exists ? (doc.data().events || []) : [];
+                        })
+                    );
+                }
+                await Promise.all(ops);
+            } catch (e) {
+                console.error('❌ Error cargando mes en caché:', e);
+            }
+        }
+
+        // Precargar todo el año actual (12 meses) en segundo plano y luego refrescar vista anual
+        async function preloadYearEvents(year) {
+            if (!isFirebaseConnected) return;
+            if (!eventsCache.events) eventsCache.events = {};
+            try {
+                const tasks = [];
+                for (let m = 0; m < 12; m++) tasks.push(loadEventsForMonthIntoCache(year, m));
+                await Promise.all(tasks);
+                // Si sigue visible la vista anual, re-renderizar
+                const yearView = document.getElementById('yearView');
+                if (yearView && yearView.style.display !== 'none') {
+                    renderYear();
+                }
+            } catch (e) {
+                console.error('❌ Error precargando eventos del año:', e);
+            }
+        }
+
         // Renderizar un día
-        async function renderDay(container, date, isOtherMonth) {
+        function renderDay(container, date, isOtherMonth) {
             const dayEl = document.createElement('div');
             dayEl.className = 'calendar-day';
             dayEl.dataset.date = date.toISOString(); // Guardar la fecha en dataset para acceso desde fuera
@@ -2167,30 +3235,39 @@
             const eventsEl = document.createElement('div');
             eventsEl.className = 'day-events';
             
-            const events = await getEventsForDate(date);
+            const events = getEventsForDateCached(date);
             dayEl.appendChild(eventsEl);
             
             // Aplicar el nuevo estilo de visualización
-            const shifts = events.filter(event => event.type !== 'note');
+            const shifts = events
+                .filter(event => event.type !== 'note')
+                .map(e => normalizeShiftEvent(e));
             if (shifts.length > 0) {
+                // Si tiene turnos, asegurar que no esté atenuado como "otro mes"
+                if (dayEl.classList.contains('other-month')) {
+                    dayEl.classList.remove('other-month');
+                    dayEl.style.opacity = '1';
+                }
                 
                 if (shifts.length === 1) {
                     // Un solo turno: pintar toda la celda
-                    const template = shiftTemplates.find(t => t.name === shifts[0].text || t.abbreviation === shifts[0].text);
+                    const template = getTemplateForEvent(shifts[0]);
                     const color = template ? (template.backgroundColor || template.colorHex || template.color) : 
-                                  (shifts[0].userColor || getUserColor(shifts[0].userId));
+                                  (shifts[0].backgroundColor || shifts[0].colorHex || shifts[0].color || shifts[0].userColor || getUserColor(shifts[0].userId));
                     
                     dayEl.style.backgroundColor = color;
                     
-                    // Hacer el número del día más visible en fondo oscuro
-                    numberEl.style.backgroundColor = 'rgba(255, 255, 255, 0.8)';
-                    numberEl.style.padding = '1px 3px';
-                    numberEl.style.borderRadius = '3px';
-                    numberEl.style.color = '#333';
+                    // Ajustar número: sin fondo, alto contraste con el fondo del turno
+                    numberEl.style.backgroundColor = 'transparent';
+                    numberEl.style.padding = '0';
+                    numberEl.style.borderRadius = '0';
+                    numberEl.style.color = getContrastColor(color);
+                    numberEl.style.textShadow = '0 1px 2px rgba(0,0,0,0.35)';
                     
                     const shiftText = document.createElement('div');
                     shiftText.className = 'shift-text-full';
                     shiftText.textContent = template ? (template.abbreviation || template.name) : shifts[0].text;
+                    const fontSize = getShiftFontSize(template, 13);
                     shiftText.style.cssText = `
                         position: absolute;
                         top: 50%;
@@ -2198,7 +3275,7 @@
                         transform: translate(-50%, -50%);
                         color: white;
                         font-weight: 700;
-                        font-size: 13px;
+                        font-size: ${fontSize}px;
                         white-space: nowrap;
                         z-index: 10;
                     `;
@@ -2209,25 +3286,27 @@
                     const shift1 = shifts[0];
                     const shift2 = shifts[1];
                     
-                    const template1 = shiftTemplates.find(t => t.name === shift1.text || t.abbreviation === shift1.text);
-                    const template2 = shiftTemplates.find(t => t.name === shift2.text || t.abbreviation === shift2.text);
+                    const template1 = getTemplateForEvent(shift1);
+                    const template2 = getTemplateForEvent(shift2);
                     
                     const color1 = template1 ? (template1.backgroundColor || template1.colorHex || template1.color) : 
-                                   (shift1.userColor || getUserColor(shift1.userId));
+                                   (shift1.backgroundColor || shift1.colorHex || shift1.color || shift1.userColor || getUserColor(shift1.userId));
                     const color2 = template2 ? (template2.backgroundColor || template2.colorHex || template2.color) : 
-                                   (shift2.userColor || getUserColor(shift2.userId));
+                                   (shift2.backgroundColor || shift2.colorHex || shift2.color || shift2.userColor || getUserColor(shift2.userId));
                     
                     dayEl.style.background = `linear-gradient(to bottom, ${color1} 50%, ${color2} 50%)`;
                     
-                    // Hacer el número del día más visible en fondo oscuro
-                    numberEl.style.backgroundColor = 'rgba(255, 255, 255, 0.8)';
-                    numberEl.style.padding = '1px 3px';
-                    numberEl.style.borderRadius = '3px';
-                    numberEl.style.color = '#333';
+                    // En gradiente: usar blanco con sombra para legibilidad
+                    numberEl.style.backgroundColor = 'transparent';
+                    numberEl.style.padding = '0';
+                    numberEl.style.borderRadius = '0';
+                    numberEl.style.color = '#ffffff';
+                    numberEl.style.textShadow = '0 1px 3px rgba(0,0,0,0.6)';
                     
                     const text1 = document.createElement('div');
                     text1.className = 'shift-text-half';
                     text1.textContent = template1 ? (template1.abbreviation || template1.name) : shift1.text;
+                    const fontSize1 = getShiftFontSize(template1, 12);
                     text1.style.cssText = `
                         position: absolute;
                         top: 25%;
@@ -2235,7 +3314,7 @@
                         transform: translate(-50%, -50%);
                         color: white;
                         font-weight: 700;
-                        font-size: 12px;
+                        font-size: ${fontSize1}px;
                         white-space: nowrap;
                         z-index: 10;
                     `;
@@ -2244,6 +3323,7 @@
                     const text2 = document.createElement('div');
                     text2.className = 'shift-text-half';
                     text2.textContent = template2 ? (template2.abbreviation || template2.name) : shift2.text;
+                    const fontSize2 = getShiftFontSize(template2, 12);
                     text2.style.cssText = `
                         position: absolute;
                         top: 75%;
@@ -2251,7 +3331,7 @@
                         transform: translate(-50%, -50%);
                         color: white;
                         font-weight: 700;
-                        font-size: 12px;
+                        font-size: ${fontSize2}px;
                         white-space: nowrap;
                         z-index: 10;
                     `;
@@ -2260,22 +3340,23 @@
                 } else {
                     // Más de dos turnos: mostrar los primeros tres
                     shifts.slice(0, 3).forEach((event, index) => {
-                        const template = shiftTemplates.find(t => t.name === event.text || t.abbreviation === event.text);
+                        const template = getTemplateForEvent(event);
                         const color = template ? (template.backgroundColor || template.colorHex || template.color) : 
                                       (event.userColor || getUserColor(event.userId));
                         
                         const eventEl = document.createElement('div');
                         eventEl.className = 'event-badge';
+                        const fontSize = getShiftFontSize(template, 10);
                         eventEl.style.cssText = `
                             position: absolute;
                             top: ${20 + index * 30}%;
                             left: 50%;
                             transform: translate(-50%, -50%);
                             background-color: ${color};
-                            color: white;
+                            color: ${getContrastColorInline(color)};
                             padding: 2px 6px;
                             border-radius: 4px;
-                            font-size: 10px;
+                            font-size: ${fontSize}px;
                             font-weight: 600;
                             z-index: 10;
                         `;
@@ -2285,62 +3366,98 @@
                 }
             }
 
+            // Asegurar que el día de hoy se vea con círculo, sin importar el fondo de turnos
+            const todayCheck = new Date();
+            if (date.toDateString() === todayCheck.toDateString()) {
+                numberEl.style.backgroundColor = '#FF1744';
+                numberEl.style.color = '#FFFFFF';
+                numberEl.style.borderRadius = '50%';
+                numberEl.style.padding = '2px 6px';
+                numberEl.style.textShadow = 'none';
+            }
+
             // Agregar texto de nota e iconos de categorías
-            const note = events.find(event => event.type === 'note');
-            if (note) {
-                // Obtener el color del usuario que creó la nota
-                const userColor = note.userColor || getUserColor(note.userId);
-                console.log('🎨 Color de nota (renderDay):', userColor, 'userId:', note.userId, 'userId type:', typeof note.userId, 'users:', users.map(u => ({id: u.id, idType: typeof u.id, name: u.name, color: u.color})));
-                
-                // Si hay nota con texto, ocultar los textos de los turnos para evitar superposición
-                if (note.text && note.text.trim() !== '') {
+            // Obtener todas las notas (múltiples usuarios pueden tener notas)
+            const notes = events.filter(event => event.type === 'note');
+            
+            if (notes.length > 0) {
+                // Si hay al menos una nota con texto, ocultar los textos de los turnos para evitar superposición
+                const hasAnyNoteText = notes.some(note => note.text && note.text.trim() !== '');
+                if (hasAnyNoteText) {
                     const shiftTexts = dayEl.querySelectorAll('.shift-text-full, .shift-text-half, .shift-text-third, .event-badge');
                     shiftTexts.forEach(el => el.style.display = 'none');
                 }
                 
-                // Agregar texto de la nota si existe
-                if (note.text && note.text.trim() !== '') {
-                    const noteTextEl = document.createElement('div');
-                    noteTextEl.className = 'note-text';
-                    noteTextEl.textContent = note.text;
-                    noteTextEl.style.cssText = `
-                        position: absolute;
-                        top: 20px;
-                        left: 50%;
-                        transform: translateX(-50%);
-                        color: ${userColor};
-                        font-weight: 700;
-                        font-size: 11px;
-                        white-space: nowrap;
-                        overflow: hidden;
-                        text-overflow: ellipsis;
-                        max-width: calc(100% - 8px);
-                        z-index: 15;
-                    `;
-                    dayEl.appendChild(noteTextEl);
+                // Crear un contenedor para todas las notas
+                const allNotesContainer = document.createElement('div');
+                allNotesContainer.style.cssText = `
+                    position: absolute;
+                    top: 20px;
+                    left: 2px;
+                    right: 2px;
+                    display: flex;
+                    flex-direction: column;
+                    gap: 2px;
+                    z-index: 15;
+                `;
+                
+                // Renderizar cada nota
+                notes.forEach(note => {
+                    if (note.text && note.text.trim() !== '') {
+                        // Dividir el texto por saltos de línea para renderizar cada línea con su color
+                        const noteLines = note.text.split('\n').filter(line => line.trim() !== '');
+                        
+                        noteLines.forEach((line, index) => {
+                            // Usar el color del usuario que creó la nota (ya no necesitamos heurística por contenido)
+                            const lineUserColor = getUserColor(note.userId);
+                            const noteTextEl = document.createElement('div');
+                            noteTextEl.className = 'note-text';
+                            noteTextEl.textContent = line;
+                            // Usar el tamaño guardado en la nota o el por defecto
+                            const noteFontSize = note.textSize || 11;
+                            const fontSize = index === 0 ? noteFontSize : noteFontSize * 0.85;
+                            const fontWeight = index === 0 ? '700' : 'normal';
+                            noteTextEl.style.cssText = `
+                                color: ${lineUserColor};
+                                font-weight: ${fontWeight};
+                                font-size: ${fontSize}px;
+                                white-space: normal;
+                                word-wrap: break-word;
+                                overflow-wrap: break-word;
+                            `;
+                            allNotesContainer.appendChild(noteTextEl);
+                        });
+                    }
+                });
+                
+                if (allNotesContainer.children.length > 0) {
+                    dayEl.appendChild(allNotesContainer);
                 }
                 
-                // Agregar iconos de categoría si existen
-                if (note.categories && note.categories.length > 0) {
-                    const categoriesEl = document.createElement('div');
-                    categoriesEl.className = 'category-icons';
-                    
-                    note.categories.forEach(category => {
-                        if (category.icon && category.icon.trim() !== '') {
-                            const iconEl = document.createElement('span');
-                            iconEl.className = 'category-icon';
-                            iconEl.textContent = category.icon;
-                            iconEl.title = category.text;
-                            // Aplicar el color del usuario al icono
-                            iconEl.style.color = userColor;
-                            iconEl.style.borderColor = userColor;
-                            categoriesEl.appendChild(iconEl);
-                        }
-                    });
-                    
-                    if (categoriesEl.children.length > 0) {
-                        dayEl.appendChild(categoriesEl);
+                // Agregar iconos de categoría de todas las notas
+                const allCategoriesEl = document.createElement('div');
+                allCategoriesEl.className = 'category-icons';
+                
+                notes.forEach(note => {
+                    if (note.categories && note.categories.length > 0) {
+                        note.categories.forEach(category => {
+                            if (category.icon && category.icon.trim() !== '') {
+                                const iconEl = document.createElement('span');
+                                iconEl.className = 'category-icon';
+                                iconEl.textContent = category.icon;
+                                iconEl.title = category.text;
+                                // Aplicar el color del usuario que creó la nota al icono
+                                const noteUserColor = getUserColor(note.userId);
+                                iconEl.style.color = noteUserColor;
+                                iconEl.style.borderColor = noteUserColor;
+                                allCategoriesEl.appendChild(iconEl);
+                            }
+                        });
                     }
+                });
+                
+                if (allCategoriesEl.children.length > 0) {
+                    dayEl.appendChild(allCategoriesEl);
                 }
             }
 
@@ -2392,6 +3509,15 @@
             const eventsJson = localStorage.getItem('calendar_events');
             const allEvents = eventsJson ? JSON.parse(eventsJson) : {};
             return allEvents[dateKey] || [];
+        }
+
+        // Obtener eventos sincrónicamente desde caché precargada o localStorage (sin esperas)
+        function getEventsForDateCached(date) {
+            const dateKey = formatDateKey(date);
+            if (eventsCache.events && eventsCache.events[dateKey]) {
+                return eventsCache.events[dateKey];
+            }
+            return getEventsFromLocalStorage(date);
         }
 
         // Guardar eventos
@@ -2454,11 +3580,260 @@
             return user ? user.name : 'Usuario';
         }
 
+        // Obtener plantilla de turno a partir de un evento (prioriza shiftId, luego nombre/abreviatura)
+        function getTemplateForEvent(event) {
+            if (!event) return null;
+            if (event.shiftId) {
+                const byId = shiftTemplates.find(t => t.id === event.shiftId);
+                if (byId) return byId;
+            }
+            const text = (event.text || '').toString().trim().toLowerCase();
+            if (!text) return null;
+            return shiftTemplates.find(t => {
+                const n = (t.name||'').toString().trim().toLowerCase();
+                const a = (t.abbreviation||'').toString().trim().toLowerCase();
+                return n === text || a === text;
+            }) || null;
+        }
+
+        // Obtener el tamaño de fuente del template del turno, con valor por defecto
+        function getShiftFontSize(template, defaultSize = 13) {
+            if (!template) return defaultSize;
+            return template.textSize || defaultSize;
+        }
+
+        // Normaliza un evento de turno a referencia canónica: asegura shiftId y texto estándar
+        function normalizeShiftEvent(event) {
+            if (!event) return event;
+            const tmpl = getTemplateForEvent(event);
+            if (tmpl) {
+                // Asegurar id y texto consistente
+                event.shiftId = tmpl.id;
+                event.text = tmpl.abbreviation || tmpl.name || event.text;
+                // Asegurar color para fallback
+                event.userColor = event.userColor || tmpl.backgroundColor || tmpl.colorHex || tmpl.color;
+            }
+            return event;
+        }
+
+        // Utilidades de color
+        function normalizeHex(color) {
+            if (!color) return null;
+            let c = color.trim();
+            if (c.startsWith('rgb')) {
+                // rgb/rgba -> hex aproximado
+                const m = c.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/i);
+                if (m) {
+                    const r = parseInt(m[1], 10), g = parseInt(m[2], 10), b = parseInt(m[3], 10);
+                    return '#' + [r,g,b].map(v => v.toString(16).padStart(2,'0')).join('').toUpperCase();
+                }
+            }
+            if (c.startsWith('#') && c.length === 4) {
+                // #RGB -> #RRGGBB
+                c = '#' + c[1]+c[1] + c[2]+c[2] + c[3]+c[3];
+            }
+            if (!c.startsWith('#')) return c.toUpperCase();
+            return c.toUpperCase();
+        }
+
+        function hexToRgb(hex) {
+            const c = normalizeHex(hex);
+            if (!c || !c.startsWith('#') || (c.length !== 7)) return null;
+            return {
+                r: parseInt(c.slice(1,3),16),
+                g: parseInt(c.slice(3,5),16),
+                b: parseInt(c.slice(5,7),16)
+            };
+        }
+
+        function getLuminance(hex) {
+            const rgb = hexToRgb(hex);
+            if (!rgb) return 0.5;
+            const srgb = [rgb.r/255, rgb.g/255, rgb.b/255].map(v => {
+                return v <= 0.03928 ? v/12.92 : Math.pow((v+0.055)/1.055, 2.4);
+            });
+            return 0.2126*srgb[0] + 0.7152*srgb[1] + 0.0722*srgb[2];
+        }
+
+        function getContrastColor(hex) {
+            const c = normalizeHex(hex);
+            const lum = getLuminance(c);
+            return lum > 0.5 ? '#000000' : '#FFFFFF';
+        }
+
+        function getContrastColorInline(hex) {
+            // Helper para CSS inline cuando hay gradientes/badges
+            try { return getContrastColor(hex); } catch(e) { return '#FFFFFF'; }
+        }
+
+        function colorsEqual(a,b) {
+            return normalizeHex(a) === normalizeHex(b);
+        }
+
+        function resolveNoteColor(userColor, shifts) {
+            // Si el color de la nota (usuario) coincide con alguno de los colores de turno del día,
+            // usar un color con alto contraste para que se lea.
+            const uc = normalizeHex(userColor);
+            const shiftColors = (shifts||[]).map(s => {
+                const t = shiftTemplates.find(t => t.name === s.text || t.abbreviation === s.text);
+                return normalizeHex(t ? (t.backgroundColor || t.colorHex || t.color) : (s.userColor || getUserColor(s.userId)));
+            }).filter(Boolean);
+            const conflict = shiftColors.some(c => c === uc);
+            if (conflict) {
+                // Elegir blanco o negro según luminancia de ese color
+                return getContrastColor(uc);
+            }
+            return userColor;
+        }
+
         // Cambiar mes
         function changeMonth(delta) {
             currentDate.setMonth(currentDate.getMonth() + delta);
             renderCalendar(true); // Forzar render inmediato para cambio de mes
         }
+
+        // Estado de año para vista anual
+        let yearViewYear = null;
+        function changeYear(delta) {
+            if (yearViewYear == null) yearViewYear = currentDate.getFullYear();
+            yearViewYear += delta;
+            updateYearNav();
+            renderYear();
+            // Actualiza el texto del botón de pestaña del año si coincide con formato YYYY
+            const yearTabBtn = Array.from(document.querySelectorAll('.tab-btn')).find(b => b.textContent.trim().match(/^\d{4}$/));
+            if (yearTabBtn) yearTabBtn.textContent = String(yearViewYear);
+        }
+
+        function updateYearNav() {
+            const title = document.getElementById('yearTitle');
+            const yr = yearViewYear ?? currentUserYear();
+            if (title) title.textContent = String(yr);
+        }
+
+        function currentUserYear() { return currentDate.getFullYear(); }
+
+        // Renderizar vista anual rápida usando caché/localStorage
+        async function renderYear() {
+            const grid = document.getElementById('yearGrid');
+            if (!grid) return;
+            grid.innerHTML = '';
+
+            const baseYear = yearViewYear ?? currentDate.getFullYear();
+            for (let m = 0; m < 12; m++) {
+                const monthBox = document.createElement('div');
+                monthBox.className = 'year-month';
+                monthBox.dataset.month = String(m);
+                monthBox.dataset.year = String(baseYear);
+
+                const header = document.createElement('div');
+                header.className = 'year-month-header';
+                header.textContent = monthNames[m].toUpperCase();
+                monthBox.appendChild(header);
+
+                const monthGrid = document.createElement('div');
+                monthGrid.className = 'year-month-grid';
+
+                // Encabezados de semana
+                ['L','M','X','J','V','S','D'].forEach(w => {
+                    const wEl = document.createElement('div');
+                    wEl.className = 'year-weekday';
+                    wEl.textContent = w;
+                    monthGrid.appendChild(wEl);
+                });
+
+                const firstDay = new Date(baseYear, m, 1);
+                const lastDay = new Date(baseYear, m + 1, 0);
+                const daysInMonth = lastDay.getDate();
+                const startDayOfWeek = firstDay.getDay();
+                const adjustedStart = startDayOfWeek === 0 ? 6 : startDayOfWeek - 1;
+
+                // Relleno inicial
+                for (let i = 0; i < adjustedStart; i++) {
+                    const dEl = document.createElement('div');
+                    dEl.className = 'year-day other-month';
+                    monthGrid.appendChild(dEl);
+                }
+
+                for (let d = 1; d <= daysInMonth; d++) {
+                    const date = new Date(baseYear, m, d);
+                    const dayEl = document.createElement('div');
+                    dayEl.className = 'year-day';
+
+                    const num = document.createElement('div');
+                    num.className = 'year-day-number';
+                    num.textContent = d;
+                    dayEl.appendChild(num);
+
+                    // Garantía de datos: usa caché si existe; si no, consulta inmediata
+                    let events = getEventsForDateCached(date);
+                    if (!events || events.length === 0) {
+                        events = await getEventsForDate(date);
+                    }
+                    const shifts = events.filter(e => e.type !== 'note');
+                    if (shifts.length > 0) {
+                        if (shifts.length === 1) {
+                            const ev = shifts[0];
+                            const template = shiftTemplates.find(t => t.name === ev.text || t.abbreviation === ev.text);
+                            const color = template ? (template.backgroundColor || template.colorHex || template.color) : (ev.userColor || getUserColor(ev.userId));
+                            dayEl.style.background = color;
+                            num.style.color = getContrastColor(color);
+                            num.style.textShadow = '0 1px 2px rgba(0,0,0,0.35)';
+                        } else if (shifts.length === 2) {
+                            const s1 = shifts[0], s2 = shifts[1];
+                            const t1 = shiftTemplates.find(t => t.name === s1.text || t.abbreviation === s1.text);
+                            const t2 = shiftTemplates.find(t => t.name === s2.text || t.abbreviation === s2.text);
+                            const c1 = t1 ? (t1.backgroundColor || t1.colorHex || t1.color) : (s1.userColor || getUserColor(s1.userId));
+                            const c2 = t2 ? (t2.backgroundColor || t2.colorHex || t2.color) : (s2.userColor || getUserColor(s2.userId));
+                            dayEl.style.background = `linear-gradient(to bottom, ${c1} 50%, ${c2} 50%)`;
+                            num.style.color = '#FFFFFF';
+                            num.style.textShadow = '0 1px 3px rgba(0,0,0,0.6)';
+                        } else {
+                            const s1 = shifts[0], s2 = shifts[1], s3 = shifts[2];
+                            const t1 = shiftTemplates.find(t => t.name === s1.text || t.abbreviation === s1.text);
+                            const t2 = shiftTemplates.find(t => t.name === s2.text || t.abbreviation === s2.text);
+                            const t3 = shiftTemplates.find(t => t.name === s3.text || t.abbreviation === s3.text);
+                            const c1 = t1 ? (t1.backgroundColor || t1.colorHex || t1.color) : (s1.userColor || getUserColor(s1.userId));
+                            const c2 = t2 ? (t2.backgroundColor || t2.colorHex || t2.color) : (s2.userColor || getUserColor(s2.userId));
+                            const c3 = t3 ? (t3.backgroundColor || t3.colorHex || t3.color) : (s3.userColor || getUserColor(s3.userId));
+                            dayEl.style.background = `linear-gradient(to bottom, ${c1} 33.34%, ${c2} 33.34%, ${c2} 66.66%, ${c3} 66.66%)`;
+                            num.style.color = '#FFFFFF';
+                            num.style.textShadow = '0 1px 3px rgba(0,0,0,0.6)';
+                        }
+                    }
+
+                    const today = new Date();
+                    if (date.toDateString() === today.toDateString()) {
+                        num.style.backgroundColor = '#FF1744';
+                        num.style.color = '#fff';
+                        num.style.borderRadius = '50%';
+                        num.style.padding = '1px 4px';
+                        num.style.textShadow = 'none';
+                    }
+
+                    monthGrid.appendChild(dayEl);
+                }
+
+                // Completar el final hasta múltiplo de 7
+                const used = adjustedStart + daysInMonth;
+                const rest = (7 - (used % 7)) % 7;
+                for (let i = 0; i < rest; i++) {
+                    const dEl = document.createElement('div');
+                    dEl.className = 'year-day other-month';
+                    monthGrid.appendChild(dEl);
+                }
+
+                monthBox.appendChild(monthGrid);
+                // Evitar duplicados: reemplazar si ya existe un mes con mismo índice
+                const existing = grid.querySelector(`.year-month[data-year="${baseYear}"][data-month="${m}"]`);
+                if (existing) {
+                    grid.replaceChild(monthBox, existing);
+                } else {
+                    grid.appendChild(monthBox);
+                }
+            }
+        }
+
+        
 
         // Abrir modal de día
         async function openDayModal(date) {
@@ -2470,14 +3845,14 @@
             const year = date.getFullYear().toString().slice(-2);
             document.getElementById('modalDate').textContent = `${day}/${month}/${year}`;
             
-            // Actualizar número de alarma con el día del mes
-            document.getElementById('alarmNumber').textContent = day;
-            
             // Cargar notas existentes del día
             await loadDayNotes(date);
             
             // Cargar y mostrar turnos del día
             await loadDayShifts(date);
+            
+            // Cargar alarmas y actualizar contador
+            await loadAlarms();
             
             document.getElementById('dayModal').classList.add('show');
         }
@@ -2488,8 +3863,8 @@
                 // Obtener eventos del día
                 const events = await getEventsForDate(date);
                 
-                // Buscar la nota del día (debería haber solo una)
-                const note = events.find(event => event.type === 'note');
+                // Buscar la nota del usuario actual (cada usuario tiene su propia nota)
+                const note = events.find(event => event.type === 'note' && event.userId === currentUserId);
                 
                 if (note) {
                     // Mostrar la nota en el textarea
@@ -2502,12 +3877,12 @@
                         resetCategories();
                     }
                     
-                    console.log('✅ Nota cargada para el día:', note.text);
+                    console.log('✅ Nota del usuario actual cargada para el día:', note.text);
                 } else {
                     // Limpiar textarea si no hay nota
                     document.getElementById('mainTextarea').value = '';
                     resetCategories();
-                    console.log('ℹ️ No hay nota para este día');
+                    console.log('ℹ️ No hay nota del usuario actual para este día');
                 }
                 
             } catch (error) {
@@ -2617,7 +3992,1136 @@
         // Cerrar modal
         function closeModal() {
             document.getElementById('dayModal').classList.remove('show');
-            scheduleRenderCalendar(); // Refrescar calendario con debounce
+        }
+
+        // Variables para el modal de notas
+        let originalNoteText = '';
+        let originalNoteTextSize = 11; // Tamaño por defecto
+        let currentFormatState = {
+            bold: false,
+            italic: false,
+            underline: false
+        };
+
+        // Abrir modal de notas
+        async function openNotesPopup() {
+            const textarea = document.getElementById('mainTextarea');
+            originalNoteText = textarea.value || '';
+            
+            // Cargar el texto actual en el modal de notas
+            const notesTextarea = document.getElementById('notesTextarea');
+            // Si es contentEditable, usar innerHTML/textContent
+            if (notesTextarea.contentEditable === 'true') {
+                notesTextarea.innerHTML = originalNoteText.replace(/\n/g, '<br>');
+                if (notesTextarea.innerHTML === '') {
+                    notesTextarea.textContent = '';
+                }
+            } else {
+                notesTextarea.value = originalNoteText;
+            }
+            
+            // Cargar el tamaño de texto guardado si existe
+            if (selectedDate) {
+                try {
+                    const events = await getEventsForDate(selectedDate);
+                    // Buscar la nota del usuario actual
+                    const note = events.find(event => event.type === 'note' && event.userId === currentUserId);
+                    if (note && note.textSize) {
+                        originalNoteTextSize = parseInt(note.textSize) || 11;
+                    } else {
+                        originalNoteTextSize = 11; // Por defecto
+                    }
+                } catch (error) {
+                    console.error('Error cargando tamaño de texto:', error);
+                    originalNoteTextSize = 11;
+                }
+            } else {
+                originalNoteTextSize = 11;
+            }
+            
+            // Actualizar el slider y el valor mostrado
+            const slider = document.getElementById('notesTextSizeSlider');
+            const valueDisplay = document.getElementById('notesTextSizeValue');
+            if (slider && valueDisplay) {
+                slider.value = originalNoteTextSize;
+                valueDisplay.textContent = originalNoteTextSize;
+                console.log('📏 Tamaño de texto cargado:', originalNoteTextSize);
+            }
+            
+            // Resetear formato
+            resetFormatButtons();
+            
+            // Mostrar el modal
+            document.getElementById('notesModal').classList.add('show');
+            
+            // Agregar event listeners para actualizar botones de formato
+            notesTextarea.addEventListener('mouseup', updateFormatButtons);
+            notesTextarea.addEventListener('keyup', updateFormatButtons);
+            notesTextarea.addEventListener('selectionchange', updateFormatButtons);
+            
+            // Enfocar el campo de texto
+            setTimeout(() => {
+                notesTextarea.focus();
+            }, 100);
+        }
+        
+        // Actualizar el tamaño de texto mostrado
+        function updateNotesTextSize(value) {
+            document.getElementById('notesTextSizeValue').textContent = value;
+        }
+
+        // Cerrar modal de notas sin guardar
+        function cancelNotesPopup() {
+            // Cerrar el modal sin guardar cambios
+            document.getElementById('notesModal').classList.remove('show');
+        }
+
+        // Aceptar cambios del modal de notas
+        async function acceptNotesPopup() {
+            const notesTextarea = document.getElementById('notesTextarea');
+            let newText = '';
+            
+            // Obtener el texto según el tipo de elemento
+            if (notesTextarea.contentEditable === 'true') {
+                // Para contentEditable, obtener texto sin HTML pero preservar saltos de línea
+                newText = notesTextarea.innerText || notesTextarea.textContent || '';
+            } else {
+                newText = notesTextarea.value || '';
+            }
+            
+            // Obtener el tamaño de texto seleccionado
+            const slider = document.getElementById('notesTextSizeSlider');
+            const textSize = slider ? parseInt(slider.value) || 11 : 11;
+            
+            console.log('📏 Tamaño de texto seleccionado:', textSize);
+            
+            // Actualizar el textarea principal del modal de día
+            document.getElementById('mainTextarea').value = newText.trim();
+            
+            // Guardar inmediatamente en Firebase si hay fecha seleccionada
+            if (selectedDate) {
+                try {
+                    const existingEvents = await getEventsForDate(selectedDate);
+                    // Buscar la nota del usuario actual (no la primera nota general)
+                    const existingNoteIndex = existingEvents.findIndex(event => event.type === 'note' && event.userId === currentUserId);
+                    
+                    console.log('📝 Nota existente del usuario actual encontrada:', existingNoteIndex !== -1);
+                    if (existingNoteIndex !== -1) {
+                        console.log('📝 Nota existente antes de actualizar:', JSON.stringify(existingEvents[existingNoteIndex]));
+                    }
+                    
+                    if (newText.trim() === '') {
+                        // Si no hay texto, eliminar la nota existente del usuario actual
+                        if (existingNoteIndex !== -1) {
+                            existingEvents.splice(existingNoteIndex, 1);
+                        }
+                    } else {
+                        const noteEvent = {
+                            text: newText.trim(),
+                            textSize: textSize, // Guardar el tamaño del texto
+                            userId: currentUserId,
+                            userColor: getUserColor(currentUserId),
+                            createdAt: existingNoteIndex !== -1 ? existingEvents[existingNoteIndex].createdAt : new Date().toISOString(),
+                            updatedAt: new Date().toISOString(),
+                            categories: existingNoteIndex !== -1 && existingEvents[existingNoteIndex].categories ? existingEvents[existingNoteIndex].categories : [],
+                            type: 'note'
+                        };
+                        
+                        console.log('💾 Nota a guardar:', JSON.stringify(noteEvent));
+                        
+                        if (existingNoteIndex !== -1) {
+                            existingEvents[existingNoteIndex] = noteEvent;
+                            console.log('✏️ Nota del usuario actual actualizada en índice:', existingNoteIndex);
+                        } else {
+                            existingEvents.push(noteEvent);
+                            console.log('📝 Nueva nota del usuario actual agregada');
+                        }
+                    }
+                    
+                    await saveEvents(selectedDate, existingEvents);
+                    console.log('✅ Nota guardada en Firebase con textSize:', textSize);
+                    
+                    // Verificar que se guardó correctamente
+                    const verifyEvents = await getEventsForDate(selectedDate);
+                    const verifyNote = verifyEvents.find(event => event.type === 'note' && event.userId === currentUserId);
+                    if (verifyNote) {
+                        console.log('✅ Verificación: Nota del usuario actual guardada con textSize:', verifyNote.textSize);
+                    } else {
+                        console.warn('⚠️ Verificación: No se encontró la nota del usuario actual después de guardar');
+                    }
+                    
+                    // Refrescar el calendario para mostrar el nuevo tamaño
+                    scheduleRenderCalendar();
+                } catch (error) {
+                    console.error('❌ Error guardando nota:', error);
+                }
+            }
+            
+            // Cerrar el modal
+            document.getElementById('notesModal').classList.remove('show');
+        }
+
+        // Borrar nota (sin cerrar el pop-up)
+        function deleteNote() {
+            const notesTextarea = document.getElementById('notesTextarea');
+            
+            // Limpiar el contenido editable
+            if (notesTextarea.contentEditable === 'true') {
+                notesTextarea.innerHTML = '';
+                notesTextarea.textContent = '';
+            } else {
+                notesTextarea.value = '';
+            }
+            
+            // También actualizar el textarea principal (pero no cerrar el modal)
+            document.getElementById('mainTextarea').value = '';
+            
+            // Resetear formato
+            resetFormatButtons();
+            
+            // Enfocar el campo de texto
+            notesTextarea.focus();
+        }
+
+        // Aplicar formato de texto (bold, italic, underline)
+        function toggleFormat(format) {
+            const notesTextarea = document.getElementById('notesTextarea');
+            
+            // Verificar que sea contentEditable
+            if (notesTextarea.contentEditable !== 'true') {
+                return;
+            }
+            
+            // Asegurar que el elemento tenga foco
+            notesTextarea.focus();
+            
+            // Usar document.execCommand para aplicar formato
+            let command = '';
+            switch(format) {
+                case 'bold':
+                    command = 'bold';
+                    break;
+                case 'italic':
+                    command = 'italic';
+                    break;
+                case 'underline':
+                    command = 'underline';
+                    break;
+            }
+            
+            if (command) {
+                try {
+                    document.execCommand(command, false, null);
+                    
+                    // Actualizar el estado visual del botón
+                    const btn = document.getElementById('format' + format.charAt(0).toUpperCase() + format.slice(1));
+                    const isActive = document.queryCommandState(command);
+                    
+                    btn.classList.toggle('active', isActive);
+                    currentFormatState[format] = isActive;
+                } catch (e) {
+                    console.error('Error aplicando formato:', e);
+                }
+            }
+            
+            // Volver a enfocar el campo de texto
+            notesTextarea.focus();
+        }
+        
+        // Actualizar el estado de los botones de formato según la selección
+        function updateFormatButtons() {
+            const notesTextarea = document.getElementById('notesTextarea');
+            if (notesTextarea.contentEditable !== 'true') return;
+            
+            // Verificar el estado de cada formato
+            const boldActive = document.queryCommandState('bold');
+            const italicActive = document.queryCommandState('italic');
+            const underlineActive = document.queryCommandState('underline');
+            
+            // Actualizar los botones
+            document.getElementById('formatBold').classList.toggle('active', boldActive);
+            document.getElementById('formatItalic').classList.toggle('active', italicActive);
+            document.getElementById('formatUnderline').classList.toggle('active', underlineActive);
+            
+            // Actualizar el estado
+            currentFormatState.bold = boldActive;
+            currentFormatState.italic = italicActive;
+            currentFormatState.underline = underlineActive;
+        }
+
+        // Resetear botones de formato
+        function resetFormatButtons() {
+            document.getElementById('formatBold').classList.remove('active');
+            document.getElementById('formatItalic').classList.remove('active');
+            document.getElementById('formatUnderline').classList.remove('active');
+            currentFormatState = {
+                bold: false,
+                italic: false,
+                underline: false
+            };
+        }
+
+        // Manejar clic fuera del modal para cerrarlo
+        function handleNotesModalClick(event) {
+            if (event.target.id === 'notesModal') {
+                cancelNotesPopup();
+            }
+        }
+        
+        // Agregar listener para cambios de selección (para actualizar botones de formato)
+        document.addEventListener('selectionchange', function() {
+            const modal = document.getElementById('notesModal');
+            if (modal && modal.classList.contains('show')) {
+                updateFormatButtons();
+            }
+        });
+
+        // Variables para alarmas
+        let alarms = [];
+
+        // Cargar alarmas desde Firebase
+        async function loadAlarms() {
+            if (!selectedDate) {
+                console.log('⚠️ loadAlarms: No hay fecha seleccionada');
+                return [];
+            }
+            
+            try {
+                const events = await getEventsForDate(selectedDate);
+                // Buscar la nota del usuario actual
+                const note = events.find(event => event.type === 'note' && event.userId === currentUserId);
+                
+                if (note && note.alarms && Array.isArray(note.alarms)) {
+                    alarms = note.alarms;
+                    console.log(`✅ Alarmas del usuario actual cargadas: ${alarms.length} alarmas para ${formatDateKey(selectedDate)}`);
+                    console.log('📋 Contenido de alarmas cargadas:', JSON.stringify(alarms));
+                } else {
+                    alarms = [];
+                    if (note) {
+                        console.log(`ℹ️ Nota del usuario actual encontrada pero sin alarmas para ${formatDateKey(selectedDate)}`);
+                    } else {
+                        console.log(`ℹ️ No se encontró nota del usuario actual para ${formatDateKey(selectedDate)}`);
+                    }
+                }
+                updateAlarmCount();
+                return alarms;
+            } catch (error) {
+                console.error('❌ Error cargando alarmas:', error);
+                alarms = [];
+                return alarms;
+            }
+        }
+
+        // Actualizar el contador de alarmas
+        function updateAlarmCount() {
+            const alarmNumber = document.getElementById('alarmNumber');
+            if (alarmNumber) {
+                alarmNumber.textContent = alarms.length;
+            }
+        }
+
+        // Abrir modal de alarma
+        async function openAlarmModal() {
+            // Cargar alarmas existentes
+            await loadAlarms();
+            
+            // Establecer fecha por defecto al día seleccionado
+            if (selectedDate) {
+                const dateStr = selectedDate.toISOString().split('T')[0];
+                document.getElementById('alarmDateInput').value = dateStr;
+            }
+            
+            // Limpiar hora
+            document.getElementById('alarmTimeInput').value = '';
+            
+            // Mostrar alarmas existentes
+            renderAlarmsList();
+            
+            // Mostrar el modal
+            document.getElementById('alarmModal').classList.add('show');
+        }
+
+        // Cerrar modal de alarma
+        function closeAlarmModal() {
+            document.getElementById('alarmModal').classList.remove('show');
+        }
+
+        // Manejar clic fuera del modal
+        function handleAlarmModalClick(event) {
+            if (event.target.id === 'alarmModal') {
+                closeAlarmModal();
+            }
+        }
+
+        // Renderizar lista de alarmas
+        function renderAlarmsList() {
+            const alarmList = document.getElementById('alarmList');
+            alarmList.innerHTML = '';
+            
+            if (alarms.length === 0) {
+                alarmList.innerHTML = '<div style="text-align: center; color: #999; padding: 20px;">No hay alarmas configuradas</div>';
+                return;
+            }
+            
+            alarms.forEach((alarm, index) => {
+                const item = document.createElement('div');
+                item.className = 'alarm-item';
+                
+                const date = new Date(alarm.dateTime);
+                const dateStr = date.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: '2-digit' });
+                const timeStr = date.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
+                
+                item.innerHTML = `
+                    <div class="alarm-item-info">
+                        <div class="alarm-item-date">${dateStr}</div>
+                        <div class="alarm-item-time">${timeStr}</div>
+                    </div>
+                    <button class="alarm-item-delete" onclick="deleteAlarm(${index})">×</button>
+                `;
+                
+                alarmList.appendChild(item);
+            });
+        }
+
+        // Agregar alarma
+        async function addAlarm() {
+            const dateInput = document.getElementById('alarmDateInput').value;
+            const timeInput = document.getElementById('alarmTimeInput').value;
+            
+            if (!dateInput || !timeInput) {
+                console.warn('⚠️ Por favor completa fecha y hora');
+                return;
+            }
+            
+            // Crear objeto de fecha y hora
+            const dateTime = new Date(`${dateInput}T${timeInput}`);
+            
+            // Verificar que la fecha no sea en el pasado
+            if (dateTime < new Date()) {
+                console.warn('⚠️ No se puede configurar una alarma en el pasado');
+                return;
+            }
+            
+            // Agregar alarma a la lista
+            const alarm = {
+                dateTime: dateTime.toISOString(), // Guardar como string ISO para Firebase
+                id: Date.now().toString() // ID único para la alarma (como string)
+            };
+            
+            alarms.push(alarm);
+            console.log('➕ Alarma agregada:', JSON.stringify(alarm));
+            
+            // Guardar alarmas en Firebase
+            await saveAlarms();
+            
+            // Limpiar inputs
+            document.getElementById('alarmTimeInput').value = '';
+            
+            // Actualizar lista
+            renderAlarmsList();
+            updateAlarmCount();
+        }
+
+        // Eliminar alarma
+        async function deleteAlarm(index) {
+            if (index >= 0 && index < alarms.length) {
+                alarms.splice(index, 1);
+                await saveAlarms();
+                renderAlarmsList();
+                updateAlarmCount();
+            }
+        }
+
+        // Guardar alarmas en Firebase
+        async function saveAlarms() {
+            if (!selectedDate) return;
+            
+            try {
+                const existingEvents = await getEventsForDate(selectedDate);
+                // Buscar la nota del usuario actual
+                const existingNoteIndex = existingEvents.findIndex(event => event.type === 'note' && event.userId === currentUserId);
+                
+                if (existingNoteIndex !== -1) {
+                    // Actualizar nota existente con alarmas, preservando todos los demás campos
+                    const existingNote = existingEvents[existingNoteIndex];
+                    existingEvents[existingNoteIndex] = {
+                        ...existingNote, // Preservar todos los campos existentes
+                        alarms: alarms,
+                        updatedAt: new Date().toISOString()
+                    };
+                    console.log('✅ Nota del usuario actual actualizada con alarmas:', alarms.length, 'alarmas');
+                    console.log('📋 Contenido de alarmas:', JSON.stringify(alarms));
+                } else {
+                    // Crear nota con alarmas
+                    const noteEvent = {
+                        text: '',
+                        userId: currentUserId,
+                        userColor: getUserColor(currentUserId),
+                        createdAt: new Date().toISOString(),
+                        updatedAt: new Date().toISOString(),
+                        categories: [],
+                        alarms: alarms,
+                        type: 'note',
+                        textSize: 11 // Tamaño por defecto
+                    };
+                    existingEvents.push(noteEvent);
+                    console.log('✅ Nueva nota del usuario actual creada con alarmas:', alarms.length, 'alarmas');
+                }
+                
+                await saveEvents(selectedDate, existingEvents);
+                console.log('✅ Alarmas guardadas en Firebase:', alarms.length);
+                
+                // Verificar que se guardaron correctamente
+                const verifyEvents = await getEventsForDate(selectedDate);
+                const verifyNote = verifyEvents.find(event => event.type === 'note' && event.userId === currentUserId);
+                if (verifyNote && verifyNote.alarms) {
+                    console.log('✅ Verificación: Alarmas guardadas correctamente:', verifyNote.alarms.length);
+                    console.log('📋 Alarmas verificadas:', JSON.stringify(verifyNote.alarms));
+                } else {
+                    console.warn('⚠️ Advertencia: No se encontraron alarmas del usuario actual después de guardar');
+                }
+                
+                // Guardar también en localStorage para verificación local (especialmente iOS)
+                saveAlarmsToLocalStorage();
+                
+                // Configurar notificaciones y programar en Service Worker
+                setupAlarmNotifications();
+                if (!isIOS) {
+                    scheduleAllAlarms();
+                } else {
+                    // En iOS, programar en localStorage para verificación cuando la app se abre
+                    scheduleAlarmsForIOS();
+                    console.log('ℹ️ iOS: Alarmas programadas para verificación cuando la app se abra');
+                }
+            } catch (error) {
+                console.error('❌ Error guardando alarmas:', error);
+            }
+        }
+
+        // Programar todas las alarmas en el Service Worker
+        async function scheduleAllAlarms() {
+            if (!('serviceWorker' in navigator)) return;
+            
+            try {
+                const registration = await navigator.serviceWorker.ready;
+                const now = new Date();
+                
+                // Obtener todas las alarmas de los próximos 30 días
+                for (let i = 0; i < 30; i++) {
+                    const checkDate = new Date(now);
+                    checkDate.setDate(checkDate.getDate() + i);
+                    
+                    try {
+                        const events = await getEventsForDate(checkDate);
+                        // Obtener todas las notas (múltiples usuarios pueden tener notas)
+                        const notes = events.filter(event => event.type === 'note');
+                        
+                        notes.forEach(note => {
+                            if (note && note.alarms && Array.isArray(note.alarms)) {
+                                note.alarms.forEach(alarm => {
+                                    const alarmDate = new Date(alarm.dateTime);
+                                    const timeUntilAlarm = alarmDate.getTime() - now.getTime();
+                                    
+                                    // Solo programar alarmas futuras (próximas 30 días)
+                                    if (timeUntilAlarm > 0 && timeUntilAlarm <= 30 * 24 * 60 * 60 * 1000) {
+                                        const alarmDateStr = alarmDate.toISOString().split('T')[0];
+                                        const alarmTimeStr = alarmDate.toTimeString().split(' ')[0].slice(0, 5);
+                                        const noteText = note.text || '';
+                                        const noteUser = users.find(u => u.id === note.userId);
+                                        const userName = noteUser ? noteUser.name : 'Usuario';
+                                        
+                                        // Enviar mensaje al Service Worker para programar la alarma
+                                        const message = {
+                                            type: 'SCHEDULE_ALARM',
+                                            alarmDate: alarmDateStr,
+                                            alarmTime: alarmTimeStr,
+                                            noteText: noteText,
+                                            userName: userName,
+                                            alarmId: alarm.id
+                                        };
+                                        
+                                        if (registration.active) {
+                                            registration.active.postMessage(message);
+                                        } else if (registration.waiting) {
+                                            registration.waiting.postMessage(message);
+                                            // Activar el SW waiting si es posible
+                                            registration.waiting.addEventListener('statechange', function() {
+                                                if (registration.waiting.state === 'activated') {
+                                                    registration.waiting.postMessage(message);
+                                                }
+                                            });
+                                        } else {
+                                            // Si no hay SW activo, guardar el mensaje para cuando esté listo
+                                            registration.addEventListener('updatefound', () => {
+                                                const newWorker = registration.installing;
+                                                if (newWorker) {
+                                                    newWorker.addEventListener('statechange', () => {
+                                                        if (newWorker.state === 'activated' && navigator.serviceWorker.controller) {
+                                                            navigator.serviceWorker.controller.postMessage(message);
+                                                        }
+                                                    });
+                                                }
+                                            });
+                                        }
+                                    }
+                                });
+                            }
+                        });
+                    } catch (error) {
+                        // Continuar con el siguiente día si hay error
+                        continue;
+                    }
+                }
+                
+                console.log('✅ Alarmas programadas en Service Worker');
+            } catch (error) {
+                console.error('❌ Error programando alarmas en SW:', error);
+            }
+        }
+
+        // Guardar alarmas en localStorage para verificación cuando la app se abre
+        function saveAlarmsToLocalStorage() {
+            try {
+                // Obtener todas las alarmas de los próximos 30 días
+                const allAlarms = [];
+                const now = new Date();
+                
+                // Guardar timestamp de última verificación
+                localStorage.setItem('last_alarm_check', now.toISOString());
+                
+                const alarmsData = {
+                    lastSaved: now.toISOString(),
+                    alarms: alarms, // Alarmas del día actual
+                    version: '2.0'
+                };
+                localStorage.setItem('pending_alarms', JSON.stringify(alarmsData));
+                console.log('💾 Alarmas guardadas en localStorage para verificación local');
+            } catch (error) {
+                console.error('Error guardando alarmas en localStorage:', error);
+            }
+        }
+        
+        // Detectar cuando la app vuelve al primer plano (iOS)
+        function setupVisibilityChangeListener() {
+            document.addEventListener('visibilitychange', () => {
+                if (!document.hidden) {
+                    // La app volvió al primer plano
+                    console.log('📱 App vuelta al primer plano - verificando alarmas pendientes');
+                    
+                    // Verificar inmediatamente alarmas que pudieron haberse perdido
+                    setTimeout(() => {
+                        checkPendingAlarmsOnStart();
+                        checkAlarms();
+                    }, 500);
+                } else {
+                    // La app se fue a segundo plano - guardar estado
+                    console.log('📱 App en segundo plano - guardando estado');
+                    saveAlarmsToLocalStorage();
+                }
+            });
+            
+            // También detectar cuando la ventana recibe foco
+            window.addEventListener('focus', () => {
+                console.log('📱 Ventana recibió foco - verificando alarmas');
+                setTimeout(() => {
+                    checkPendingAlarmsOnStart();
+                    checkAlarms();
+                }, 500);
+            });
+        }
+        
+        // Configurar prompt de instalación para Android
+        let deferredPrompt = null;
+        
+        function setupAndroidInstallPrompt() {
+            // Escuchar el evento beforeinstallprompt (Android Chrome)
+            window.addEventListener('beforeinstallprompt', (e) => {
+                console.log('📱 Evento beforeinstallprompt recibido');
+                e.preventDefault();
+                deferredPrompt = e;
+                showAndroidInstallButton();
+            });
+            
+            // Verificar si ya está instalada
+            if (isStandaloneMode || window.matchMedia('(display-mode: standalone)').matches) {
+                console.log('✅ App ya está instalada como PWA');
+                hideAndroidInstallButton();
+            }
+        }
+        
+        // Mostrar botón de instalación en Android
+        function showAndroidInstallButton() {
+            // Verificar si ya existe el botón
+            let installBtn = document.getElementById('androidInstallBtn');
+            
+            if (!installBtn && deferredPrompt) {
+                installBtn = document.createElement('button');
+                installBtn.id = 'androidInstallBtn';
+                installBtn.innerHTML = '📱 Instalar App';
+                installBtn.style.cssText = `
+                    position: fixed;
+                    bottom: 20px;
+                    left: 50%;
+                    transform: translateX(-50%);
+                    background: #4CAF50;
+                    color: white;
+                    border: none;
+                    padding: 12px 24px;
+                    border-radius: 25px;
+                    font-size: 14px;
+                    font-weight: bold;
+                    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+                    z-index: 10000;
+                    cursor: pointer;
+                    display: flex;
+                    align-items: center;
+                    gap: 8px;
+                    font-family: inherit;
+                `;
+                
+                installBtn.addEventListener('click', async () => {
+                    if (!deferredPrompt) return;
+                    
+                    // Mostrar el prompt de instalación
+                    deferredPrompt.prompt();
+                    
+                    // Esperar respuesta del usuario
+                    const { outcome } = await deferredPrompt.userChoice;
+                    console.log('Usuario eligió:', outcome);
+                    
+                    if (outcome === 'accepted') {
+                        console.log('✅ Usuario aceptó instalar la app');
+                    } else {
+                        console.log('❌ Usuario rechazó instalar la app');
+                    }
+                    
+                    deferredPrompt = null;
+                    hideAndroidInstallButton();
+                });
+                
+                document.body.appendChild(installBtn);
+            }
+        }
+        
+        // Ocultar botón de instalación
+        function hideAndroidInstallButton() {
+            const installBtn = document.getElementById('androidInstallBtn');
+            if (installBtn) {
+                installBtn.remove();
+            }
+        }
+        
+        // Verificar si la app está instalada como PWA
+        function checkPWAInstallation() {
+            // Verificar si se está ejecutando en modo standalone (PWA instalada)
+            const isStandalone = isStandaloneMode || 
+                                window.matchMedia('(display-mode: standalone)').matches ||
+                                (window.navigator.standalone === true) ||
+                                document.referrer.includes('android-app://');
+            
+            if (isStandalone) {
+                console.log('✅ PWA instalada detectada - mejores capacidades disponibles');
+                // Cuando está instalada como PWA, puede tener más permisos
+                if ('Notification' in window && Notification.permission === 'default') {
+                    Notification.requestPermission();
+                }
+                hideAndroidInstallButton();
+            } else if (isIOS) {
+                console.log('ℹ️ Para mejor funcionalidad en iPhone, instala la app:');
+                console.log('   1. Toca el botón Compartir (cuadrado con flecha)');
+                console.log('   2. Selecciona "Añadir a pantalla de inicio"');
+                console.log('   3. Abre la app desde el icono en la pantalla de inicio');
+                
+                // Mostrar un mensaje visual la primera vez
+                const hasSeenPWAMessage = localStorage.getItem('pwa_install_message_seen');
+                if (!hasSeenPWAMessage && isIOS) {
+                    setTimeout(() => {
+                        const pwaHint = document.createElement('div');
+                        pwaHint.style.cssText = `
+                            position: fixed;
+                            bottom: 20px;
+                            left: 10px;
+                            right: 10px;
+                            background: #FF9800;
+                            color: white;
+                            padding: 15px;
+                            border-radius: 10px;
+                            z-index: 10000;
+                            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+                            font-size: 14px;
+                            line-height: 1.5;
+                        `;
+                        pwaHint.innerHTML = `
+                            <strong>💡 Mejora las alarmas en iPhone:</strong><br>
+                            Instala esta app tocando <strong>Compartir</strong> → <strong>"Añadir a pantalla de inicio"</strong>
+                            <button onclick="this.parentElement.remove(); localStorage.setItem('pwa_install_message_seen', 'true');" 
+                                    style="float: right; margin-top: 5px; background: white; color: #FF9800; border: none; padding: 5px 10px; border-radius: 5px; font-weight: bold; cursor: pointer;">
+                                ✕
+                            </button>
+                        `;
+                        document.body.appendChild(pwaHint);
+                    }, 3000);
+                }
+            }
+            
+            return isStandalone;
+        }
+        
+        // Programar alarmas para iOS usando localStorage (para verificación cuando la app se abre)
+        async function scheduleAlarmsForIOS() {
+            try {
+                const now = new Date();
+                const scheduledAlarms = [];
+                
+                // Obtener todas las alarmas de los próximos 7 días
+                for (let i = 0; i < 7; i++) {
+                    const checkDate = new Date(now);
+                    checkDate.setDate(checkDate.getDate() + i);
+                    
+                    try {
+                        const events = await getEventsForDate(checkDate);
+                        // Obtener todas las notas (múltiples usuarios)
+                        const notes = events.filter(event => event.type === 'note');
+                        
+                        notes.forEach(note => {
+                            if (note && note.alarms && Array.isArray(note.alarms)) {
+                                note.alarms.forEach(alarm => {
+                                    const alarmDate = new Date(alarm.dateTime);
+                                    const timeUntilAlarm = alarmDate.getTime() - now.getTime();
+                                    
+                                    // Solo programar alarmas futuras
+                                    if (timeUntilAlarm > 0) {
+                                        scheduledAlarms.push({
+                                            id: alarm.id,
+                                            dateTime: alarm.dateTime,
+                                            date: alarmDate.toISOString().split('T')[0],
+                                            time: alarmDate.toTimeString().split(' ')[0].slice(0, 5),
+                                            noteText: note.text || '',
+                                            userId: note.userId
+                                        });
+                                    }
+                                });
+                            }
+                        });
+                    } catch (error) {
+                        continue;
+                    }
+                }
+                
+                // Guardar en localStorage para verificación cuando la app se abre
+                localStorage.setItem('ios_scheduled_alarms', JSON.stringify({
+                    alarms: scheduledAlarms,
+                    lastUpdated: now.toISOString()
+                }));
+                
+                console.log(`✅ ${scheduledAlarms.length} alarmas programadas para verificación en iOS`);
+            } catch (error) {
+                console.error('Error programando alarmas para iOS:', error);
+            }
+        }
+        
+        // Verificar alarmas pendientes al abrir la app (especialmente importante para iOS)
+        async function checkPendingAlarmsOnStart() {
+            try {
+                const now = new Date();
+                const checkedAlarmIds = new Set();
+                let foundAlarms = false;
+                
+                // Obtener última verificación
+                const lastCheck = localStorage.getItem('last_alarm_check');
+                const lastCheckTime = lastCheck ? new Date(lastCheck) : null;
+                
+                // Si no hay última verificación, buscar en las últimas 24 horas
+                const checkRange = lastCheckTime ? 
+                    Math.max(1, Math.ceil((now - lastCheckTime) / (1000 * 60 * 60))) : 24; // Horas
+                
+                console.log(`🔍 Verificando alarmas perdidas (últimos ${checkRange} horas o 7 días)`);
+                
+                // Verificar alarmas de los últimos 7 días (o desde última verificación)
+                const daysToCheck = Math.min(7, Math.ceil(checkRange / 24) + 1);
+                
+                for (let i = 0; i < daysToCheck; i++) {
+                    const checkDate = new Date(now);
+                    checkDate.setDate(checkDate.getDate() - i); // Verificar días pasados también
+                    
+                    try {
+                        const events = await getEventsForDate(checkDate);
+                        // Obtener todas las notas (múltiples usuarios)
+                        const notes = events.filter(event => event.type === 'note');
+                        
+                        notes.forEach(note => {
+                            if (note && note.alarms && Array.isArray(note.alarms)) {
+                                note.alarms.forEach(alarm => {
+                                    if (checkedAlarmIds.has(alarm.id)) return;
+                                    checkedAlarmIds.add(alarm.id);
+                                    
+                                    const alarmDate = new Date(alarm.dateTime);
+                                    const diff = alarmDate.getTime() - now.getTime();
+                                    
+                                    // Si la alarma era en el pasado (se perdió mientras la app estaba cerrada)
+                                    // Verificar desde la última verificación o máximo 30 minutos atrás
+                                    const maxTimeBack = lastCheckTime ? 
+                                        (now - lastCheckTime) : (30 * 60 * 1000); // 30 minutos por defecto
+                                    
+                                    if (diff < 0 && diff > -maxTimeBack) {
+                                        console.log(`🔔 Alarma perdida detectada: ${alarm.id} (hace ${Math.round(-diff/1000)}s)`);
+                                        foundAlarms = true;
+                                        const noteText = note.text || '';
+                                        
+                                        // Mostrar notificación inmediatamente
+                                        setTimeout(() => {
+                                            showAlarmNotification(alarm, noteText);
+                                        }, 100);
+                                    }
+                                });
+                            }
+                        });
+                    } catch (error) {
+                        continue;
+                    }
+                }
+                
+                // Verificar también alarmas programadas en localStorage (iOS)
+                if (isIOS) {
+                    const iosAlarms = localStorage.getItem('ios_scheduled_alarms');
+                    if (iosAlarms) {
+                        try {
+                            const data = JSON.parse(iosAlarms);
+                            data.alarms.forEach(alarm => {
+                                if (checkedAlarmIds.has(alarm.id)) return;
+                                checkedAlarmIds.add(alarm.id);
+                                
+                                const alarmDate = new Date(alarm.dateTime);
+                                const diff = alarmDate.getTime() - now.getTime();
+                                
+                                const maxTimeBack = lastCheckTime ? 
+                                    (now - lastCheckTime) : (30 * 60 * 1000);
+                                
+                                if (diff < 0 && diff > -maxTimeBack) {
+                                    console.log(`🔔 Alarma iOS perdida detectada: ${alarm.id}`);
+                                    foundAlarms = true;
+                                    
+                                    setTimeout(() => {
+                                        showAlarmNotification({id: alarm.id, dateTime: alarm.dateTime}, alarm.noteText);
+                                    }, 100);
+                                }
+                            });
+                        } catch (e) {
+                            console.error('Error verificando alarmas iOS:', e);
+                        }
+                    }
+                }
+                
+                // Actualizar timestamp de última verificación
+                localStorage.setItem('last_alarm_check', now.toISOString());
+                
+                if (!foundAlarms) {
+                    console.log('✅ No se encontraron alarmas perdidas');
+                } else {
+                    console.log('⚠️ Alarmas perdidas encontradas y mostradas');
+                }
+            } catch (error) {
+                console.error('Error verificando alarmas pendientes:', error);
+            }
+        }
+        
+        // Configurar notificaciones de alarmas
+        function setupAlarmNotifications() {
+            // Limpiar notificaciones anteriores
+            clearInterval(window.alarmCheckInterval);
+            
+            // Verificar alarmas cada minuto (o cada 30 segundos en móviles para mejor respuesta)
+            const checkInterval = isMobile ? 30000 : 60000;
+            
+            window.alarmCheckInterval = setInterval(() => {
+                checkAlarms();
+            }, checkInterval);
+            
+            console.log(`⏰ Verificación de alarmas cada ${checkInterval/1000} segundos (${isMobile ? 'móvil' : 'escritorio'})`);
+            
+            // Verificar inmediatamente
+            checkAlarms();
+        }
+
+        // Verificar si alguna alarma debe activarse
+        async function checkAlarms() {
+            const now = new Date();
+            const checkedAlarmIds = new Set(); // Para evitar duplicados
+            let totalAlarmsChecked = 0;
+            
+            try {
+                // Verificar alarmas del día actual y los próximos 7 días
+                for (let i = 0; i < 7; i++) {
+                    const checkDate = new Date(now);
+                    checkDate.setDate(checkDate.getDate() + i);
+                    const dateKey = formatDateKey(checkDate);
+                    
+                    try {
+                        const events = await getEventsForDate(checkDate);
+                        // Obtener todas las notas (múltiples usuarios)
+                        const notes = events.filter(event => event.type === 'note');
+                        
+                        notes.forEach(note => {
+                            if (note && note.alarms && Array.isArray(note.alarms)) {
+                                console.log(`🔍 Verificando ${note.alarms.length} alarmas para ${dateKey}`);
+                                
+                                note.alarms.forEach(alarm => {
+                                    // Evitar verificar la misma alarma dos veces
+                                    if (checkedAlarmIds.has(alarm.id)) return;
+                                    checkedAlarmIds.add(alarm.id);
+                                    totalAlarmsChecked++;
+                                    
+                                    const alarmDate = new Date(alarm.dateTime);
+                                    const diff = alarmDate.getTime() - now.getTime();
+                                    
+                                    console.log(`⏰ Alarma ${alarm.id}: fecha=${alarmDate.toISOString()}, diff=${Math.round(diff/1000)}s`);
+                                    
+                                    // Si la alarma es ahora o en los próximos 60 segundos
+                                    if (diff >= 0 && diff <= 60000) {
+                                        console.log(`🔔 ¡ALARMA ACTIVADA! ${alarm.id} - Diferencia: ${Math.round(diff/1000)}s`);
+                                        const noteText = note.text || '';
+                                        showAlarmNotification(alarm, noteText);
+                                    }
+                                });
+                            }
+                        });
+                    } catch (error) {
+                        console.error(`Error verificando alarmas para ${dateKey}:`, error);
+                        // Continuar con el siguiente día si hay error
+                        continue;
+                    }
+                }
+                
+                if (totalAlarmsChecked > 0) {
+                    console.log(`✅ Verificación completada: ${totalAlarmsChecked} alarmas verificadas`);
+                }
+            } catch (error) {
+                console.error('❌ Error verificando alarmas:', error);
+            }
+        }
+
+        // Mostrar notificación de alarma
+        async function showAlarmNotification(alarm, alarmNoteText = '') {
+            const alarmDate = new Date(alarm.dateTime);
+            const dateStr = alarmDate.toISOString().split('T')[0];
+            const timeStr = alarmDate.toTimeString().split(' ')[0].slice(0, 5);
+            
+            // Obtener texto de la nota si no se proporcionó
+            let noteText = alarmNoteText;
+            if (!noteText) {
+                try {
+                    const events = await getEventsForDate(new Date(alarm.dateTime));
+                    const note = events.find(event => event.type === 'note');
+                    if (note && note.text) {
+                        noteText = note.text;
+                    }
+                } catch (error) {
+                    console.error('Error obteniendo nota para alarma:', error);
+                }
+            }
+            
+            // Abrir página de notificación
+            openAlarmNotificationPage(dateStr, timeStr, noteText);
+            
+            // También mostrar notificación del navegador si está permitido
+            if ('Notification' in window) {
+                if (Notification.permission === 'granted') {
+                    try {
+                        const notification = new Notification('🔔 Recordatorio', {
+                            body: `Tienes una alarma configurada para ${alarmDate.toLocaleString('es-ES')}`,
+                            icon: 'icons/Icon-192.png',
+                            tag: `alarm-${alarm.id}`,
+                            requireInteraction: true,
+                            data: {
+                                url: `alarm-notification.html?date=${dateStr}&time=${timeStr}&note=${encodeURIComponent(noteText)}&user=${encodeURIComponent(users.find(u => u.id === currentUserId)?.name || 'Usuario')}`
+                            }
+                        });
+                        
+                        notification.onclick = function() {
+                            openAlarmNotificationPage(dateStr, timeStr, noteText);
+                            window.focus();
+                            notification.close();
+                        };
+                    } catch (error) {
+                        console.log('Error mostrando notificación (permiso puede haber sido revocado):', error);
+                        // Continuar - la página de alarma ya se abrió
+                    }
+                } else if (Notification.permission === 'default') {
+                    // Solicitar permiso solo si es la primera vez
+                    Notification.requestPermission().then(permission => {
+                        if (permission === 'granted') {
+                            // Si ahora se otorgó el permiso, mostrar notificación
+                            try {
+                                const notification = new Notification('🔔 Recordatorio', {
+                                    body: `Tienes una alarma configurada para ${alarmDate.toLocaleString('es-ES')}`,
+                                    icon: 'icons/Icon-192.png',
+                                    tag: `alarm-${alarm.id}`,
+                                    requireInteraction: true
+                                });
+                                
+                                notification.onclick = function() {
+                                    openAlarmNotificationPage(dateStr, timeStr, noteText);
+                                    window.focus();
+                                    notification.close();
+                                };
+                            } catch (error) {
+                                console.log('Error mostrando notificación después de otorgar permiso:', error);
+                            }
+                        }
+                    });
+                }
+                // Si el permiso es 'denied', simplemente no mostramos notificación pero sí la página
+            }
+        }
+
+        // Abrir página de notificación de alarma
+        function openAlarmNotificationPage(dateStr, timeStr, noteText) {
+            // Obtener nombre del usuario actual
+            const currentUser = users.find(u => u.id === currentUserId);
+            const userName = currentUser ? currentUser.name : 'Usuario';
+            
+            // Construir URL con parámetros
+            const params = new URLSearchParams({
+                date: dateStr,
+                time: timeStr,
+                note: encodeURIComponent(noteText || ''),
+                user: encodeURIComponent(userName)
+            });
+            
+            // Abrir en nueva ventana/pestaña o redirigir
+            const alarmUrl = `alarm-notification.html?${params.toString()}`;
+            
+            console.log('🔔 Abriendo página de alarma:', alarmUrl);
+            
+            // En móviles, mejor redirigir directamente en la misma ventana
+            if (isMobile) {
+                console.log('📱 Dispositivo móvil detectado: redirigiendo a pantalla de alarma');
+                window.location.href = alarmUrl;
+                return;
+            }
+            
+            // En escritorio, intentar abrir en nueva ventana
+            try {
+                // Usar window.open con características específicas para pantalla completa
+                const alarmWindow = window.open(
+                    alarmUrl, 
+                    'alarmWindow',
+                    'width=' + screen.width + ',height=' + screen.height + ',left=0,top=0,fullscreen=yes'
+                );
+                
+                if (alarmWindow) {
+                    alarmWindow.focus();
+                    console.log('✅ Ventana de alarma abierta');
+                } else {
+                    // Si falla por bloqueo del navegador, redirigir en la misma ventana
+                    console.log('⚠️ No se pudo abrir nueva ventana, redirigiendo en la misma ventana');
+                    window.location.href = alarmUrl;
+                }
+            } catch (error) {
+                console.error('Error abriendo ventana de alarma:', error);
+                // Fallback: redirigir en la misma ventana
+                window.location.href = alarmUrl;
+            }
         }
 
         // Obtener categorías seleccionadas
@@ -2685,17 +5189,19 @@
                 // Obtener eventos existentes del día
                 const existingEvents = await getEventsForDate(selectedDate);
                 
-                // Buscar si ya existe una nota para este día
-                const existingNoteIndex = existingEvents.findIndex(event => event.type === 'note');
+                // Buscar si ya existe una nota del usuario actual para este día
+                const existingNoteIndex = existingEvents.findIndex(event => event.type === 'note' && event.userId === currentUserId);
                 
                 if (mainText.trim() === '') {
-                    // Si no hay texto, eliminar la nota existente
+                    // Si no hay texto, eliminar la nota existente del usuario actual
                     if (existingNoteIndex !== -1) {
                         existingEvents.splice(existingNoteIndex, 1);
-                        console.log('🗑️ Nota eliminada');
+                        console.log('🗑️ Nota del usuario actual eliminada');
                     }
                 } else {
-                    // Crear o actualizar la nota
+                    // Crear o actualizar la nota del usuario actual
+                    // Preservar textSize y alarmas existentes si existen
+                    const existingNote = existingNoteIndex !== -1 ? existingEvents[existingNoteIndex] : null;
                     const noteEvent = {
                         text: mainText.trim(),
                         userId: currentUserId,
@@ -2703,17 +5209,21 @@
                         createdAt: existingNoteIndex !== -1 ? existingEvents[existingNoteIndex].createdAt : new Date().toISOString(),
                         updatedAt: new Date().toISOString(),
                         categories: selectedCategories,
-                        type: 'note'
+                        type: 'note',
+                        // Preservar textSize si existe, si no usar el por defecto
+                        textSize: existingNote && existingNote.textSize ? existingNote.textSize : 11,
+                        // Preservar alarmas si existen
+                        alarms: existingNote && existingNote.alarms && Array.isArray(existingNote.alarms) ? existingNote.alarms : []
                     };
                     
                     if (existingNoteIndex !== -1) {
-                        // Actualizar nota existente
+                        // Actualizar nota existente del usuario actual
                         existingEvents[existingNoteIndex] = noteEvent;
-                        console.log('✏️ Nota actualizada');
+                        console.log('✏️ Nota del usuario actual actualizada con textSize:', noteEvent.textSize, 'y alarmas:', noteEvent.alarms.length);
                     } else {
-                        // Crear nueva nota
+                        // Crear nueva nota del usuario actual
                         existingEvents.push(noteEvent);
-                        console.log('📝 Nueva nota creada');
+                        console.log('📝 Nueva nota del usuario actual creada con textSize:', noteEvent.textSize);
                     }
                 }
                 
@@ -2722,12 +5232,8 @@
                 
                 console.log('✅ Cambios guardados en Firebase');
                 
-                // Mostrar mensaje de éxito
-                alert('✅ Cambios guardados correctamente');
-                
             } catch (error) {
                 console.error('❌ Error guardando cambios:', error);
-                alert('❌ Error al guardar los cambios');
             }
             
             closeModal();
@@ -2782,22 +5288,22 @@
                 const existingEvents = await getEventsForDate(selectedDate);
                 console.log('📅 Eventos existentes:', existingEvents);
                 
-                // Buscar si ya existe una nota para este día
-                const existingNoteIndex = existingEvents.findIndex(event => event.type === 'note');
-                console.log('🔍 Índice de nota existente:', existingNoteIndex);
+                // Buscar si ya existe una nota del usuario actual para este día
+                const existingNoteIndex = existingEvents.findIndex(event => event.type === 'note' && event.userId === currentUserId);
+                console.log('🔍 Índice de nota del usuario actual existente:', existingNoteIndex);
                 
                 if (existingNoteIndex !== -1) {
-                    // Actualizar categorías de la nota existente
+                    // Actualizar categorías de la nota existente del usuario actual
                     existingEvents[existingNoteIndex].categories = selectedCategories;
                     existingEvents[existingNoteIndex].updatedAt = new Date().toISOString();
                     
-                    console.log('✏️ Actualizando nota existente con categorías:', existingEvents[existingNoteIndex]);
+                    console.log('✏️ Actualizando nota del usuario actual existente con categorías:', existingEvents[existingNoteIndex]);
                     
                     // Guardar en Firebase
                     await saveEvents(selectedDate, existingEvents);
                     console.log('✅ Categorías guardadas en Firebase inmediatamente');
                 } else {
-                    // Si no hay nota, crear una temporal solo con categorías
+                    // Si no hay nota del usuario actual, crear una temporal solo con categorías
                     const noteEvent = {
                         text: '', // Nota vacía
                         userId: currentUserId,
@@ -2807,11 +5313,11 @@
                         type: 'note'
                     };
                     
-                    console.log('📝 Creando nueva nota con categorías:', noteEvent);
+                    console.log('📝 Creando nueva nota del usuario actual con categorías:', noteEvent);
                     
                     existingEvents.push(noteEvent);
                     await saveEvents(selectedDate, existingEvents);
-                    console.log('✅ Categorías guardadas en Firebase (nota temporal creada)');
+                    console.log('✅ Categorías guardadas en Firebase (nota temporal del usuario actual creada)');
                 }
                 
             } catch (error) {
@@ -2835,7 +5341,7 @@
             const text = select.value.trim();
 
             if (!text) {
-                alert('Por favor selecciona un turno');
+                console.warn('⚠️ Por favor selecciona un turno');
                 return;
             }
 
@@ -2859,8 +5365,13 @@
             await openDayModal(selectedDate); // Refrescar modal
         }
 
-        // Volver a selector de usuarios
+        // Volver a selector de usuarios (solo si NO está en modo standalone)
         function goBack() {
+            // En modo standalone de iOS, no redirigir (podría causar que se abra Safari)
+            if (isIOS && isStandaloneMode) {
+                console.log('⚠️ En modo standalone, no se puede redirigir a iphone.html');
+                return;
+            }
             window.location.href = 'iphone.html';
         }
 
@@ -2883,7 +5394,38 @@
         }
 
         // Inicializar cuando cargue la página
-        window.addEventListener('load', init);
+        // IMPORTANTE: Para iOS standalone, evitar cualquier retraso o redirección
+        // Verificar modo standalone ANTES de cualquier otra cosa
+        (function() {
+            // Si estamos en iOS standalone, inicializar inmediatamente
+            if (isIOS && (window.navigator.standalone === true)) {
+                console.log('🚀 iOS Standalone detectado - inicializando inmediatamente');
+                // Inicializar lo antes posible
+                if (document.readyState === 'loading') {
+                    document.addEventListener('DOMContentLoaded', () => {
+                        setTimeout(init, 0);
+                    });
+                } else {
+                    setTimeout(init, 0);
+                }
+                return;
+            }
+            
+            // Para otros casos, usar la inicialización normal
+            if (document.readyState === 'complete' || document.readyState === 'interactive') {
+                setTimeout(init, 0);
+            } else {
+                document.addEventListener('DOMContentLoaded', init);
+            }
+            
+            // También escuchar el evento load como backup
+            window.addEventListener('load', () => {
+                if (!window.calendarInitialized && !isInitialized) {
+                    window.calendarInitialized = true;
+                    init();
+                }
+            }, { once: true });
+        })();
 
         // Asegurar que los botones de acción sean visibles
         window.addEventListener('DOMContentLoaded', () => {

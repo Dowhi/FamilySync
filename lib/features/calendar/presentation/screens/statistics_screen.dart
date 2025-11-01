@@ -472,7 +472,7 @@ class _StatisticsScreenState extends ConsumerState<StatisticsScreen> {
   // Lista de iconos disponibles
   List<String> get _availableIcons => [
     'Cambio de turno',
-    'Ingreso',
+    'Pago',
     'Importante',
     'Festivo',
     'Médico',
@@ -1506,19 +1506,19 @@ class _StatisticsScreenState extends ConsumerState<StatisticsScreen> {
   IconData? _getCategoryIcon(String? category) {
     switch (category) {
       case 'Cambio de turno':
-        return Icons.swap_horiz;
-      case 'Ingreso':
-        return Icons.attach_money;
+        return Icons.shuffle;
+      case 'Pago':
+        return Icons.credit_card;
       case 'Importante':
-        return Icons.priority_high;
+        return Icons.notifications;
       case 'Festivo':
         return Icons.celebration;
       case 'Médico':
-        return Icons.medical_services;
+        return Icons.medication;
       case 'Cumpleaños':
-        return Icons.cake; // Cambiado de pets a cake para cumpleaños
+        return Icons.cake;
       case 'Favorito':
-        return Icons.favorite;
+        return Icons.bookmark;
       case 'Coche':
         return Icons.directions_car;
       default:
