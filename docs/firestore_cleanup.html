@@ -308,6 +308,55 @@
                 </div>
             </div>
         </div>
+
+        <!-- MIGRATION SECTION -->
+        <div class="section">
+            <h2>🔧 Migración Automática (Turnos y Eventos)</h2>
+            <p style="margin-bottom: 15px;">Normaliza turnos y eventos del calendario para evitar duplicados y colores grises.</p>
+
+            <div class="checkbox-container">
+                <label>
+                    <input type="checkbox" id="migrateShiftTemplates" checked>
+                    <strong>Mover turnos de shift_templates → shifts (si existen)</strong>
+                </label>
+            </div>
+
+            <div class="checkbox-container">
+                <label>
+                    <input type="checkbox" id="normalizeCalendarEvents" checked>
+                    <strong>Normalizar calendar_events (añadir shiftId, estandarizar texto y color)</strong>
+                </label>
+            </div>
+
+            <button class="button button-secondary" onclick="runMigration()" id="migrateBtn">🚀 Ejecutar Migración Automática</button>
+
+            <div class="status" id="migrateStatus"></div>
+            <div class="progress" id="migrateProgress">
+                <div class="progress-text" id="migrateProgressText">Preparando migración...</div>
+                <div class="progress-bar"><div class="progress-fill" id="migrateProgressFill"></div></div>
+            </div>
+        </div>
+
+        <!-- FULL RESET SECTION -->
+        <div class="section danger">
+            <h2>🧨 Reset TOTAL de la Base de Datos</h2>
+            <p style="margin-bottom: 10px;">Borra todas las colecciones relacionadas y (opcional) crea una semilla mínima de turnos.</p>
+
+            <div class="checkbox-container">
+                <label>
+                    <input type="checkbox" id="seedAfterReset" checked>
+                    <strong>Sembrar turnos por defecto tras el borrado (recomendado)</strong>
+                </label>
+                <p style="font-size:12px; color:#666; margin-left:24px;">Crea 4 turnos: D1, D2, Libre, Oper</p>
+            </div>
+
+            <button class="button" onclick="resetDatabase()" id="resetBtn">🧨 Borrar TODO y Reiniciar</button>
+            <div class="status" id="resetStatus"></div>
+            <div class="progress" id="resetProgress">
+                <div class="progress-text" id="resetProgressText">Preparando...</div>
+                <div class="progress-bar"><div class="progress-fill" id="resetProgressFill"></div></div>
+            </div>
+        </div>
     </div>
 
     <!-- Firebase SDK -->
@@ -595,7 +644,181 @@
                 cleanupBtn.disabled = false;
             }
         }
+
+        // ---------- MIGRACIÓN AUTOMÁTICA ----------
+        function normalizeKey(s){ return (s||'').toString().trim().toLowerCase(); }
+
+        async function loadShiftsMap(){
+            const mapById = new Map();
+            const mapByName = new Map();
+            const snap = await db.collection('shifts').get();
+            snap.docs.forEach(d=>{
+                const data=d.data();
+                const rec={ id:d.id, ...data };
+                mapById.set(d.id, rec);
+                mapByName.set(normalizeKey(data.name), rec);
+                mapByName.set(normalizeKey(data.abbreviation), rec);
+            });
+            return {mapById, mapByName};
+        }
+
+        async function migrateShiftTemplatesIntoShifts(progress){
+            try{
+                const tmpSnap = await db.collection('shift_templates').get();
+                if (tmpSnap.empty) return {moved:0};
+                let moved=0;
+                const {mapByName}=await loadShiftsMap();
+                for (const doc of tmpSnap.docs){
+                    const data=doc.data();
+                    const keyA=normalizeKey(data.abbreviation), keyN=normalizeKey(data.name);
+                    if (!mapByName.has(keyA) && !mapByName.has(keyN)){
+                        const newRef = db.collection('shifts').doc();
+                        await newRef.set(data);
+                        moved++;
+                    }
+                }
+                progress(`Turnos migrados: ${moved}`);
+                return {moved};
+            }catch(e){ console.error('migrateShiftTemplatesIntoShifts',e); return {moved:0,error:e}; }
+        }
+
+        async function normalizeCalendarEventsDocs(progress){
+            let updated=0, scanned=0;
+            const {mapById, mapByName}=await loadShiftsMap();
+            const snap = await db.collection('calendar_events').get();
+            for (const doc of snap.docs){
+                scanned++;
+                const data = doc.data();
+                const events = Array.isArray(data.events)? [...data.events] : [];
+                let changed=false;
+                for (const ev of events){
+                    if (ev && ev.type !== 'note'){
+                        if (!ev.shiftId){
+                            const rec = mapByName.get(normalizeKey(ev.text));
+                            if (rec){ ev.shiftId = rec.id; ev.text = rec.abbreviation || rec.name; ev.userColor = ev.userColor || rec.backgroundColor || rec.colorHex || rec.color; changed=true; }
+                        } else {
+                            const rec = mapById.get(ev.shiftId) || mapByName.get(normalizeKey(ev.text));
+                            if (rec){
+                                const newText = rec.abbreviation || rec.name;
+                                const newColor = rec.backgroundColor || rec.colorHex || rec.color;
+                                if (ev.text !== newText){ ev.text=newText; changed=true; }
+                                if (!ev.userColor && newColor){ ev.userColor=newColor; changed=true; }
+                            }
+                        }
+                    }
+                }
+                if (changed){
+                    await doc.ref.set({
+                        events,
+                        lastModified: firebase.firestore.FieldValue.serverTimestamp()
+                    }, {merge:true});
+                    updated++;
+                }
+                if (scanned % 50 === 0) progress(`Procesados ${scanned}/${snap.size} días...`);
+            }
+            progress(`Eventos normalizados: ${updated}`);
+            return {updated, scanned:snap.size};
+        }
+
+        async function runMigration(){
+            const migrateBtn=document.getElementById('migrateBtn');
+            const migrateStatus=document.getElementById('migrateStatus');
+            const migrateProgress=document.getElementById('migrateProgress');
+            const migrateProgressText=document.getElementById('migrateProgressText');
+            const migrateProgressFill=document.getElementById('migrateProgressFill');
+
+            function setProgress(t, ratio){ migrateProgressText.textContent=t; if (ratio!=null) migrateProgressFill.style.width = `${Math.max(1,Math.min(100,ratio*100))}%`; }
+
+            try{
+                migrateBtn.disabled=true; migrateProgress.classList.add('show');
+                migrateStatus.className='status info'; migrateStatus.style.display='block'; migrateStatus.textContent='⏳ Ejecutando migración...';
+
+                let steps=0, done=0; const wantMove=document.getElementById('migrateShiftTemplates').checked; const wantNormalize=document.getElementById('normalizeCalendarEvents').checked;
+                steps += wantMove?1:0; steps += wantNormalize?1:0; if (steps===0) { migrateStatus.className='status error'; migrateStatus.textContent='Selecciona al menos una opción.'; return; }
+
+                if (wantMove){
+                    await migrateShiftTemplatesIntoShifts(msg=>setProgress(`Migrando turnos: ${msg}`, (done+0.5)/steps));
+                    done+=1; setProgress('Turnos migrados', done/steps);
+                }
+                if (wantNormalize){
+                    await normalizeCalendarEventsDocs(msg=>setProgress(`Normalizando eventos: ${msg}`, (done+0.5)/steps));
+                    done+=1; setProgress('Eventos normalizados', done/steps);
+                }
+
+                migrateStatus.className='status success';
+                migrateStatus.textContent='✅ Migración completada. Abre el calendario y la vista 2025 para verificar colores y totales.';
+            }catch(e){
+                console.error('runMigration',e);
+                migrateStatus.className='status error'; migrateStatus.textContent=`❌ Error en migración: ${e.message}`;
+            }finally{
+                migrateBtn.disabled=false;
+                setTimeout(()=>migrateProgress.classList.remove('show'), 2000);
+            }
+        }
+
+        // ---------- RESET TOTAL ----------
+        async function resetDatabase(){
+            const resetBtn=document.getElementById('resetBtn');
+            const resetStatus=document.getElementById('resetStatus');
+            const resetProgress=document.getElementById('resetProgress');
+            const resetProgressText=document.getElementById('resetProgressText');
+            const resetProgressFill=document.getElementById('resetProgressFill');
+
+            const seed = document.getElementById('seedAfterReset').checked;
+
+            if (!confirm('⚠️ Esto borrará TODA la base de datos de la app (calendar_events, shifts, users, shift_templates, local_users, families, etc.). ¿Continuar?')) return;
+            if (!confirm('⚠️ ÚLTIMA CONFIRMACIÓN: Operación IRREVERSIBLE. ¿Seguro que deseas borrar todo?')) return;
+
+            function setProgress(t, ratio){ resetProgressText.textContent=t; if (ratio!=null) resetProgressFill.style.width=`${Math.max(1,Math.min(100,ratio*100))}%`; }
+
+            try{
+                resetBtn.disabled=true; resetProgress.classList.add('show');
+                resetStatus.className='status info'; resetStatus.style.display='block'; resetStatus.textContent='⏳ Ejecutando reset total...';
+
+                const collections = ['calendar_events','shifts','users','shift_templates','local_users','families','alarms','dayCategories','notes'];
+                const total = collections.length; let done=0;
+                for (const name of collections){
+                    setProgress(`Eliminando colección: ${name}`, (done/total)*0.9);
+                    try{
+                        const snap = await db.collection(name).get();
+                        if (!snap.empty){
+                            const batchSize = 400; // en lotes por límites de Firestore
+                            let idx=0;
+                            while (idx < snap.size){
+                                const batch = db.batch();
+                                snap.docs.slice(idx, idx+batchSize).forEach(doc => batch.delete(doc.ref));
+                                await batch.commit();
+                                idx += batchSize;
+                            }
+                        }
+                    }catch(e){ /* colección puede no existir */ }
+                    done++;
+                }
+
+                // Semilla mínima (opcional)
+                if (seed){
+                    setProgress('Sembrando turnos por defecto...', 0.95);
+                    const defaults = [
+                        { name:'D1', abbreviation:'D1', backgroundColor:'#2196F3', textColor:'#FFFFFF', timeSlots:[{startTime:'08:00', endTime:'20:00'}] },
+                        { name:'D2', abbreviation:'D2', backgroundColor:'#F44336', textColor:'#FFFFFF', timeSlots:[{startTime:'20:00', endTime:'08:00'}] },
+                        { name:'Libre', abbreviation:'L', backgroundColor:'#4CAF50', textColor:'#FFFFFF' },
+                        { name:'Oper', abbreviation:'Oper', backgroundColor:'#FBC02D', textColor:'#000000' }
+                    ];
+                    for (const s of defaults){ await db.collection('shifts').add(s); }
+                }
+
+                setProgress('Listo', 1);
+                resetStatus.className='status success'; resetStatus.textContent='✅ Reset completado.';
+            }catch(e){
+                console.error('resetDatabase',e);
+                resetStatus.className='status error'; resetStatus.textContent=`❌ Error en reset: ${e.message}`;
+            }finally{
+                resetBtn.disabled=false;
+                setTimeout(()=>resetProgress.classList.remove('show'), 2000);
+            }
+        }
     </script>
 </body>
 </html>
+
 

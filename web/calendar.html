@@ -185,6 +185,273 @@
         .settings-label { font-size:14px; font-weight:600; color:#333; }
         .settings-select, .settings-checkbox { margin-left: auto; }
         .settings-actions { display:flex; gap:8px; margin-top: 8px; }
+        
+        /* Theme Selector */
+        .theme-selector {
+            display: flex;
+            gap: 8px;
+            background: #e9e9e9;
+            padding: 4px;
+            border-radius: 12px;
+            position: relative;
+        }
+        
+        .theme-option {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            padding: 12px 8px;
+            border: none;
+            background: transparent;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            z-index: 2;
+        }
+        
+        .theme-option:hover {
+            transform: translateY(-2px);
+        }
+        
+        .theme-option.active {
+            background: white;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+        }
+        
+        .theme-icon {
+            font-size: 24px;
+            line-height: 1;
+            display: block;
+        }
+        
+        .theme-name {
+            font-size: 11px;
+            font-weight: 600;
+            color: #666;
+            transition: color 0.3s;
+        }
+        
+        .theme-option.active .theme-name {
+            color: #2196F3;
+        }
+        
+        /* Dark mode styles */
+        body.dark-theme {
+            background: #1a1a1a;
+            color: #e0e0e0;
+        }
+        
+        body.dark-theme .header {
+            background: #0D47A1;
+            border-bottom: 1px solid #0a3470;
+        }
+        
+        body.dark-theme .tab-nav {
+            background: #2a2a2a;
+            border-bottom: 1px solid #3a3a3a;
+        }
+        
+        body.dark-theme .tab-btn {
+            color: #b0b0b0;
+            background: transparent;
+        }
+        
+        body.dark-theme .tab-btn.active {
+            color: #fff;
+            background: #3a3a3a;
+        }
+        
+        body.dark-theme .month-nav {
+            background: #2a2a2a;
+            border-bottom: 1px solid #3a3a3a;
+        }
+        
+        body.dark-theme .calendar-day {
+            background: #2a2a2a;
+            border: 1px solid #3a3a3a;
+            color: #e0e0e0;
+        }
+        
+        body.dark-theme .calendar-day.other-month {
+            background: #1f1f1f;
+            opacity: 0.5;
+        }
+        
+        body.dark-theme .calendar-day.today {
+            border: 2px solid #ff4444;
+        }
+        
+        body.dark-theme .weekday-header {
+            background: #333;
+            color: #b0b0b0;
+        }
+        
+        body.dark-theme .settings-backdrop {
+            background: rgba(0, 0, 0, 0.7);
+        }
+        
+        body.dark-theme .settings-panel {
+            background: #2a2a2a;
+            color: #e0e0e0;
+        }
+        
+        body.dark-theme .settings-group {
+            background: #1f1f1f;
+        }
+        
+        body.dark-theme .settings-label {
+            color: #b0b0b0;
+        }
+        
+        body.dark-theme .btn-secondary {
+            background: #3a3a3a;
+            color: #e0e0e0;
+        }
+        
+        body.dark-theme .btn-secondary:hover {
+            background: #4a4a4a;
+        }
+        
+        body.dark-theme .theme-selector {
+            background: #1f1f1f;
+        }
+        
+        body.dark-theme .theme-option.active {
+            background: #3a3a3a;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+        }
+        
+        body.dark-theme .theme-name {
+            color: #aaa;
+        }
+        
+        body.dark-theme .theme-option.active .theme-name {
+            color: #4da3ff;
+        }
+        
+        /* Dark mode for modals */
+        body.dark-theme .modal-backdrop,
+        body.dark-theme .day-modal {
+            background: rgba(0, 0, 0, 0.8);
+        }
+        
+        body.dark-theme .modal-content,
+        body.dark-theme .day-modal-content {
+            background: #2a2a2a;
+            color: #e0e0e0;
+        }
+        
+        body.dark-theme .modal-header,
+        body.dark-theme .day-modal-header {
+            background: #0D47A1;
+            border-bottom: 1px solid #0a3470;
+        }
+        
+        body.dark-theme .modal-body,
+        body.dark-theme .day-modal-body {
+            background: #2a2a2a;
+        }
+        
+        body.dark-theme .notes-modal {
+            background: rgba(0, 0, 0, 0.8);
+        }
+        
+        body.dark-theme .notes-modal-content {
+            background: #2a2a2a;
+        }
+        
+        body.dark-theme .notes-header {
+            background: #ff5722;
+        }
+        
+        body.dark-theme .notes-content-editable {
+            background: #1f1f1f;
+            color: #e0e0e0;
+            border: 1px solid #3a3a3a;
+        }
+        
+        body.dark-theme .notes-time-input,
+        body.dark-theme .notes-text-size-slider {
+            background: #1f1f1f;
+            color: #e0e0e0;
+            border: 1px solid #3a3a3a;
+        }
+        
+        body.dark-theme .format-btn {
+            background: #1f1f1f;
+            border-color: #3a3a3a;
+            color: #e0e0e0;
+        }
+        
+        body.dark-theme .format-btn.active {
+            background: #00BCD4;
+            border-color: #00BCD4;
+            color: white;
+        }
+        
+        body.dark-theme .notes-visibility-container,
+        body.dark-theme .notes-time-container,
+        body.dark-theme .notes-text-size-container {
+            background: #2a2a2a;
+        }
+        
+        body.dark-theme .user-checkbox-item {
+            color: #b0b0b0;
+        }
+        
+        body.dark-theme .notes-accept-btn {
+            background: #43a047;
+        }
+        
+        body.dark-theme .notes-cancel-btn {
+            background: #ef5350;
+        }
+        
+        body.dark-theme .notes-delete-btn {
+            background: #d32f2f;
+        }
+        
+        @media (prefers-color-scheme: dark) {
+            body:not(.light-theme) {
+                background: #1a1a1a;
+                color: #e0e0e0;
+            }
+            
+            body:not(.light-theme) .header {
+                background: #0D47A1;
+            }
+            
+            body:not(.light-theme) .calendar-day {
+                background: #2a2a2a;
+                border: 1px solid #3a3a3a;
+            }
+            
+            body:not(.light-theme) .theme-selector {
+                background: #1f1f1f;
+            }
+            
+            body:not(.light-theme) .theme-option.active {
+                background: #3a3a3a;
+            }
+        }
+        
+        /* Theme transition animation */
+        .theme-transition {
+            animation: themeSwitch 0.5s ease-in-out;
+        }
+        
+        @keyframes themeSwitch {
+            0%, 100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.8;
+                transform: scale(0.98);
+            }
+        }
         .btn { border:none; padding:10px 12px; border-radius:10px; font-weight:700; cursor:pointer; }
         .btn-primary { background:#2a7ade; color:#fff; }
         .btn-secondary { background:#e9e9e9; color:#333; }
@@ -1736,7 +2003,21 @@
             <div class="settings-group">
                 <div class="settings-row">
                     <div class="settings-label">Tema</div>
-                    <select id="stTheme" class="settings-select">
+                    <div class="theme-selector">
+                        <button class="theme-option" data-theme="light" onclick="selectTheme('light')">
+                            <span class="theme-icon">☀️</span>
+                            <span class="theme-name">Claro</span>
+                        </button>
+                        <button class="theme-option" data-theme="system" onclick="selectTheme('system')">
+                            <span class="theme-icon">🖥️</span>
+                            <span class="theme-name">Auto</span>
+                        </button>
+                        <button class="theme-option" data-theme="dark" onclick="selectTheme('dark')">
+                            <span class="theme-icon">🌙</span>
+                            <span class="theme-name">Oscuro</span>
+                        </button>
+                    </div>
+                    <select id="stTheme" class="settings-select" style="display: none;">
                         <option value="system">Sistema</option>
                         <option value="light">Claro</option>
                         <option value="dark">Oscuro</option>
@@ -2530,14 +2811,65 @@
             document.getElementById('stHighlightToday').checked = st.highlightToday!==false;
             document.getElementById('stSmartWeeks').checked = st.smartWeeks!==false;
             document.getElementById('settingsModal').classList.add('show');
+            
+            // Actualizar botones de tema
+            updateThemeButtons(st.theme || 'system');
+        }
+        
+        function updateThemeButtons(selectedTheme) {
+            const buttons = document.querySelectorAll('.theme-option');
+            buttons.forEach(btn => {
+                if (btn.dataset.theme === selectedTheme) {
+                    btn.classList.add('active');
+                } else {
+                    btn.classList.remove('active');
+                }
+            });
+        }
+        
+        function selectTheme(theme) {
+            // Actualizar el select oculto
+            document.getElementById('stTheme').value = theme;
+            
+            // Actualizar botones visuales
+            updateThemeButtons(theme);
+            
+            // Agregar animación
+            document.body.classList.add('theme-transition');
+            setTimeout(() => {
+                document.body.classList.remove('theme-transition');
+            }, 500);
+            
+            // Aplicar el tema inmediatamente para preview
+            if (theme === 'dark') {
+                document.documentElement.style.colorScheme = 'dark';
+                document.body.classList.add('dark-theme');
+                document.body.classList.remove('light-theme');
+            } else if (theme === 'light') {
+                document.documentElement.style.colorScheme = 'light';
+                document.body.classList.add('light-theme');
+                document.body.classList.remove('dark-theme');
+            } else {
+                document.documentElement.style.colorScheme = 'normal';
+                document.body.classList.remove('dark-theme', 'light-theme');
+            }
         }
         function closeSettings(ev){ if (ev && ev.target && !ev.target.classList){} document.getElementById('settingsModal').classList.remove('show'); }
         function applySettings(){
             const st = loadSettings();
             // Tema
-            if (st.theme==='dark') document.documentElement.style.colorScheme='dark';
-            else if (st.theme==='light') document.documentElement.style.colorScheme='light';
-            else document.documentElement.style.colorScheme='normal';
+            if (st.theme==='dark') {
+                document.documentElement.style.colorScheme='dark';
+                document.body.classList.add('dark-theme');
+                document.body.classList.remove('light-theme');
+            } else if (st.theme==='light') {
+                document.documentElement.style.colorScheme='light';
+                document.body.classList.add('light-theme');
+                document.body.classList.remove('dark-theme');
+            } else {
+                document.documentElement.style.colorScheme='normal';
+                document.body.classList.remove('dark-theme', 'light-theme');
+            }
         }
         // Utilidad: días de la semana según configuración
         function getWeekDays(){
@@ -2823,7 +3155,7 @@
 
                 // Agregar eventos recurrentes (ya que solo borramos los no-recurrentes)
                 const eventsWithRecurring = await addRecurringEventsToDay([], date);
-                
+
                 // Actualizar solo la visualización de este día
                 updateDayDisplay(cell, eventsWithRecurring);
                 
@@ -2885,7 +3217,7 @@
 
                 // Agregar eventos recurrentes antes de actualizar la visualización
                 const eventsWithRecurring = await addRecurringEventsToDay(existingEvents, date);
-                
+
                 // Actualizar solo la visualización de este día sin re-renderizar todo
                 updateDayDisplay(cell, eventsWithRecurring);
                 
@@ -3158,15 +3490,15 @@
                     if (note.type === 'recurring' && note.title) {
                         // Renderizar evento recurrente
                         const lineUserColor = getUserColor(note.userId);
-                        const noteTextEl = document.createElement('div');
-                        noteTextEl.className = 'note-text';
+                    const noteTextEl = document.createElement('div');
+                    noteTextEl.className = 'note-text';
                         
                         noteTextEl.textContent = note.title;
                         const noteFontSize = 11;
-                        noteTextEl.style.cssText = `
+                    noteTextEl.style.cssText = `
                             color: ${lineUserColor};
-                            font-weight: 700;
-                            font-size: ${noteFontSize}px;
+                        font-weight: 700;
+                        font-size: ${noteFontSize}px;
                             text-decoration: underline;
                             white-space: normal;
                             word-wrap: break-word;
@@ -3217,12 +3549,12 @@
                 
                 notes.forEach(note => {
                     if (note.categories && note.categories.length > 0) {
-                        note.categories.forEach(category => {
-                            if (category.icon && category.icon.trim() !== '') {
-                                const iconEl = document.createElement('span');
-                                iconEl.className = 'category-icon';
-                                iconEl.textContent = category.icon;
-                                iconEl.title = category.text;
+                    note.categories.forEach(category => {
+                        if (category.icon && category.icon.trim() !== '') {
+                            const iconEl = document.createElement('span');
+                            iconEl.className = 'category-icon';
+                            iconEl.textContent = category.icon;
+                            iconEl.title = category.text;
                                 // Aplicar el color del usuario que creó la nota al icono
                                 const noteUserColor = getUserColor(note.userId);
                                 iconEl.style.color = noteUserColor;
@@ -3755,15 +4087,15 @@
                     if (note.type === 'recurring' && note.title) {
                         // Renderizar evento recurrente
                         const lineUserColor = getUserColor(note.userId);
-                        const noteTextEl = document.createElement('div');
-                        noteTextEl.className = 'note-text';
+                    const noteTextEl = document.createElement('div');
+                    noteTextEl.className = 'note-text';
                         
                         noteTextEl.textContent = note.title;
                         const noteFontSize = 11;
-                        noteTextEl.style.cssText = `
+                    noteTextEl.style.cssText = `
                             color: ${lineUserColor};
-                            font-weight: 700;
-                            font-size: ${noteFontSize}px;
+                        font-weight: 700;
+                        font-size: ${noteFontSize}px;
                             text-decoration: underline;
                             white-space: normal;
                             word-wrap: break-word;
@@ -3814,12 +4146,12 @@
                 
                 notes.forEach(note => {
                     if (note.categories && note.categories.length > 0) {
-                        note.categories.forEach(category => {
-                            if (category.icon && category.icon.trim() !== '') {
-                                const iconEl = document.createElement('span');
-                                iconEl.className = 'category-icon';
-                                iconEl.textContent = category.icon;
-                                iconEl.title = category.text;
+                    note.categories.forEach(category => {
+                        if (category.icon && category.icon.trim() !== '') {
+                            const iconEl = document.createElement('span');
+                            iconEl.className = 'category-icon';
+                            iconEl.textContent = category.icon;
+                            iconEl.title = category.text;
                                 // Aplicar el color del usuario que creó la nota al icono
                                 const noteUserColor = getUserColor(note.userId);
                                 iconEl.style.color = noteUserColor;
@@ -4596,9 +4928,9 @@
                     console.log('📝 Nota encontrada:', JSON.stringify(note));
                     if (note) {
                         if (note.textSize) {
-                            originalNoteTextSize = parseInt(note.textSize) || 11;
-                        } else {
-                            originalNoteTextSize = 11; // Por defecto
+                        originalNoteTextSize = parseInt(note.textSize) || 11;
+                    } else {
+                        originalNoteTextSize = 11; // Por defecto
                         }
                         if (note.time) {
                             originalNoteTime = note.time;
@@ -5198,55 +5530,55 @@
                         const notes = events.filter(event => event.type === 'note');
                         
                         notes.forEach(note => {
-                            if (note && note.alarms && Array.isArray(note.alarms)) {
-                                note.alarms.forEach(alarm => {
-                                    const alarmDate = new Date(alarm.dateTime);
-                                    const timeUntilAlarm = alarmDate.getTime() - now.getTime();
-                                    
-                                    // Solo programar alarmas futuras (próximas 30 días)
-                                    if (timeUntilAlarm > 0 && timeUntilAlarm <= 30 * 24 * 60 * 60 * 1000) {
-                                        const alarmDateStr = alarmDate.toISOString().split('T')[0];
-                                        const alarmTimeStr = alarmDate.toTimeString().split(' ')[0].slice(0, 5);
-                                        const noteText = note.text || '';
+                        if (note && note.alarms && Array.isArray(note.alarms)) {
+                            note.alarms.forEach(alarm => {
+                                const alarmDate = new Date(alarm.dateTime);
+                                const timeUntilAlarm = alarmDate.getTime() - now.getTime();
+                                
+                                // Solo programar alarmas futuras (próximas 30 días)
+                                if (timeUntilAlarm > 0 && timeUntilAlarm <= 30 * 24 * 60 * 60 * 1000) {
+                                    const alarmDateStr = alarmDate.toISOString().split('T')[0];
+                                    const alarmTimeStr = alarmDate.toTimeString().split(' ')[0].slice(0, 5);
+                                    const noteText = note.text || '';
                                         const noteUser = users.find(u => u.id === note.userId);
                                         const userName = noteUser ? noteUser.name : 'Usuario';
-                                        
-                                        // Enviar mensaje al Service Worker para programar la alarma
-                                        const message = {
-                                            type: 'SCHEDULE_ALARM',
-                                            alarmDate: alarmDateStr,
-                                            alarmTime: alarmTimeStr,
-                                            noteText: noteText,
-                                            userName: userName,
-                                            alarmId: alarm.id
-                                        };
-                                        
-                                        if (registration.active) {
-                                            registration.active.postMessage(message);
-                                        } else if (registration.waiting) {
-                                            registration.waiting.postMessage(message);
-                                            // Activar el SW waiting si es posible
-                                            registration.waiting.addEventListener('statechange', function() {
-                                                if (registration.waiting.state === 'activated') {
-                                                    registration.waiting.postMessage(message);
-                                                }
-                                            });
-                                        } else {
-                                            // Si no hay SW activo, guardar el mensaje para cuando esté listo
-                                            registration.addEventListener('updatefound', () => {
-                                                const newWorker = registration.installing;
-                                                if (newWorker) {
-                                                    newWorker.addEventListener('statechange', () => {
-                                                        if (newWorker.state === 'activated' && navigator.serviceWorker.controller) {
-                                                            navigator.serviceWorker.controller.postMessage(message);
-                                                        }
-                                                    });
-                                                }
-                                            });
-                                        }
+                                    
+                                    // Enviar mensaje al Service Worker para programar la alarma
+                                    const message = {
+                                        type: 'SCHEDULE_ALARM',
+                                        alarmDate: alarmDateStr,
+                                        alarmTime: alarmTimeStr,
+                                        noteText: noteText,
+                                        userName: userName,
+                                        alarmId: alarm.id
+                                    };
+                                    
+                                    if (registration.active) {
+                                        registration.active.postMessage(message);
+                                    } else if (registration.waiting) {
+                                        registration.waiting.postMessage(message);
+                                        // Activar el SW waiting si es posible
+                                        registration.waiting.addEventListener('statechange', function() {
+                                            if (registration.waiting.state === 'activated') {
+                                                registration.waiting.postMessage(message);
+                                            }
+                                        });
+                                    } else {
+                                        // Si no hay SW activo, guardar el mensaje para cuando esté listo
+                                        registration.addEventListener('updatefound', () => {
+                                            const newWorker = registration.installing;
+                                            if (newWorker) {
+                                                newWorker.addEventListener('statechange', () => {
+                                                    if (newWorker.state === 'activated' && navigator.serviceWorker.controller) {
+                                                        navigator.serviceWorker.controller.postMessage(message);
+                                                    }
+                                                });
+                                            }
+                                        });
                                     }
-                                });
-                            }
+                                }
+                            });
+                        }
                         });
                     } catch (error) {
                         // Continuar con el siguiente día si hay error
@@ -5465,24 +5797,24 @@
                         const notes = events.filter(event => event.type === 'note');
                         
                         notes.forEach(note => {
-                            if (note && note.alarms && Array.isArray(note.alarms)) {
-                                note.alarms.forEach(alarm => {
-                                    const alarmDate = new Date(alarm.dateTime);
-                                    const timeUntilAlarm = alarmDate.getTime() - now.getTime();
-                                    
-                                    // Solo programar alarmas futuras
-                                    if (timeUntilAlarm > 0) {
-                                        scheduledAlarms.push({
-                                            id: alarm.id,
-                                            dateTime: alarm.dateTime,
-                                            date: alarmDate.toISOString().split('T')[0],
-                                            time: alarmDate.toTimeString().split(' ')[0].slice(0, 5),
+                        if (note && note.alarms && Array.isArray(note.alarms)) {
+                            note.alarms.forEach(alarm => {
+                                const alarmDate = new Date(alarm.dateTime);
+                                const timeUntilAlarm = alarmDate.getTime() - now.getTime();
+                                
+                                // Solo programar alarmas futuras
+                                if (timeUntilAlarm > 0) {
+                                    scheduledAlarms.push({
+                                        id: alarm.id,
+                                        dateTime: alarm.dateTime,
+                                        date: alarmDate.toISOString().split('T')[0],
+                                        time: alarmDate.toTimeString().split(' ')[0].slice(0, 5),
                                             noteText: note.text || '',
                                             userId: note.userId
-                                        });
-                                    }
-                                });
-                            }
+                                    });
+                                }
+                            });
+                        }
                         });
                     } catch (error) {
                         continue;
@@ -5531,31 +5863,31 @@
                         const notes = events.filter(event => event.type === 'note');
                         
                         notes.forEach(note => {
-                            if (note && note.alarms && Array.isArray(note.alarms)) {
-                                note.alarms.forEach(alarm => {
-                                    if (checkedAlarmIds.has(alarm.id)) return;
-                                    checkedAlarmIds.add(alarm.id);
+                        if (note && note.alarms && Array.isArray(note.alarms)) {
+                            note.alarms.forEach(alarm => {
+                                if (checkedAlarmIds.has(alarm.id)) return;
+                                checkedAlarmIds.add(alarm.id);
+                                
+                                const alarmDate = new Date(alarm.dateTime);
+                                const diff = alarmDate.getTime() - now.getTime();
+                                
+                                // Si la alarma era en el pasado (se perdió mientras la app estaba cerrada)
+                                // Verificar desde la última verificación o máximo 30 minutos atrás
+                                const maxTimeBack = lastCheckTime ? 
+                                    (now - lastCheckTime) : (30 * 60 * 1000); // 30 minutos por defecto
+                                
+                                if (diff < 0 && diff > -maxTimeBack) {
+                                    console.log(`🔔 Alarma perdida detectada: ${alarm.id} (hace ${Math.round(-diff/1000)}s)`);
+                                    foundAlarms = true;
+                                    const noteText = note.text || '';
                                     
-                                    const alarmDate = new Date(alarm.dateTime);
-                                    const diff = alarmDate.getTime() - now.getTime();
-                                    
-                                    // Si la alarma era en el pasado (se perdió mientras la app estaba cerrada)
-                                    // Verificar desde la última verificación o máximo 30 minutos atrás
-                                    const maxTimeBack = lastCheckTime ? 
-                                        (now - lastCheckTime) : (30 * 60 * 1000); // 30 minutos por defecto
-                                    
-                                    if (diff < 0 && diff > -maxTimeBack) {
-                                        console.log(`🔔 Alarma perdida detectada: ${alarm.id} (hace ${Math.round(-diff/1000)}s)`);
-                                        foundAlarms = true;
-                                        const noteText = note.text || '';
-                                        
-                                        // Mostrar notificación inmediatamente
-                                        setTimeout(() => {
-                                            showAlarmNotification(alarm, noteText);
-                                        }, 100);
-                                    }
-                                });
-                            }
+                                    // Mostrar notificación inmediatamente
+                                    setTimeout(() => {
+                                        showAlarmNotification(alarm, noteText);
+                                    }, 100);
+                                }
+                            });
+                        }
                         });
                     } catch (error) {
                         continue;
@@ -5643,28 +5975,28 @@
                         const notes = events.filter(event => event.type === 'note');
                         
                         notes.forEach(note => {
-                            if (note && note.alarms && Array.isArray(note.alarms)) {
-                                console.log(`🔍 Verificando ${note.alarms.length} alarmas para ${dateKey}`);
+                        if (note && note.alarms && Array.isArray(note.alarms)) {
+                            console.log(`🔍 Verificando ${note.alarms.length} alarmas para ${dateKey}`);
+                            
+                            note.alarms.forEach(alarm => {
+                                // Evitar verificar la misma alarma dos veces
+                                if (checkedAlarmIds.has(alarm.id)) return;
+                                checkedAlarmIds.add(alarm.id);
+                                totalAlarmsChecked++;
                                 
-                                note.alarms.forEach(alarm => {
-                                    // Evitar verificar la misma alarma dos veces
-                                    if (checkedAlarmIds.has(alarm.id)) return;
-                                    checkedAlarmIds.add(alarm.id);
-                                    totalAlarmsChecked++;
-                                    
-                                    const alarmDate = new Date(alarm.dateTime);
-                                    const diff = alarmDate.getTime() - now.getTime();
-                                    
-                                    console.log(`⏰ Alarma ${alarm.id}: fecha=${alarmDate.toISOString()}, diff=${Math.round(diff/1000)}s`);
-                                    
-                                    // Si la alarma es ahora o en los próximos 60 segundos
-                                    if (diff >= 0 && diff <= 60000) {
-                                        console.log(`🔔 ¡ALARMA ACTIVADA! ${alarm.id} - Diferencia: ${Math.round(diff/1000)}s`);
-                                        const noteText = note.text || '';
-                                        showAlarmNotification(alarm, noteText);
-                                    }
-                                });
-                            }
+                                const alarmDate = new Date(alarm.dateTime);
+                                const diff = alarmDate.getTime() - now.getTime();
+                                
+                                console.log(`⏰ Alarma ${alarm.id}: fecha=${alarmDate.toISOString()}, diff=${Math.round(diff/1000)}s`);
+                                
+                                // Si la alarma es ahora o en los próximos 60 segundos
+                                if (diff >= 0 && diff <= 60000) {
+                                    console.log(`🔔 ¡ALARMA ACTIVADA! ${alarm.id} - Diferencia: ${Math.round(diff/1000)}s`);
+                                    const noteText = note.text || '';
+                                    showAlarmNotification(alarm, noteText);
+                                }
+                            });
+                        }
                         });
                     } catch (error) {
                         console.error(`Error verificando alarmas para ${dateKey}:`, error);

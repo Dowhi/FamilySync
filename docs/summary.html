@@ -12,7 +12,7 @@
     <link rel="apple-touch-icon" href="icons/Icon-192.png" />
     <title>Resumen - FamilySync</title>
     <style>
-        body { margin: 0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial; background: #f5f5f5; }
+        body { margin: 0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial; background: #f5f5f5; transition: background 0.3s, color 0.3s; }
         .app-header { display: flex; align-items: center; justify-content: space-between; background: #1B5E20; color: #fff; padding: 8px 12px; padding-top: max(8px, calc(env(safe-area-inset-top) + 8px)); min-height: 48px; }
         .app-header .seg { display: flex; gap: 12px; align-items: center; }
         .seg .chip { background: transparent; color: #9fc1ff; font-weight: 800; letter-spacing: .5px; }
@@ -64,6 +64,55 @@
         .badge { padding: 6px 8px; border-radius: 6px; color: #fff; font-weight: 800; text-align: center; box-shadow: inset 0 -2px 0 rgba(0,0,0,0.15); }
         .row .center { text-align: center; }
         .global { text-align: right; font-style: italic; padding: 8px 10px; color: #1B5E20; }
+        
+        /* Dark Theme Styles */
+        body.dark-theme { background: #1a1a1a; color: #e0e0e0; }
+        body.dark-theme .app-header { background: #0D47A1; border-bottom: 1px solid #0a3470; }
+        body.dark-theme .tabs { background: #1a1a1a; }
+        body.dark-theme .tab { background: #2a2a2a; color: #e0e0e0; border-color: #3a3a3a; }
+        body.dark-theme .tab.active { background: #1976D2; color: #fff; border-color: #1976D2; }
+        body.dark-theme .section { background: #2a2a2a; border-color: #3a3a3a; }
+        body.dark-theme .section .header { background: #333; color: #b0b0b0; border-bottom-color: #3a3a3a; }
+        body.dark-theme .pill-tabs { background: #2a2a2a; border-color: #3a3a3a; }
+        body.dark-theme .pill { background: #2a2a2a; color: #b0b0b0; }
+        body.dark-theme .pill.active { background: #1B5E20; color: #fff; }
+        body.dark-theme .list { background: #2a2a2a; border-color: #3a3a3a; }
+        body.dark-theme .list .item { border-bottom-color: #3a3a3a; color: #e0e0e0; }
+        body.dark-theme .list .footer { background: #1f1f1f; color: #b0b0b0; }
+        body.dark-theme .input { background: #2a2a2a; border-color: #3a3a3a; color: #e0e0e0; }
+        body.dark-theme .btn { background: #1B5E20; }
+        body.dark-theme .note-table { background: #2a2a2a; border-color: #3a3a3a; color: #b0b0b0; }
+        body.dark-theme .icon-results-list { background: #2a2a2a; border-color: #3a3a3a; }
+        body.dark-theme .icon-results-list .result-item { border-bottom-color: #3a3a3a; }
+        body.dark-theme .icon-results-list .result-date { color: #4CAF50; }
+        body.dark-theme .icon-results-list .result-event { color: #b0b0b0; }
+        body.dark-theme .switch-row .switch { background: #2a2a2a; border-color: #3a3a3a; }
+        body.dark-theme .select { background: #2a2a2a; border-color: #3a3a3a; color: #e0e0e0; }
+        body.dark-theme .stats { background: #2a2a2a; border-color: #3a3a3a; }
+        body.dark-theme .date-chip { background: #2a2a2a; border-color: #3a3a3a; color: #e0e0e0; }
+        body.dark-theme .arrow { background: #333; color: #4CAF50; }
+        body.dark-theme .table { border-color: #3a3a3a; }
+        body.dark-theme .row { border-bottom-color: #3a3a3a; color: #e0e0e0; }
+        body.dark-theme .row.header { background: #333; color: #b0b0b0; }
+        body.dark-theme .global { color: #4CAF50; }
+        
+        /* Auto dark mode */
+        @media (prefers-color-scheme: dark) {
+            body:not(.light-theme) { background: #1a1a1a; color: #e0e0e0; }
+            body:not(.light-theme) .app-header { background: #0D47A1; }
+            body:not(.light-theme) .tabs { background: #1a1a1a; }
+            body:not(.light-theme) .tab { background: #2a2a2a; color: #e0e0e0; border-color: #3a3a3a; }
+            body:not(.light-theme) .tab.active { background: #1976D2; color: #fff; }
+            body:not(.light-theme) .section { background: #2a2a2a; border-color: #3a3a3a; }
+            body:not(.light-theme) .section .header { background: #333; color: #b0b0b0; }
+            body:not(.light-theme) .pill { background: #2a2a2a; color: #b0b0b0; }
+            body:not(.light-theme) .pill.active { background: #1B5E20; color: #fff; }
+            body:not(.light-theme) .list { background: #2a2a2a; border-color: #3a3a3a; }
+            body:not(.light-theme) .input, body:not(.light-theme) .select { background: #2a2a2a; border-color: #3a3a3a; color: #e0e0e0; }
+            body:not(.light-theme) .stats, body:not(.light-theme) .date-chip { background: #2a2a2a; border-color: #3a3a3a; }
+            body:not(.light-theme) .arrow { background: #333; color: #4CAF50; }
+            body:not(.light-theme) .row.header { background: #333; }
+        }
     </style>
 </head>
 <body>
@@ -686,7 +735,31 @@
             document.getElementById('toNext').onclick=()=>{ const f=new Date(currentFrom); f.setMonth(f.getMonth()+1); setMonthRange(f); refreshAll(currentFrom,currentTo); };
         }
 
+        // Aplicar tema guardado
+        function applyTheme() {
+            try {
+                const settings = JSON.parse(localStorage.getItem('app_settings_v1')) || {};
+                const theme = settings.theme || 'system';
+                
+                if (theme === 'dark') {
+                    document.body.classList.add('dark-theme');
+                    document.body.classList.remove('light-theme');
+                } else if (theme === 'light') {
+                    document.body.classList.add('light-theme');
+                    document.body.classList.remove('dark-theme');
+                } else {
+                    // Sistema - usar preferencia del navegador
+                    document.body.classList.remove('dark-theme', 'light-theme');
+                }
+            } catch (e) {
+                console.error('Error aplicando tema:', e);
+            }
+        }
+        
         async function init(){
+            // Aplicar tema antes de todo para evitar parpadeos
+            applyTheme();
+            
             await initFirebase();
             await loadShiftTemplates();
             await loadUsers();
