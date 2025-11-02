@@ -176,7 +176,7 @@
         /* Settings Modal */
         .settings-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.4); display: none; align-items: flex-end; justify-content: center; z-index: 3000; }
         .settings-backdrop.show { display: flex; }
-        .settings-panel { background: #ffffff; width: 100%; max-width: 520px; border-top-left-radius: 16px; border-top-right-radius: 16px; box-shadow: 0 -8px 24px rgba(0,0,0,0.2); padding: 16px; }
+        .settings-panel { background: #ffffff; width: 100%; max-width: 520px; border-top-left-radius: 16px; border-top-right-radius: 16px; box-shadow: 0 -8px 24px rgba(0,0,0,0.2); padding: 16px; padding-top: max(16px, calc(env(safe-area-inset-top) + 16px)); }
         .settings-header { display:flex; align-items:center; justify-content: space-between; margin-bottom: 8px; }
         .settings-title { font-size:16px; font-weight:700; }
         .settings-group { margin: 12px 0; padding: 12px; background:#f7f7f7; border-radius: 12px; }
@@ -2576,7 +2576,7 @@
             }, (error) => {
                 console.error('❌ Error en listener de users:', error);
             });
-
+            
             // Listener SOLO para shifts: si se edita un turno (nombre/color/abreviatura),
             // actualizamos plantillas y re-renderizamos el calendario.
             db.collection('shifts').onSnapshot((snapshot) => {
@@ -2694,7 +2694,7 @@
 
             // Asegurar que el tab de calendario esté activo al iniciar
             ensureCalendarTabActive();
-
+            
             // Renderizar calendario solo una vez
             setTimeout(() => {
                 renderCalendar();
@@ -2916,17 +2916,17 @@
             if (yearView) yearView.style.display = 'none';
             if (mainGridContainer) mainGridContainer.style.display = 'block';
         }
-
+        
         // Mostrar tabs
         function showTab(tab) {
             // Remover active de todos los botones
             document.querySelectorAll('.tab-btn').forEach(btn => {
                 btn.classList.remove('active');
             });
-
+            
             // Agregar active al botón clickeado
             if (event && event.target) {
-            event.target.classList.add('active');
+                event.target.classList.add('active');
             } else {
                 // Si no hay event, activar el botón correspondiente
                 const targetBtn = document.querySelector(`.tab-btn[onclick*="${tab}"]`);
@@ -3498,7 +3498,7 @@
                     noteTextEl.style.cssText = `
                             color: ${lineUserColor};
                         font-weight: 700;
-                            font-size: ${noteFontSize}px;
+                        font-size: ${noteFontSize}px;
                             text-decoration: underline;
                             white-space: normal;
                             word-wrap: break-word;
@@ -3666,12 +3666,12 @@
             // Días del mes siguiente (completar sólo si necesitamos 6 semanas)
             const totalCellsUsed = adjustedStartDay + daysInMonth;
             const needsSixWeeks = totalCellsUsed > 35; // 5 semanas * 7 = 35
-            
+
             if (needsSixWeeks) {
                 const remainingCells = 42 - totalCellsUsed; // completar a 6 semanas
-            if (remainingCells > 0) {
-                for (let day = 1; day <= remainingCells; day++) {
-                    const date = new Date(year, month + 1, day);
+                if (remainingCells > 0) {
+                    for (let day = 1; day <= remainingCells; day++) {
+                        const date = new Date(year, month + 1, day);
                         renderDay(container, date, true);
                     }
                 }
@@ -4095,7 +4095,7 @@
                     noteTextEl.style.cssText = `
                             color: ${lineUserColor};
                         font-weight: 700;
-                            font-size: ${noteFontSize}px;
+                        font-size: ${noteFontSize}px;
                             text-decoration: underline;
                             white-space: normal;
                             word-wrap: break-word;
@@ -4928,9 +4928,9 @@
                     console.log('📝 Nota encontrada:', JSON.stringify(note));
                     if (note) {
                         if (note.textSize) {
-                            originalNoteTextSize = parseInt(note.textSize) || 11;
-                        } else {
-                            originalNoteTextSize = 11; // Por defecto
+                        originalNoteTextSize = parseInt(note.textSize) || 11;
+                    } else {
+                        originalNoteTextSize = 11; // Por defecto
                         }
                         if (note.time) {
                             originalNoteTime = note.time;
@@ -5530,55 +5530,55 @@
                         const notes = events.filter(event => event.type === 'note');
                         
                         notes.forEach(note => {
-                            if (note && note.alarms && Array.isArray(note.alarms)) {
-                                note.alarms.forEach(alarm => {
-                                    const alarmDate = new Date(alarm.dateTime);
-                                    const timeUntilAlarm = alarmDate.getTime() - now.getTime();
-                                    
-                                    // Solo programar alarmas futuras (próximas 30 días)
-                                    if (timeUntilAlarm > 0 && timeUntilAlarm <= 30 * 24 * 60 * 60 * 1000) {
-                                        const alarmDateStr = alarmDate.toISOString().split('T')[0];
-                                        const alarmTimeStr = alarmDate.toTimeString().split(' ')[0].slice(0, 5);
-                                        const noteText = note.text || '';
+                        if (note && note.alarms && Array.isArray(note.alarms)) {
+                            note.alarms.forEach(alarm => {
+                                const alarmDate = new Date(alarm.dateTime);
+                                const timeUntilAlarm = alarmDate.getTime() - now.getTime();
+                                
+                                // Solo programar alarmas futuras (próximas 30 días)
+                                if (timeUntilAlarm > 0 && timeUntilAlarm <= 30 * 24 * 60 * 60 * 1000) {
+                                    const alarmDateStr = alarmDate.toISOString().split('T')[0];
+                                    const alarmTimeStr = alarmDate.toTimeString().split(' ')[0].slice(0, 5);
+                                    const noteText = note.text || '';
                                         const noteUser = users.find(u => u.id === note.userId);
                                         const userName = noteUser ? noteUser.name : 'Usuario';
-                                        
-                                        // Enviar mensaje al Service Worker para programar la alarma
-                                        const message = {
-                                            type: 'SCHEDULE_ALARM',
-                                            alarmDate: alarmDateStr,
-                                            alarmTime: alarmTimeStr,
-                                            noteText: noteText,
-                                            userName: userName,
-                                            alarmId: alarm.id
-                                        };
-                                        
-                                        if (registration.active) {
-                                            registration.active.postMessage(message);
-                                        } else if (registration.waiting) {
-                                            registration.waiting.postMessage(message);
-                                            // Activar el SW waiting si es posible
-                                            registration.waiting.addEventListener('statechange', function() {
-                                                if (registration.waiting.state === 'activated') {
-                                                    registration.waiting.postMessage(message);
-                                                }
-                                            });
-                                        } else {
-                                            // Si no hay SW activo, guardar el mensaje para cuando esté listo
-                                            registration.addEventListener('updatefound', () => {
-                                                const newWorker = registration.installing;
-                                                if (newWorker) {
-                                                    newWorker.addEventListener('statechange', () => {
-                                                        if (newWorker.state === 'activated' && navigator.serviceWorker.controller) {
-                                                            navigator.serviceWorker.controller.postMessage(message);
-                                                        }
-                                                    });
-                                                }
-                                            });
-                                        }
+                                    
+                                    // Enviar mensaje al Service Worker para programar la alarma
+                                    const message = {
+                                        type: 'SCHEDULE_ALARM',
+                                        alarmDate: alarmDateStr,
+                                        alarmTime: alarmTimeStr,
+                                        noteText: noteText,
+                                        userName: userName,
+                                        alarmId: alarm.id
+                                    };
+                                    
+                                    if (registration.active) {
+                                        registration.active.postMessage(message);
+                                    } else if (registration.waiting) {
+                                        registration.waiting.postMessage(message);
+                                        // Activar el SW waiting si es posible
+                                        registration.waiting.addEventListener('statechange', function() {
+                                            if (registration.waiting.state === 'activated') {
+                                                registration.waiting.postMessage(message);
+                                            }
+                                        });
+                                    } else {
+                                        // Si no hay SW activo, guardar el mensaje para cuando esté listo
+                                        registration.addEventListener('updatefound', () => {
+                                            const newWorker = registration.installing;
+                                            if (newWorker) {
+                                                newWorker.addEventListener('statechange', () => {
+                                                    if (newWorker.state === 'activated' && navigator.serviceWorker.controller) {
+                                                        navigator.serviceWorker.controller.postMessage(message);
+                                                    }
+                                                });
+                                            }
+                                        });
                                     }
-                                });
-                            }
+                                }
+                            });
+                        }
                         });
                     } catch (error) {
                         // Continuar con el siguiente día si hay error
@@ -5797,24 +5797,24 @@
                         const notes = events.filter(event => event.type === 'note');
                         
                         notes.forEach(note => {
-                            if (note && note.alarms && Array.isArray(note.alarms)) {
-                                note.alarms.forEach(alarm => {
-                                    const alarmDate = new Date(alarm.dateTime);
-                                    const timeUntilAlarm = alarmDate.getTime() - now.getTime();
-                                    
-                                    // Solo programar alarmas futuras
-                                    if (timeUntilAlarm > 0) {
-                                        scheduledAlarms.push({
-                                            id: alarm.id,
-                                            dateTime: alarm.dateTime,
-                                            date: alarmDate.toISOString().split('T')[0],
-                                            time: alarmDate.toTimeString().split(' ')[0].slice(0, 5),
+                        if (note && note.alarms && Array.isArray(note.alarms)) {
+                            note.alarms.forEach(alarm => {
+                                const alarmDate = new Date(alarm.dateTime);
+                                const timeUntilAlarm = alarmDate.getTime() - now.getTime();
+                                
+                                // Solo programar alarmas futuras
+                                if (timeUntilAlarm > 0) {
+                                    scheduledAlarms.push({
+                                        id: alarm.id,
+                                        dateTime: alarm.dateTime,
+                                        date: alarmDate.toISOString().split('T')[0],
+                                        time: alarmDate.toTimeString().split(' ')[0].slice(0, 5),
                                             noteText: note.text || '',
                                             userId: note.userId
-                                        });
-                                    }
-                                });
-                            }
+                                    });
+                                }
+                            });
+                        }
                         });
                     } catch (error) {
                         continue;
@@ -5863,31 +5863,31 @@
                         const notes = events.filter(event => event.type === 'note');
                         
                         notes.forEach(note => {
-                            if (note && note.alarms && Array.isArray(note.alarms)) {
-                                note.alarms.forEach(alarm => {
-                                    if (checkedAlarmIds.has(alarm.id)) return;
-                                    checkedAlarmIds.add(alarm.id);
+                        if (note && note.alarms && Array.isArray(note.alarms)) {
+                            note.alarms.forEach(alarm => {
+                                if (checkedAlarmIds.has(alarm.id)) return;
+                                checkedAlarmIds.add(alarm.id);
+                                
+                                const alarmDate = new Date(alarm.dateTime);
+                                const diff = alarmDate.getTime() - now.getTime();
+                                
+                                // Si la alarma era en el pasado (se perdió mientras la app estaba cerrada)
+                                // Verificar desde la última verificación o máximo 30 minutos atrás
+                                const maxTimeBack = lastCheckTime ? 
+                                    (now - lastCheckTime) : (30 * 60 * 1000); // 30 minutos por defecto
+                                
+                                if (diff < 0 && diff > -maxTimeBack) {
+                                    console.log(`🔔 Alarma perdida detectada: ${alarm.id} (hace ${Math.round(-diff/1000)}s)`);
+                                    foundAlarms = true;
+                                    const noteText = note.text || '';
                                     
-                                    const alarmDate = new Date(alarm.dateTime);
-                                    const diff = alarmDate.getTime() - now.getTime();
-                                    
-                                    // Si la alarma era en el pasado (se perdió mientras la app estaba cerrada)
-                                    // Verificar desde la última verificación o máximo 30 minutos atrás
-                                    const maxTimeBack = lastCheckTime ? 
-                                        (now - lastCheckTime) : (30 * 60 * 1000); // 30 minutos por defecto
-                                    
-                                    if (diff < 0 && diff > -maxTimeBack) {
-                                        console.log(`🔔 Alarma perdida detectada: ${alarm.id} (hace ${Math.round(-diff/1000)}s)`);
-                                        foundAlarms = true;
-                                        const noteText = note.text || '';
-                                        
-                                        // Mostrar notificación inmediatamente
-                                        setTimeout(() => {
-                                            showAlarmNotification(alarm, noteText);
-                                        }, 100);
-                                    }
-                                });
-                            }
+                                    // Mostrar notificación inmediatamente
+                                    setTimeout(() => {
+                                        showAlarmNotification(alarm, noteText);
+                                    }, 100);
+                                }
+                            });
+                        }
                         });
                     } catch (error) {
                         continue;
@@ -5975,28 +5975,28 @@
                         const notes = events.filter(event => event.type === 'note');
                         
                         notes.forEach(note => {
-                            if (note && note.alarms && Array.isArray(note.alarms)) {
-                                console.log(`🔍 Verificando ${note.alarms.length} alarmas para ${dateKey}`);
+                        if (note && note.alarms && Array.isArray(note.alarms)) {
+                            console.log(`🔍 Verificando ${note.alarms.length} alarmas para ${dateKey}`);
+                            
+                            note.alarms.forEach(alarm => {
+                                // Evitar verificar la misma alarma dos veces
+                                if (checkedAlarmIds.has(alarm.id)) return;
+                                checkedAlarmIds.add(alarm.id);
+                                totalAlarmsChecked++;
                                 
-                                note.alarms.forEach(alarm => {
-                                    // Evitar verificar la misma alarma dos veces
-                                    if (checkedAlarmIds.has(alarm.id)) return;
-                                    checkedAlarmIds.add(alarm.id);
-                                    totalAlarmsChecked++;
-                                    
-                                    const alarmDate = new Date(alarm.dateTime);
-                                    const diff = alarmDate.getTime() - now.getTime();
-                                    
-                                    console.log(`⏰ Alarma ${alarm.id}: fecha=${alarmDate.toISOString()}, diff=${Math.round(diff/1000)}s`);
-                                    
-                                    // Si la alarma es ahora o en los próximos 60 segundos
-                                    if (diff >= 0 && diff <= 60000) {
-                                        console.log(`🔔 ¡ALARMA ACTIVADA! ${alarm.id} - Diferencia: ${Math.round(diff/1000)}s`);
-                                        const noteText = note.text || '';
-                                        showAlarmNotification(alarm, noteText);
-                                    }
-                                });
-                            }
+                                const alarmDate = new Date(alarm.dateTime);
+                                const diff = alarmDate.getTime() - now.getTime();
+                                
+                                console.log(`⏰ Alarma ${alarm.id}: fecha=${alarmDate.toISOString()}, diff=${Math.round(diff/1000)}s`);
+                                
+                                // Si la alarma es ahora o en los próximos 60 segundos
+                                if (diff >= 0 && diff <= 60000) {
+                                    console.log(`🔔 ¡ALARMA ACTIVADA! ${alarm.id} - Diferencia: ${Math.round(diff/1000)}s`);
+                                    const noteText = note.text || '';
+                                    showAlarmNotification(alarm, noteText);
+                                }
+                            });
+                        }
                         });
                     } catch (error) {
                         console.error(`Error verificando alarmas para ${dateKey}:`, error);
