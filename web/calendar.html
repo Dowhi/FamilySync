@@ -196,6 +196,7 @@
             padding: 0;
             display: flex;
             flex-direction: column;
+            min-height: 0;
         }
 
         .calendar-grid {
@@ -301,6 +302,7 @@
             padding: 8px 12px;
             background: #2e7d32;
             color: white;
+            flex-shrink: 0;
         }
         .year-nav .title { font-weight: 700; }
         .year-nav button {
@@ -319,6 +321,7 @@
             padding: 8px;
             overflow-y: auto;
             flex: 1;
+            min-height: 0;
             -webkit-overflow-scrolling: touch;
         }
         
@@ -329,6 +332,8 @@
         
         #yearView .year-grid {
             overflow-y: auto;
+            min-height: 0;
+            max-height: calc(100vh - 152px);
         }
         .year-month {
             background: #f5f5f5;
@@ -1120,6 +1125,73 @@
             outline: none;
             border-color: #00BCD4;
             box-shadow: 0 0 0 2px rgba(0, 188, 212, 0.1);
+        }
+
+        /* Selector de visibilidad */
+        .notes-visibility-container {
+            padding: 0 20px 16px;
+            background: white;
+            flex-shrink: 0;
+        }
+
+        .notes-visibility-label {
+            display: block;
+            font-size: 12px;
+            font-weight: 600;
+            color: #666;
+            margin-bottom: 8px;
+        }
+
+        .notes-visibility-options {
+            display: flex;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+
+        .notes-private-label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            color: #666;
+            cursor: pointer;
+        }
+
+        .notes-visibility-checkbox {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+
+        .notes-user-selection {
+            margin-top: 8px;
+            padding-top: 8px;
+            border-top: 1px solid #e0e0e0;
+        }
+
+        .user-checkbox-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 6px;
+            font-size: 13px;
+            font-weight: 500;
+            color: #333;
+            cursor: pointer;
+        }
+
+        .user-checkbox-item input[type="checkbox"] {
+            width: 16px;
+            height: 16px;
+            cursor: pointer;
+        }
+
+        .user-checkbox-item .user-color-dot {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            display: inline-block;
         }
 
         /* Botones de formato */
@@ -1937,6 +2009,20 @@
                 <input type="time" id="notesTimeInput" class="notes-time-input" placeholder="HH:MM">
             </div>
             
+            <!-- Selector de visibilidad -->
+            <div class="notes-visibility-container">
+                <label class="notes-visibility-label">👥 Visibilidad:</label>
+                <div class="notes-visibility-options">
+                    <label class="notes-private-label">
+                        <input type="checkbox" id="notesPrivateCheck" class="notes-visibility-checkbox">
+                        <span>🔒 Solo yo</span>
+                    </label>
+                </div>
+                <div id="notesUserSelection" class="notes-user-selection" style="display: none;">
+                    <!-- Los checkboxes de usuarios se generarán aquí dinámicamente -->
+                </div>
+            </div>
+            
             <!-- Botones de acción -->
             <div class="notes-action-buttons">
                 <button class="action-btn delete-btn" onclick="deleteNote()">BORRAR</button>
@@ -2011,6 +2097,7 @@
         let isFirebaseConnected = false;
         let users = [];
         let shiftTemplates = [];
+        let recurringEventsDefinitions = []; // Definiciones de eventos recurrentes
 
         // Configuración de Firebase (configuración real del proyecto)
         const firebaseConfig = {
@@ -2053,7 +2140,10 @@
                 await loadUsersFromFirebase();
                 
                 // Cargar shift templates
-                loadShiftTemplates();
+                await loadShiftTemplates();
+                
+                // Cargar eventos recurrentes y generar ocurrencias
+                await loadRecurringEvents();
                 
                 // Configurar listener para cambios en tiempo real
                 setupRealtimeListener();
@@ -2071,6 +2161,12 @@
 
         // Cargar usuarios desde Firebase
         async function loadUsersFromFirebase() {
+            if (!isFirebaseConnected) {
+                console.log('⚠️ Firebase no conectado, usando usuarios por defecto');
+                loadDefaultUsers();
+                return;
+            }
+            
             try {
                 const snapshot = await db.collection('users').get();
                 
@@ -2091,6 +2187,11 @@
                 }
             } catch (error) {
                 console.error('❌ Error cargando usuarios:', error);
+                // Si hay error (quota exceeded, etc.), desactivar Firebase
+                if (error.message && error.message.includes('quota')) {
+                    console.error('⚠️ Cuota de Firebase excedida, desactivando Firebase para esta sesión');
+                    isFirebaseConnected = false;
+                }
                 loadDefaultUsers();
             }
         }
@@ -2148,6 +2249,11 @@
                 console.log('✅ Shift templates cargados:', shiftTemplates.length);
             } catch (error) {
                 console.error('❌ Error cargando shift templates:', error);
+                // Si hay error (quota exceeded, etc.), desactivar Firebase
+                if (error.message && error.message.includes('quota')) {
+                    console.error('⚠️ Cuota de Firebase excedida, desactivando Firebase para esta sesión');
+                    isFirebaseConnected = false;
+                }
                 // Usar templates por defecto si falla
                 shiftTemplates = [
                     { id: '1', name: 'D1', colorHex: '#FF5722', abbreviation: 'D1', order: 0 },
@@ -2247,6 +2353,14 @@
             console.log('📱 Modo standalone:', isStandaloneMode);
             console.log('📱 iOS detectado:', isIOS);
             console.log('📱 Android detectado:', isAndroid);
+            
+            // Verificar si se solicita refresh (viniendo de recurring-events)
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.get('refresh') === '1') {
+                console.log('🔄 Refresh solicitado, limpiando caché');
+                eventsCache = {}; // Limpiar caché
+                window.location.search = ''; // Limpiar URL
+            }
             
             // Aplicar tema y configuración persistida
             applySettings();
@@ -2761,13 +2875,13 @@
             const date = new Date(dateStr);
             const dateKey = formatDateKey(date);
             
-            // Actualizar la caché con los nuevos eventos
+            // Actualizar la caché con los eventos (sin recurrentes, que se calculan dinámicamente)
             if (!eventsCache.events) eventsCache.events = {};
-            eventsCache.events[dateKey] = events;
+            eventsCache.events[dateKey] = events.filter(e => e.type !== 'recurring');
             
-            // Filtrar solo turnos (excluir notas)
+            // Filtrar solo turnos (excluir notas y eventos recurrentes)
             const shifts = events
-                .filter(event => event.type !== 'note')
+                .filter(event => event.type !== 'note' && event.type !== 'recurring')
                 .map(e => normalizeShiftEvent(e));
             
             // Obtener el número del día
@@ -2970,12 +3084,15 @@
             }
             
             // Agregar iconos de categoría con el color del usuario
-            // Obtener todas las notas (múltiples usuarios pueden tener notas)
-            const notes = events.filter(event => event.type === 'note');
+            // Obtener todas las notas y eventos recurrentes (múltiples usuarios pueden tener notas)
+            const notes = events.filter(event => event.type === 'note' || event.type === 'recurring');
             
             if (notes.length > 0) {
-                // Si hay al menos una nota con texto, ocultar los textos de los turnos para evitar superposición
-                const hasAnyNoteText = notes.some(note => note.text && note.text.trim() !== '');
+                // Si hay al menos una nota con texto o evento recurrente con título, ocultar los textos de los turnos para evitar superposición
+                const hasAnyNoteText = notes.some(note => 
+                    (note.text && note.text.trim() !== '') || 
+                    (note.type === 'recurring' && note.title)
+                );
                 if (hasAnyNoteText) {
                     const shiftTexts = cell.querySelectorAll('.shift-text-full, .shift-text-half, .shift-text-third, .event-badge');
                     shiftTexts.forEach(el => el.style.display = 'none');
@@ -2994,9 +3111,42 @@
                     z-index: 15;
                 `;
                 
-                // Renderizar cada nota
+                // Renderizar cada nota o evento recurrente
                 notes.forEach(note => {
-                    if (note.text && note.text.trim() !== '') {
+                    // Filtrar notas privadas y visibilidad
+                    if (note.type === 'note') {
+                        // Si es privada, solo mostrar al autor
+                        if (note.private && note.userId !== currentUserId) {
+                            return; // Omitir notas privadas que no son del usuario actual
+                        }
+                        // Si tiene lista de usuarios visibles, verificar si el usuario actual está incluido
+                        if (note.visibleTo && Array.isArray(note.visibleTo)) {
+                            if (!note.visibleTo.includes(currentUserId)) {
+                                return; // Omitir si no está en la lista de visibles
+                            }
+                        }
+                        // Si no tiene lista visibleTo ni es privada, mostrar a todos (pública)
+                    }
+                    
+                    if (note.type === 'recurring' && note.title) {
+                        // Renderizar evento recurrente
+                        const lineUserColor = getUserColor(note.userId);
+                        const noteTextEl = document.createElement('div');
+                        noteTextEl.className = 'note-text';
+                        
+                        noteTextEl.textContent = note.title;
+                        const noteFontSize = 11;
+                        noteTextEl.style.cssText = `
+                            color: ${lineUserColor};
+                            font-weight: 700;
+                            font-size: ${noteFontSize}px;
+                            text-decoration: underline;
+                            white-space: normal;
+                            word-wrap: break-word;
+                            overflow-wrap: break-word;
+                        `;
+                        allNotesContainer.appendChild(noteTextEl);
+                    } else if (note.text && note.text.trim() !== '') {
                         // Dividir el texto por saltos de línea para renderizar cada línea con su color
                         const noteLines = note.text.split('\n').filter(line => line.trim() !== '');
                         
@@ -3329,7 +3479,7 @@
             
             // Aplicar el nuevo estilo de visualización
             const shifts = events
-                .filter(event => event.type !== 'note')
+                .filter(event => event.type !== 'note' && event.type !== 'recurring')
                 .map(e => normalizeShiftEvent(e));
             if (shifts.length > 0) {
                 // Si tiene turnos, asegurar que no esté atenuado como "otro mes"
@@ -3497,12 +3647,15 @@
             }
 
             // Agregar texto de nota e iconos de categorías
-            // Obtener todas las notas (múltiples usuarios pueden tener notas)
-            const notes = events.filter(event => event.type === 'note');
+            // Obtener todas las notas y eventos recurrentes (múltiples usuarios pueden tener notas)
+            const notes = events.filter(event => event.type === 'note' || event.type === 'recurring');
             
             if (notes.length > 0) {
-                // Si hay al menos una nota con texto, ocultar los textos de los turnos para evitar superposición
-                const hasAnyNoteText = notes.some(note => note.text && note.text.trim() !== '');
+                // Si hay al menos una nota con texto o evento recurrente con título, ocultar los textos de los turnos para evitar superposición
+                const hasAnyNoteText = notes.some(note => 
+                    (note.text && note.text.trim() !== '') || 
+                    (note.type === 'recurring' && note.title)
+                );
                 if (hasAnyNoteText) {
                     const shiftTexts = dayEl.querySelectorAll('.shift-text-full, .shift-text-half, .shift-text-third, .event-badge');
                     shiftTexts.forEach(el => el.style.display = 'none');
@@ -3521,9 +3674,42 @@
                     z-index: 15;
                 `;
                 
-                // Renderizar cada nota
+                // Renderizar cada nota o evento recurrente
                 notes.forEach(note => {
-                    if (note.text && note.text.trim() !== '') {
+                    // Filtrar notas privadas y visibilidad
+                    if (note.type === 'note') {
+                        // Si es privada, solo mostrar al autor
+                        if (note.private && note.userId !== currentUserId) {
+                            return; // Omitir notas privadas que no son del usuario actual
+                        }
+                        // Si tiene lista de usuarios visibles, verificar si el usuario actual está incluido
+                        if (note.visibleTo && Array.isArray(note.visibleTo)) {
+                            if (!note.visibleTo.includes(currentUserId)) {
+                                return; // Omitir si no está en la lista de visibles
+                            }
+                        }
+                        // Si no tiene lista visibleTo ni es privada, mostrar a todos (pública)
+                    }
+                    
+                    if (note.type === 'recurring' && note.title) {
+                        // Renderizar evento recurrente
+                        const lineUserColor = getUserColor(note.userId);
+                        const noteTextEl = document.createElement('div');
+                        noteTextEl.className = 'note-text';
+                        
+                        noteTextEl.textContent = note.title;
+                        const noteFontSize = 11;
+                        noteTextEl.style.cssText = `
+                            color: ${lineUserColor};
+                            font-weight: 700;
+                            font-size: ${noteFontSize}px;
+                            text-decoration: underline;
+                            white-space: normal;
+                            word-wrap: break-word;
+                            overflow-wrap: break-word;
+                        `;
+                        allNotesContainer.appendChild(noteTextEl);
+                    } else if (note.text && note.text.trim() !== '') {
                         // Dividir el texto por saltos de línea para renderizar cada línea con su color
                         const noteLines = note.text.split('\n').filter(line => line.trim() !== '');
                         
@@ -3598,35 +3784,218 @@
             container.appendChild(dayEl);
         }
 
+        // Cargar solo las DEFINICIONES de eventos recurrentes (sin generar ocurrencias)
+        async function loadRecurringEvents() {
+            if (!isFirebaseConnected) return;
+            
+            try {
+                const snapshot = await db.collection('recurring_events').get();
+                recurringEventsDefinitions = snapshot.docs.map(doc => ({
+                    id: doc.id,
+                    ...doc.data()
+                }));
+                
+                if (recurringEventsDefinitions.length === 0) {
+                    console.log('📭 No hay eventos recurrentes configurados');
+                } else {
+                    console.log('✅', recurringEventsDefinitions.length, 'definiciones de eventos recurrentes cargadas');
+                    recurringEventsDefinitions.forEach(e => {
+                        const rawDate = e.startDate?.toDate ? e.startDate.toDate() : null;
+                        const isoDate = rawDate ? rawDate.toISOString().split('T')[0] : 'N/A';
+                        console.log('  -', e.title, '(', e.recurrenceType, ')', 
+                            'startDate:', isoDate);
+                    });
+                }
+                
+                // No generar ocurrencias, solo cargar las definiciones
+                // Las ocurrencias se calcularán dinámicamente en getEventsForDate
+                scheduleRenderCalendar();
+            } catch (error) {
+                console.error('❌ Error cargando eventos recurrentes:', error);
+                // Si hay error (quota exceeded, etc.), desactivar Firebase
+                if (error.message && error.message.includes('quota')) {
+                    console.error('⚠️ Cuota de Firebase excedida, desactivando Firebase para esta sesión');
+                    isFirebaseConnected = false;
+                }
+            }
+        }
+
         // Obtener eventos para una fecha
         async function getEventsForDate(date) {
             const dateKey = formatDateKey(date);
             
             // Primero intentar desde la caché
             if (eventsCache.events && eventsCache.events[dateKey]) {
-                return eventsCache.events[dateKey];
+                let cachedEvents = eventsCache.events[dateKey];
+                // Agregar eventos recurrentes calculados dinámicamente
+                cachedEvents = await addRecurringEventsToDay(cachedEvents, date);
+                return cachedEvents;
             }
             
+            let events = [];
             if (isFirebaseConnected) {
                 try {
                     const docRef = db.collection('calendar_events').doc(dateKey);
                     const doc = await docRef.get();
                     
                     if (doc.exists) {
-                        const events = doc.data().events || [];
-                        // Guardar en caché para próximas consultas
-                        if (!eventsCache.events) eventsCache.events = {};
-                        eventsCache.events[dateKey] = events;
-                        return events;
+                        events = doc.data().events || [];
                     }
-                    return [];
                 } catch (error) {
                     console.error('❌ Error obteniendo eventos de Firestore:', error);
-                    // Fallback a localStorage
-                    return getEventsFromLocalStorage(date);
+                    events = getEventsFromLocalStorage(date);
                 }
             } else {
-                return getEventsFromLocalStorage(date);
+                events = getEventsFromLocalStorage(date);
+            }
+            
+            // Agregar eventos recurrentes calculados dinámicamente
+            events = await addRecurringEventsToDay(events, date);
+            
+            // NO guardar en caché eventos con recurrentes (se calculan dinámicamente)
+            // La caché solo contiene eventos de Firebase sin recurrentes
+            
+            return events;
+        }
+        
+        // Agregar eventos recurrentes calculados para un día específico
+        async function addRecurringEventsToDay(events, date) {
+            if (!recurringEventsDefinitions || recurringEventsDefinitions.length === 0) {
+                console.log('⚠️ No hay definiciones de eventos recurrentes cargadas');
+                return events;
+            }
+            
+            const resultEvents = [...events];
+            const dateKey = formatDateKey(date);
+            
+            console.log('🔍 Buscando eventos recurrentes para', dateKey, 'Total definiciones:', recurringEventsDefinitions.length);
+            
+            for (const eventDef of recurringEventsDefinitions) {
+                try {
+                    // Verificar si este evento recurrente tiene una ocurrencia en esta fecha
+                    const hasOccurrence = checkIfDateMatchesRecurring(eventDef, date);
+                    
+                    if (hasOccurrence) {
+                        console.log('✅ Coincide evento recurrente:', eventDef.title, 'para', dateKey);
+                        // Verificar si ya existe en eventos
+                        const exists = resultEvents.some(e => 
+                            e.type === 'recurring' && e.recurringEventId === eventDef.id
+                        );
+                        
+                        if (!exists) {
+                            resultEvents.push({
+                                type: 'recurring',
+                                recurringEventId: eventDef.id,
+                                title: eventDef.title,
+                                description: eventDef.description || '',
+                                time: eventDef.time,
+                                userId: currentUserId,
+                                userColor: getUserColor(currentUserId),
+                                createdAt: new Date().toISOString()
+                            });
+                            console.log('📝 Evento recurrente agregado:', eventDef.title);
+                        }
+                    }
+                } catch (error) {
+                    console.error('Error verificando evento recurrente:', eventDef.title, error);
+                }
+            }
+            
+            return resultEvents;
+        }
+        
+        // Verificar si una fecha coincide con una regla de evento recurrente
+        function checkIfDateMatchesRecurring(eventDef, date) {
+            // Normalizar fechas para comparación
+            const dateNormalized = new Date(date);
+            dateNormalized.setHours(0, 0, 0, 0);
+            
+            let eventStart;
+            if (eventDef.startDate && eventDef.startDate.toDate) {
+                const firestoreDate = eventDef.startDate.toDate();
+                // Convertir a string ISO sin zona horaria para evitar problemas
+                const dateStr = firestoreDate.toISOString().split('T')[0];
+                eventStart = new Date(dateStr);
+            } else if (eventDef.startDate instanceof Date) {
+                eventStart = new Date(eventDef.startDate);
+            } else {
+                console.error('Formato de startDate inválido:', eventDef.startDate);
+                return false;
+            }
+            eventStart.setHours(0, 0, 0, 0);
+            
+            // Log removed to avoid quota exhaustion
+            
+            // Si la fecha está antes del inicio, no coincide
+            if (dateNormalized < eventStart) {
+                return false;
+            }
+            
+            // Si hay fecha de fin, verificar
+            if (eventDef.endDate) {
+                let eventEnd;
+                if (eventDef.endDate.toDate) {
+                    const firestoreEndDate = eventDef.endDate.toDate();
+                    const dateStr = firestoreEndDate.toISOString().split('T')[0];
+                    eventEnd = new Date(dateStr);
+                } else if (eventDef.endDate instanceof Date) {
+                    eventEnd = new Date(eventDef.endDate);
+                } else {
+                    eventEnd = new Date(eventDef.endDate);
+                }
+                eventEnd.setHours(23, 59, 59, 999);
+                if (dateNormalized > eventEnd) {
+                    return false;
+                }
+            }
+            
+            // Calcular el número de días desde el inicio
+            const daysSinceStart = Math.floor((dateNormalized - eventStart) / (1000 * 60 * 60 * 24));
+            
+            switch (eventDef.recurrenceType) {
+                case 'daily':
+                    return true; // Todos los días
+                    
+                case 'weekly':
+                    return daysSinceStart % 7 === 0;
+                    
+                case 'monthly':
+                    // Verificar si el día del mes coincide
+                    return dateNormalized.getDate() === eventStart.getDate();
+                    
+                case 'yearly':
+                    // Verificar si el día y mes coinciden
+                    const matches = dateNormalized.getMonth() === eventStart.getMonth() && 
+                           dateNormalized.getDate() === eventStart.getDate();
+                    return matches;
+                    
+                case 'custom':
+                    // Verificar intervalos personalizados
+                    const interval = eventDef.customInterval || 1;
+                    const unit = eventDef.customUnit || 'days';
+                    
+                    let shouldMatch = false;
+                    if (unit === 'days') {
+                        shouldMatch = daysSinceStart % interval === 0;
+                    } else if (unit === 'weeks') {
+                        shouldMatch = daysSinceStart % (interval * 7) === 0;
+                    } else if (unit === 'months') {
+                        // Calcular diferencia de meses
+                        const monthDiff = (date.getFullYear() - eventStart.getFullYear()) * 12 + 
+                                        (date.getMonth() - eventStart.getMonth());
+                        shouldMatch = monthDiff % interval === 0;
+                    }
+                    
+                    // Si hay días específicos de la semana, verificar
+                    if (shouldMatch && eventDef.customDaysOfWeek && eventDef.customDaysOfWeek.length > 0) {
+                        const dayOfWeek = date.getDay();
+                        shouldMatch = eventDef.customDaysOfWeek.includes(dayOfWeek);
+                    }
+                    
+                    return shouldMatch;
+                    
+                default:
+                    return false;
             }
         }
 
@@ -3639,6 +4008,7 @@
         }
 
         // Obtener eventos sincrónicamente desde caché precargada o localStorage (sin esperas)
+        // NOTA: Esta función ya no incluye eventos recurrentes, usar getEventsForDate para obtener todos los eventos
         function getEventsForDateCached(date) {
             const dateKey = formatDateKey(date);
             if (eventsCache.events && eventsCache.events[dateKey]) {
@@ -3651,21 +4021,28 @@
         async function saveEvents(date, events) {
             const dateKey = formatDateKey(date);
             
+            // Filtrar eventos recurrentes antes de guardar (no se guardan en Firebase)
+            const eventsToSave = events.filter(e => e.type !== 'recurring');
+            
             if (isFirebaseConnected) {
                 try {
                     await db.collection('calendar_events').doc(dateKey).set({
-                        events: events,
+                        events: eventsToSave,
                         lastModified: firebase.firestore.FieldValue.serverTimestamp(),
                         modifiedBy: currentUserId
                     });
                     console.log('✅ Eventos guardados en Firestore');
+                    // Limpiar caché para forzar recarga desde Firebase
+                    if (eventsCache.events) {
+                        delete eventsCache.events[dateKey];
+                    }
                 } catch (error) {
                     console.error('❌ Error guardando en Firestore:', error);
                     // Fallback a localStorage
-                    saveEventsToLocalStorage(date, events);
+                    saveEventsToLocalStorage(date, eventsToSave);
                 }
             } else {
-                saveEventsToLocalStorage(date, events);
+                saveEventsToLocalStorage(date, eventsToSave);
             }
         }
 
@@ -4067,8 +4444,13 @@
                 // Obtener eventos del día
                 const events = await getEventsForDate(date);
                 
-                // Filtrar solo turnos (excluir notas con type='note')
-                const shifts = events.filter(event => event.type !== 'note');
+                // Filtrar solo turnos (excluir notas y eventos recurrentes)
+                const shifts = events.filter(event => 
+                    event.type !== 'note' && 
+                    event.type !== 'recurring' &&
+                    event.text && 
+                    event.text !== 'undefined'
+                );
                 
                 if (shifts.length === 0) {
                     shiftsContent.innerHTML = `
@@ -4125,6 +4507,7 @@
         let originalNoteText = '';
         let originalNoteTextSize = 11; // Tamaño por defecto
         let originalNoteTime = '';
+        let originalNotePrivate = false; // Visibilidad por defecto
         let currentFormatState = {
             bold: false,
             italic: false,
@@ -4169,19 +4552,29 @@
                             originalNoteTime = '';
                             console.log('⚠️ No hay hora en la nota');
                         }
+                        if (note.private) {
+                            originalNotePrivate = note.private;
+                            console.log('✅ Privacidad encontrada en nota:', note.private);
+                        } else {
+                            originalNotePrivate = false;
+                            console.log('⚠️ No hay privacidad en la nota');
+                        }
                     } else {
                         originalNoteTextSize = 11;
                         originalNoteTime = '';
+                        originalNotePrivate = false;
                         console.log('⚠️ No se encontró nota para el usuario');
                     }
                 } catch (error) {
                     console.error('Error cargando datos de nota:', error);
                     originalNoteTextSize = 11;
                     originalNoteTime = '';
+                    originalNotePrivate = false;
                 }
             } else {
                 originalNoteTextSize = 11;
                 originalNoteTime = '';
+                originalNotePrivate = false;
             }
             
             // Actualizar el slider y el valor mostrado
@@ -4198,8 +4591,61 @@
             if (timeInput) {
                 timeInput.value = originalNoteTime;
                 console.log('🕐 Hora cargada en input:', originalNoteTime);
-            } else {
-                console.error('❌ No se encontró el elemento notesTimeInput');
+            }
+            
+            // Actualizar el checkbox de privacidad y generar selector de usuarios
+            const privateCheck = document.getElementById('notesPrivateCheck');
+            if (privateCheck) {
+                privateCheck.checked = originalNotePrivate;
+                console.log('🔒 Privacidad cargada:', originalNotePrivate);
+                
+                // Generar checkboxes de usuarios
+                const userSelectionDiv = document.getElementById('notesUserSelection');
+                if (userSelectionDiv) {
+                    userSelectionDiv.innerHTML = '';
+                    users.forEach(user => {
+                        if (user.id !== currentUserId) { // No mostrar el usuario actual
+                            const checkboxDiv = document.createElement('div');
+                            checkboxDiv.className = 'user-checkbox-item';
+                            const checkboxId = `userCheck_${user.id}`;
+                            checkboxDiv.innerHTML = `
+                                <input type="checkbox" id="${checkboxId}" data-user-id="${user.id}">
+                                <span class="user-color-dot" style="background-color: ${user.color};"></span>
+                                <span>${user.name}</span>
+                            `;
+                            userSelectionDiv.appendChild(checkboxDiv);
+                        }
+                    });
+                    
+                    // Mostrar/ocultar selector según si es privada
+                    userSelectionDiv.style.display = originalNotePrivate ? 'none' : 'block';
+                }
+                
+                // Event listener para toggle privacidad
+                privateCheck.addEventListener('change', function() {
+                    const userSelectionDiv = document.getElementById('notesUserSelection');
+                    if (userSelectionDiv) {
+                        userSelectionDiv.style.display = this.checked ? 'none' : 'block';
+                    }
+                });
+            }
+            
+            // Cargar usuarios seleccionados si existe
+            if (selectedDate) {
+                try {
+                    const events = await getEventsForDate(selectedDate);
+                    const note = events.find(event => event.type === 'note' && event.userId === currentUserId);
+                    if (note && note.visibleTo && Array.isArray(note.visibleTo)) {
+                        note.visibleTo.forEach(userId => {
+                            const checkbox = document.getElementById(`userCheck_${userId}`);
+                            if (checkbox) {
+                                checkbox.checked = true;
+                            }
+                        });
+                    }
+                } catch (error) {
+                    console.error('Error cargando usuarios seleccionados:', error);
+                }
             }
             
             // Resetear formato
@@ -4250,8 +4696,27 @@
             const timeInput = document.getElementById('notesTimeInput');
             const noteTime = timeInput ? timeInput.value.trim() : '';
             
+            const privateCheck = document.getElementById('notesPrivateCheck');
+            const notePrivate = privateCheck ? privateCheck.checked : false;
+            
+            // Obtener usuarios seleccionados (siempre incluir al autor)
+            let visibleTo = null;
+            if (!notePrivate) {
+                visibleTo = [];
+                // Agregar siempre al autor
+                visibleTo.push(currentUserId);
+                const userCheckboxes = document.querySelectorAll('#notesUserSelection input[type="checkbox"]');
+                userCheckboxes.forEach(checkbox => {
+                    if (checkbox.checked) {
+                        visibleTo.push(parseInt(checkbox.dataset.userId));
+                    }
+                });
+            }
+            
             console.log('📏 Tamaño de texto seleccionado:', textSize);
             console.log('🕐 Hora seleccionada:', noteTime);
+            console.log('🔒 Privacidad seleccionada:', notePrivate);
+            console.log('👥 Usuarios seleccionados:', visibleTo);
             
             // Actualizar el textarea principal del modal de día
             document.getElementById('mainTextarea').value = newText.trim();
@@ -4278,6 +4743,8 @@
                             text: newText.trim(),
                             textSize: textSize, // Guardar el tamaño del texto
                             time: noteTime || undefined, // Guardar la hora si existe
+                            private: notePrivate, // Guardar la privacidad
+                            visibleTo: visibleTo, // Guardar usuarios seleccionados (null si es privada, array si es pública)
                             userId: currentUserId,
                             userColor: getUserColor(currentUserId),
                             createdAt: existingNoteIndex !== -1 ? existingEvents[existingNoteIndex].createdAt : new Date().toISOString(),
@@ -5374,7 +5841,11 @@
                         // Preservar alarmas si existen
                         alarms: existingNote && existingNote.alarms && Array.isArray(existingNote.alarms) ? existingNote.alarms : [],
                         // Preservar hora si existe
-                        time: existingNote && existingNote.time ? existingNote.time : undefined
+                        time: existingNote && existingNote.time ? existingNote.time : undefined,
+                        // Preservar privacidad si existe
+                        private: existingNote && existingNote.private ? existingNote.private : false,
+                        // Preservar usuarios visibles si existe
+                        visibleTo: existingNote && existingNote.visibleTo ? existingNote.visibleTo : undefined
                     };
                     
                     if (existingNoteIndex !== -1) {

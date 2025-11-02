@@ -364,7 +364,8 @@
                 </div>
             </div>
 
-            <button class="btn" onclick="addRecurringEvent()">➕ Crear Evento</button>
+            <button class="btn" id="submitBtn" onclick="addRecurringEvent()">➕ Crear Evento</button>
+            <button class="btn btn-secondary" id="cancelBtn" onclick="cancelEdit()" style="display:none; margin-top: 8px;">Cancelar</button>
         </div>
 
         <!-- Lista de Eventos Recurrentes -->
@@ -392,11 +393,22 @@
 
         let db;
         let recurringEvents = [];
+        let editingEventId = null;
+        let isFirebaseConnected = false;
+        let currentUserId = 1; // Usuario por defecto
 
         function init() {
             try {
                 firebase.initializeApp(firebaseConfig);
                 db = firebase.firestore();
+                isFirebaseConnected = true;
+                
+                // Cargar usuario guardado
+                const savedUserId = localStorage.getItem('current_user_id');
+                if (savedUserId) {
+                    currentUserId = parseInt(savedUserId);
+                }
+                
                 console.log('✅ Firebase inicializado');
                 loadRecurringEvents();
             } catch (error) {
@@ -471,17 +483,24 @@
             }
 
             try {
+                // Crear fecha de inicio usando solo la fecha (sin considerar la hora actual)
+                // Agregar 'Z' al final para forzar UTC y evitar problemas de zona horaria
+                const startDateTime = new Date(`${startDate}T${time}:00`);
+                console.log('📅 Creando evento con fecha:', startDate, 'hora:', time, 'Date:', startDateTime.toISOString());
+                
                 const eventData = {
                     title: title,
                     description: description || '',
-                    startDate: firebase.firestore.Timestamp.fromDate(new Date(`${startDate}T${time}`)),
+                    startDate: firebase.firestore.Timestamp.fromDate(startDateTime),
                     time: time,
-                    recurrenceType: recurrenceType,
-                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                    recurrenceType: recurrenceType
                 };
+                
+                console.log('📅 startDate guardado (Timestamp):', eventData.startDate.toDate().toISOString());
 
                 if (endDate) {
-                    eventData.endDate = firebase.firestore.Timestamp.fromDate(new Date(`${endDate}T${time}`));
+                    const endDateTime = new Date(`${endDate}T${time}:00`);
+                    eventData.endDate = firebase.firestore.Timestamp.fromDate(endDateTime);
                 }
 
                 // Configuración de recurrencia personalizada
@@ -502,7 +521,77 @@
                     }
                 }
 
-                await db.collection('recurring_events').add(eventData);
+                if (editingEventId) {
+                    // Actualizar evento existente
+                    // Obtener el evento original para comparar
+                    const originalEvent = recurringEvents.find(e => e.id === editingEventId);
+                    
+                    // Construir objeto de actualización
+                    const startDateTime = new Date(`${startDate}T${time}:00`);
+                    console.log('📅 Actualizando evento con fecha:', startDate, 'hora:', time, 'Date:', startDateTime.toISOString());
+                    
+                    const updateData = {
+                        title: title,
+                        description: description || '',
+                        startDate: firebase.firestore.Timestamp.fromDate(startDateTime),
+                        time: time,
+                        recurrenceType: recurrenceType,
+                        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                    };
+                    
+                    console.log('📅 startDate actualizado (Timestamp):', updateData.startDate.toDate().toISOString());
+                    
+                    if (endDate) {
+                        const endDateTime = new Date(`${endDate}T${time}:00`);
+                        updateData.endDate = firebase.firestore.Timestamp.fromDate(endDateTime);
+                    } else {
+                        // Si no hay endDate y antes existía, eliminarlo
+                        if (originalEvent && originalEvent.endDate) {
+                            updateData.endDate = firebase.firestore.FieldValue.delete();
+                        }
+                    }
+                    
+                    // Configuración de recurrencia personalizada
+                    if (recurrenceType === 'custom') {
+                        updateData.customInterval = parseInt(document.getElementById('recurrenceInterval').value);
+                        updateData.customUnit = document.getElementById('recurrenceUnit').value;
+                        
+                        // Días de la semana seleccionados
+                        const selectedDays = [];
+                        for (let i = 0; i <= 6; i++) {
+                            const checkbox = document.getElementById(`day${i}`);
+                            if (checkbox.checked) {
+                                selectedDays.push(i);
+                            }
+                        }
+                        if (selectedDays.length > 0) {
+                            updateData.customDaysOfWeek = selectedDays;
+                        } else {
+                            updateData.customDaysOfWeek = firebase.firestore.FieldValue.delete();
+                        }
+                    } else {
+                        // Si cambió de custom a otro tipo, eliminar campos personalizados
+                        if (originalEvent && originalEvent.recurrenceType === 'custom') {
+                            updateData.customInterval = firebase.firestore.FieldValue.delete();
+                            updateData.customUnit = firebase.firestore.FieldValue.delete();
+                            updateData.customDaysOfWeek = firebase.firestore.FieldValue.delete();
+                        }
+                    }
+                    
+                    await db.collection('recurring_events').doc(editingEventId).update(updateData);
+                    
+                    alert('✅ Evento actualizado exitosamente');
+                    cancelEdit();
+                    
+                    // Redirigir a calendar.html para ver los cambios
+                    window.location.href = 'calendar.html';
+                } else {
+                    // Crear nuevo evento
+                    eventData.createdAt = firebase.firestore.FieldValue.serverTimestamp();
+                    await db.collection('recurring_events').add(eventData);
+                    
+                    alert('✅ Evento recurrente creado exitosamente');
+                }
 
                 // Limpiar formulario
                 document.getElementById('eventTitle').value = '';
@@ -512,12 +601,16 @@
                 document.getElementById('eventTime').value = '';
                 document.getElementById('recurrenceType').value = '';
                 document.getElementById('recurrenceOptions').classList.remove('show');
+                
+                // Limpiar checkboxes
+                for (let i = 0; i <= 6; i++) {
+                    document.getElementById(`day${i}`).checked = false;
+                }
 
                 loadRecurringEvents();
-                alert('✅ Evento recurrente creado exitosamente');
             } catch (error) {
-                console.error('Error creando evento:', error);
-                alert('❌ Error al crear evento');
+                console.error('Error guardando evento:', error);
+                alert('❌ Error al guardar evento');
             }
         }
 
@@ -526,15 +619,84 @@
 
             try {
                 await db.collection('recurring_events').doc(id).delete();
+                
                 loadRecurringEvents();
             } catch (error) {
                 console.error('Error eliminando evento:', error);
                 alert('❌ Error al eliminar evento');
             }
         }
-
         function editEvent(id) {
-            alert('Función de edición próximamente disponible');
+            const event = recurringEvents.find(e => e.id === id);
+            if (!event) return;
+
+            // Cargar datos en el formulario
+            document.getElementById('eventTitle').value = event.title;
+            document.getElementById('eventDescription').value = event.description || '';
+            
+            // Formatear fechas para input type="date" (YYYY-MM-DD)
+            const startDate = event.startDate.toDate();
+            document.getElementById('startDate').value = formatDateForInput(startDate);
+            
+            if (event.endDate) {
+                const endDate = event.endDate.toDate();
+                document.getElementById('endDate').value = formatDateForInput(endDate);
+            } else {
+                document.getElementById('endDate').value = '';
+            }
+            
+            document.getElementById('eventTime').value = event.time;
+            document.getElementById('recurrenceType').value = event.recurrenceType;
+            toggleRecurrenceOptions();
+
+            // Cargar opciones personalizadas si existen
+            if (event.recurrenceType === 'custom') {
+                document.getElementById('recurrenceInterval').value = event.customInterval || 1;
+                document.getElementById('recurrenceUnit').value = event.customUnit || 'days';
+                
+                // Marcar días seleccionados
+                if (event.customDaysOfWeek) {
+                    for (let i = 0; i <= 6; i++) {
+                        const checkbox = document.getElementById(`day${i}`);
+                        checkbox.checked = event.customDaysOfWeek.includes(i);
+                    }
+                }
+            }
+
+            // Cambiar a modo edición
+            editingEventId = id;
+            document.getElementById('submitBtn').textContent = '💾 Guardar Cambios';
+            document.getElementById('cancelBtn').style.display = 'block';
+            
+            // Scroll al formulario
+            document.querySelector('.section').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function cancelEdit() {
+            editingEventId = null;
+            document.getElementById('submitBtn').textContent = '➕ Crear Evento';
+            document.getElementById('cancelBtn').style.display = 'none';
+            
+            // Limpiar formulario
+            document.getElementById('eventTitle').value = '';
+            document.getElementById('eventDescription').value = '';
+            document.getElementById('startDate').value = '';
+            document.getElementById('endDate').value = '';
+            document.getElementById('eventTime').value = '';
+            document.getElementById('recurrenceType').value = '';
+            document.getElementById('recurrenceOptions').classList.remove('show');
+            
+            // Limpiar checkboxes de días
+            for (let i = 0; i <= 6; i++) {
+                document.getElementById(`day${i}`).checked = false;
+            }
+        }
+
+        function formatDateForInput(date) {
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
         }
 
         function toggleRecurrenceOptions() {

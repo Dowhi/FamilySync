@@ -559,7 +559,10 @@
         function calculateTop(time) {
             if (!time) return 0;
             const [hours, minutes] = time.split(':');
-            return (parseInt(hours) * 50) + (parseInt(minutes) * 50 / 60);
+            // Calcular posición dentro de la fila de 50px basándonos en los minutos
+            const h = parseInt(hours);
+            const m = parseInt(minutes);
+            return (m * 50 / 60);
         }
 
         function previousWeek() {
