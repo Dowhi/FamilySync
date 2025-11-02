@@ -3009,8 +3009,7 @@
                             // Agregar hora a la primera línea si existe
                             let displayText = line;
                             if (index === 0 && note.time) {
-                                displayText = `${line} 🕐 ${note.time}`;
-                                console.log('📅 Renderizando nota con hora:', displayText);
+                                displayText = `${line} ${note.time}`;
                             }
                             
                             noteTextEl.textContent = displayText;
@@ -3537,8 +3536,7 @@
                             // Agregar hora a la primera línea si existe
                             let displayText = line;
                             if (index === 0 && note.time) {
-                                displayText = `${line} 🕐 ${note.time}`;
-                                console.log('📅 Renderizando nota con hora:', displayText);
+                                displayText = `${line} ${note.time}`;
                             }
                             
                             noteTextEl.textContent = displayText;
