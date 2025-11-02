@@ -1038,23 +1038,27 @@
 
         /* Control de tamaño de texto */
         .notes-text-size-container {
-            padding: 0 20px 16px;
+            padding: 0 20px 12px;
             background: white;
             flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            gap: 12px;
         }
 
         .notes-text-size-label {
-            display: block;
             font-size: 12px;
             font-weight: 600;
             color: #666;
-            margin-bottom: 8px;
+            white-space: nowrap;
+            flex-shrink: 0;
         }
 
         .notes-text-size-control {
             display: flex;
             align-items: center;
             gap: 12px;
+            flex: 1;
         }
 
         .notes-text-size-value {
@@ -1098,22 +1102,25 @@
 
         /* Campo de Hora */
         .notes-time-container {
-            padding: 0 20px 16px;
+            padding: 0 20px 12px;
             background: white;
             flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            gap: 12px;
         }
 
         .notes-time-label {
-            display: block;
             font-size: 12px;
             font-weight: 600;
             color: #666;
-            margin-bottom: 8px;
+            white-space: nowrap;
+            flex-shrink: 0;
         }
 
         .notes-time-input {
-            width: 100%;
-            padding: 10px 12px;
+            flex: 1;
+            padding: 8px 12px;
             border: 1px solid #ddd;
             border-radius: 8px;
             font-size: 14px;
@@ -1129,7 +1136,7 @@
 
         /* Selector de visibilidad */
         .notes-visibility-container {
-            padding: 0 20px 16px;
+            padding: 0 20px 12px;
             background: white;
             flex-shrink: 0;
         }
@@ -1139,7 +1146,7 @@
             font-size: 12px;
             font-weight: 600;
             color: #666;
-            margin-bottom: 8px;
+            margin-bottom: 6px;
         }
 
         .notes-visibility-options {
@@ -1165,8 +1172,8 @@
         }
 
         .notes-user-selection {
-            margin-top: 8px;
-            padding-top: 8px;
+            margin-top: 6px;
+            padding-top: 6px;
             border-top: 1px solid #e0e0e0;
         }
 
@@ -1174,7 +1181,7 @@
             display: flex;
             align-items: center;
             gap: 8px;
-            margin-bottom: 6px;
+            margin-bottom: 4px;
             font-size: 13px;
             font-weight: 500;
             color: #333;
@@ -1198,7 +1205,7 @@
         .notes-format-buttons {
             display: flex;
             gap: 12px;
-            padding: 0 20px 16px;
+            padding: 0 20px 12px;
             justify-content: center;
             flex-shrink: 0;
         }
@@ -2334,6 +2341,20 @@
             }, (error) => {
                 console.error('❌ Error en listener de calendar_events:', error);
             });
+            
+            // Listener para eventos recurrentes: recargar definiciones
+            db.collection('recurring_events').onSnapshot((snapshot) => {
+                console.log('🔄 Cambios detectados en recurring_events');
+                recurringEventsDefinitions = snapshot.docs.map(doc => ({
+                    id: doc.id,
+                    ...doc.data()
+                }));
+                console.log('✅ Definiciones de eventos recurrentes actualizadas:', recurringEventsDefinitions.length);
+                // Re-renderizar el calendario para aplicar cambios
+                scheduleRenderCalendar();
+            }, (error) => {
+                console.error('❌ Error en listener de recurring_events:', error);
+            });
         }
 
         // Inicializar
@@ -2800,8 +2821,11 @@
                     await saveEventsToLocalStorage(date, []);
                 }
 
+                // Agregar eventos recurrentes (ya que solo borramos los no-recurrentes)
+                const eventsWithRecurring = await addRecurringEventsToDay([], date);
+                
                 // Actualizar solo la visualización de este día
-                updateDayDisplay(cell, []);
+                updateDayDisplay(cell, eventsWithRecurring);
                 
             } catch (error) {
                 console.error('❌ Error borrando turnos:', error);
@@ -2859,8 +2883,11 @@
                     await saveEventsToLocalStorage(date, existingEvents);
                 }
 
+                // Agregar eventos recurrentes antes de actualizar la visualización
+                const eventsWithRecurring = await addRecurringEventsToDay(existingEvents, date);
+                
                 // Actualizar solo la visualización de este día sin re-renderizar todo
-                updateDayDisplay(cell, existingEvents);
+                updateDayDisplay(cell, eventsWithRecurring);
                 
             } catch (error) {
                 console.error('❌ Error pintando día:', error);
@@ -3474,7 +3501,41 @@
             const eventsEl = document.createElement('div');
             eventsEl.className = 'day-events';
             
-            const events = getEventsForDateCached(date);
+            // Obtener eventos del caché y agregar eventos recurrentes dinámicamente
+            let events = getEventsForDateCached(date);
+            
+            // Agregar eventos recurrentes calculados dinámicamente (síncrono)
+            if (recurringEventsDefinitions && recurringEventsDefinitions.length > 0) {
+                for (const eventDef of recurringEventsDefinitions) {
+                    try {
+                        const hasOccurrence = checkIfDateMatchesRecurring(eventDef, date);
+                        if (hasOccurrence) {
+                            // Verificar si ya existe en eventos
+                            const exists = events.some(e => 
+                                e.type === 'recurring' && e.recurringEventId === eventDef.id
+                            );
+                            
+                            if (!exists) {
+                                const recurringEvent = {
+                                    type: 'recurring',
+                                    recurringEventId: eventDef.id,
+                                    title: eventDef.title,
+                                    description: eventDef.description || '',
+                                    time: eventDef.time,
+                                    userId: currentUserId,
+                                    userColor: getUserColor(currentUserId),
+                                    createdAt: new Date().toISOString()
+                                };
+                                events.push(recurringEvent);
+                                console.log('📅 Evento recurrente agregado en renderDay:', eventDef.title, 'para', formatDateKey(date));
+                            }
+                        }
+                    } catch (error) {
+                        console.error('Error verificando evento recurrente en renderDay:', eventDef.title, error);
+                    }
+                }
+            }
+            
             dayEl.appendChild(eventsEl);
             
             // Aplicar el nuevo estilo de visualización
@@ -3861,14 +3922,10 @@
         // Agregar eventos recurrentes calculados para un día específico
         async function addRecurringEventsToDay(events, date) {
             if (!recurringEventsDefinitions || recurringEventsDefinitions.length === 0) {
-                console.log('⚠️ No hay definiciones de eventos recurrentes cargadas');
                 return events;
             }
             
             const resultEvents = [...events];
-            const dateKey = formatDateKey(date);
-            
-            console.log('🔍 Buscando eventos recurrentes para', dateKey, 'Total definiciones:', recurringEventsDefinitions.length);
             
             for (const eventDef of recurringEventsDefinitions) {
                 try {
@@ -3876,7 +3933,6 @@
                     const hasOccurrence = checkIfDateMatchesRecurring(eventDef, date);
                     
                     if (hasOccurrence) {
-                        console.log('✅ Coincide evento recurrente:', eventDef.title, 'para', dateKey);
                         // Verificar si ya existe en eventos
                         const exists = resultEvents.some(e => 
                             e.type === 'recurring' && e.recurringEventId === eventDef.id
@@ -3893,7 +3949,6 @@
                                 userColor: getUserColor(currentUserId),
                                 createdAt: new Date().toISOString()
                             });
-                            console.log('📝 Evento recurrente agregado:', eventDef.title);
                         }
                     }
                 } catch (error) {
