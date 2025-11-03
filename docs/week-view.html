@@ -383,12 +383,82 @@
         }
 
         .pdf-preview-content {
-            padding: 20px;
+            padding: 0;
             overflow-y: auto;
             flex: 1;
-            font-family: 'Courier New', monospace;
-            font-size: 12px;
-            line-height: 1.6;
+            background: #f5f5f5;
+        }
+
+        .pdf-preview-page {
+            width: 210mm;
+            min-height: 297mm;
+            background: white;
+            margin: 20px auto;
+            padding: 12mm;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            font-family: 'Arial', sans-serif;
+            color: #333;
+        }
+
+        .pdf-preview-title {
+            font-size: 14pt;
+            font-weight: bold;
+            margin-bottom: 5mm;
+        }
+
+        .pdf-preview-meta {
+            font-size: 9pt;
+            color: #666;
+            margin-bottom: 5mm;
+        }
+
+        .pdf-preview-divider {
+            border-top: 0.2mm solid #000;
+            margin: 4mm 0;
+        }
+
+        .pdf-preview-day {
+            margin-bottom: 3mm;
+        }
+
+        .pdf-preview-day-header {
+            font-size: 10pt;
+            font-weight: bold;
+            color: #1B5E20;
+            margin-bottom: 2mm;
+        }
+
+        .pdf-preview-note {
+            font-size: 8pt;
+            margin-bottom: 1mm;
+            padding-left: 0;
+        }
+
+        .pdf-preview-note-time {
+            font-weight: bold;
+            color: #424242;
+            display: inline-block;
+            width: 22mm;
+        }
+
+        .pdf-preview-note-text {
+            display: inline-block;
+            width: calc(100% - 25mm);
+        }
+
+        .pdf-preview-footer {
+            margin-top: 5mm;
+            border-top: 0.2mm solid #000;
+            padding-top: 4mm;
+            font-size: 9pt;
+            font-weight: bold;
+        }
+
+        .pdf-preview-page-footer {
+            position: absolute;
+            bottom: 10mm;
+            font-size: 7pt;
+            color: #999;
         }
 
         .pdf-preview-footer {
@@ -619,18 +689,20 @@
                 weekDays.forEach(day => {
                     const dateKey = formatDateKey(day);
                     const dayEvents = events[dateKey] || [];
-                    // Solo mostrar eventos con hora (no turnos ni eventos de todo el día)
+                    // Solo mostrar eventos con hora que sean notas (no turnos ni eventos de todo el día)
                     const hourEvents = dayEvents.filter(evt => {
                         if (!evt.time) return false;
-                        // Excluir turnos
-                        if (evt.type === 'shift') return false;
+                        // Excluir turnos - por tipo, shiftId o shiftName
+                        if (evt.type === 'shift' || evt.shiftId || evt.shiftName) return false;
+                        // Solo mostrar notas
+                        if (evt.type !== 'note') return false;
                         const [h] = evt.time.split(':');
                         return parseInt(h) === hour;
                     });
                     
                     html += `<div class="time-slot">
                         ${hourEvents.map(evt => `<div class="event-block ${evt.type}" style="top: ${calculateTop(evt.time)}px">
-                            ${evt.shiftName || evt.text?.substring(0, 15) || 'Evento'}
+                            ${evt.text?.substring(0, 15) || 'Evento'}
                         </div>`).join('')}
                     </div>`;
                 });
@@ -813,18 +885,57 @@
                 }
             });
             
-            const previewText = `
-RESUMEN SEMANAL
-────────────────────────────────────────────────
-Semana ${getWeekNumber(currentWeek)} | ${start.getDate()}/${start.getMonth()+1}/${start.getFullYear()} - ${end.getDate()}/${end.getMonth()+1}/${end.getFullYear()}
-
-${summaryContent || 'No hay notas en esta semana.'}
-
-────────────────────────────────────────────────
-Total: ${totalNotes} notas | FamilySync - ${new Date().toLocaleDateString('es-ES')}
-            `.trim();
+            // Generar HTML visual que simula el PDF en A4
+            let previewHtml = '<div class="pdf-preview-page">';
             
-            document.getElementById('pdfPreviewContent').textContent = previewText;
+            // Título
+            previewHtml += '<div class="pdf-preview-title">RESUMEN SEMANAL</div>';
+            
+            // Meta información
+            previewHtml += `<div class="pdf-preview-meta">Semana ${getWeekNumber(currentWeek)} | ${start.getDate()}/${start.getMonth()+1}/${start.getFullYear()} - ${end.getDate()}/${end.getMonth()+1}/${end.getFullYear()}</div>`;
+            
+            // Línea separadora
+            previewHtml += '<div class="pdf-preview-divider"></div>';
+            
+            // Contenido de notas
+            if (summaryContent) {
+                weekDays.forEach(day => {
+                    const dateKey = formatDateKey(day);
+                    const dayEvents = events[dateKey] || [];
+                    const notesOnly = dayEvents.filter(evt => evt.type !== 'shift' && !evt.shiftId && !evt.shiftName);
+                    
+                    if (notesOnly.length > 0) {
+                        const dayHeader = formatDayHeader(day);
+                        previewHtml += `<div class="pdf-preview-day">`;
+                        previewHtml += `<div class="pdf-preview-day-header">${dayHeader}</div>`;
+                        
+                        notesOnly.forEach(note => {
+                            const timeDisplay = note.time || '';
+                            const title = note.text?.substring(0, 100) || 'Nota sin texto';
+                            
+                            previewHtml += '<div class="pdf-preview-note">';
+                            if (timeDisplay) {
+                                previewHtml += `<span class="pdf-preview-note-time">${timeDisplay}</span>`;
+                                previewHtml += `<span class="pdf-preview-note-text">${title}</span>`;
+                            } else {
+                                previewHtml += `<span class="pdf-preview-note-text" style="width: 100%;">${title}</span>`;
+                            }
+                            previewHtml += '</div>';
+                        });
+                        
+                        previewHtml += '</div>';
+                    }
+                });
+            } else {
+                previewHtml += '<div style="padding: 20mm 0; text-align: center; color: #999;">No hay notas en esta semana.</div>';
+            }
+            
+            // Footer
+            previewHtml += '<div class="pdf-preview-footer">Total: ' + totalNotes + ' notas</div>';
+            previewHtml += '<div class="pdf-preview-page-footer">FamilySync - ' + new Date().toLocaleDateString('es-ES') + '</div>';
+            previewHtml += '</div>';
+            
+            document.getElementById('pdfPreviewContent').innerHTML = previewHtml;
             document.getElementById('pdfPreviewBackdrop').classList.add('show');
         }
 
