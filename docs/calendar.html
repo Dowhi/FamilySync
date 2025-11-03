@@ -3475,8 +3475,13 @@
                             if (!note.visibleTo.includes(currentUserId)) {
                                 return; // Omitir si no está en la lista de visibles
                             }
+                        } else if (!note.private) {
+                            // Si no tiene lista visibleTo y no es privada, no mostrar a nadie (excepto al autor)
+                            // Esto asegura que solo los usuarios explícitamente seleccionados puedan ver la nota
+                            if (note.userId !== currentUserId) {
+                                return; // Omitir si no es el autor y no tiene visibleTo
+                            }
                         }
-                        // Si no tiene lista visibleTo ni es privada, mostrar a todos (pública)
                     }
                     
                     if (note.type === 'recurring' && note.title) {
@@ -4072,8 +4077,13 @@
                             if (!note.visibleTo.includes(currentUserId)) {
                                 return; // Omitir si no está en la lista de visibles
                             }
+                        } else if (!note.private) {
+                            // Si no tiene lista visibleTo y no es privada, no mostrar a nadie (excepto al autor)
+                            // Esto asegura que solo los usuarios explícitamente seleccionados puedan ver la nota
+                            if (note.userId !== currentUserId) {
+                                return; // Omitir si no es el autor y no tiene visibleTo
+                            }
                         }
-                        // Si no tiene lista visibleTo ni es privada, mostrar a todos (pública)
                     }
                     
                     if (note.type === 'recurring' && note.title) {
@@ -5009,22 +5019,40 @@
                 });
             }
             
-            // Cargar usuarios seleccionados si existe
+            // Cargar usuarios seleccionados si existe, o marcar todos por defecto
             if (selectedDate) {
                 try {
                     const events = await getEventsForDate(selectedDate);
                     const note = events.find(event => event.type === 'note' && event.userId === currentUserId);
                     if (note && note.visibleTo && Array.isArray(note.visibleTo)) {
+                        // Si hay una nota existente con usuarios seleccionados, cargar esos
                         note.visibleTo.forEach(userId => {
                             const checkbox = document.getElementById(`userCheck_${userId}`);
                             if (checkbox) {
                                 checkbox.checked = true;
                             }
                         });
+                    } else {
+                        // Si no hay nota o no tiene visibleTo, marcar TODOS los usuarios por defecto
+                        const userCheckboxes = document.querySelectorAll('#notesUserSelection input[type="checkbox"]');
+                        userCheckboxes.forEach(checkbox => {
+                            checkbox.checked = true;
+                        });
                     }
                 } catch (error) {
                     console.error('Error cargando usuarios seleccionados:', error);
+                    // En caso de error, marcar todos por defecto
+                    const userCheckboxes = document.querySelectorAll('#notesUserSelection input[type="checkbox"]');
+                    userCheckboxes.forEach(checkbox => {
+                        checkbox.checked = true;
+                    });
                 }
+            } else {
+                // Si no hay fecha seleccionada, marcar todos por defecto
+                const userCheckboxes = document.querySelectorAll('#notesUserSelection input[type="checkbox"]');
+                userCheckboxes.forEach(checkbox => {
+                    checkbox.checked = true;
+                });
             }
             
             // Resetear formato
