@@ -15,6 +15,9 @@
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
     
+    <!-- jsPDF -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    
     <style>
         * {
             margin: 0;
@@ -293,6 +296,131 @@
             color: #666;
             display: flex;
             justify-content: space-between;
+            align-items: center;
+        }
+
+        .pdf-btn {
+            background: #d32f2f;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            transition: background 0.2s;
+        }
+
+        .pdf-btn:hover {
+            background: #b71c1c;
+        }
+
+        .pdf-btn:active {
+            background: #9a0000;
+        }
+
+        /* Modal de vista previa PDF */
+        .pdf-preview-backdrop {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.7);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+        }
+
+        .pdf-preview-backdrop.show {
+            display: flex;
+        }
+
+        .pdf-preview-modal {
+            background: white;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 600px;
+            max-height: 90vh;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+
+        .pdf-preview-header {
+            padding: 16px;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .pdf-preview-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .pdf-preview-close {
+            background: none;
+            border: none;
+            font-size: 24px;
+            color: #666;
+            cursor: pointer;
+            padding: 0;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            transition: background 0.2s;
+        }
+
+        .pdf-preview-close:hover {
+            background: #f5f5f5;
+        }
+
+        .pdf-preview-content {
+            padding: 20px;
+            overflow-y: auto;
+            flex: 1;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            line-height: 1.6;
+        }
+
+        .pdf-preview-footer {
+            padding: 16px;
+            border-top: 1px solid #eee;
+            display: flex;
+            gap: 12px;
+            justify-content: flex-end;
+        }
+
+        .pdf-preview-btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+
+        .pdf-preview-btn.cancel {
+            background: #f5f5f5;
+            color: #333;
+        }
+
+        .pdf-preview-btn.download {
+            background: #d32f2f;
+            color: white;
+        }
+
+        .pdf-preview-btn:hover {
+            opacity: 0.9;
         }
     </style>
 </head>
@@ -320,7 +448,12 @@
     <!-- Stats Bar -->
     <div class="stats-bar" id="statsBar">
         <span>Total: <strong id="totalEvents">0</strong> eventos</span>
-        <span id="weekRange"></span>
+        <div style="display: flex; align-items: center; gap: 12px;">
+            <button class="pdf-btn" onclick="showPdfPreview()" title="Generar PDF resumen">
+                📄 PDF
+            </button>
+            <span id="weekRange"></span>
+        </div>
     </div>
 
     <!-- Content -->
@@ -330,6 +463,21 @@
 
         <!-- Vista de Agenda -->
         <div id="agendaView" class="agenda-view"></div>
+    </div>
+
+    <!-- Modal de Vista Previa PDF -->
+    <div id="pdfPreviewBackdrop" class="pdf-preview-backdrop" onclick="closePdfPreview()">
+        <div class="pdf-preview-modal" onclick="event.stopPropagation()">
+            <div class="pdf-preview-header">
+                <div class="pdf-preview-title">Vista Previa del Resumen</div>
+                <button class="pdf-preview-close" onclick="closePdfPreview()">×</button>
+            </div>
+            <div class="pdf-preview-content" id="pdfPreviewContent"></div>
+            <div class="pdf-preview-footer">
+                <button class="pdf-preview-btn cancel" onclick="closePdfPreview()">Cancelar</button>
+                <button class="pdf-preview-btn download" onclick="downloadPdf()">Descargar PDF</button>
+            </div>
+        </div>
     </div>
 
     <script>
@@ -469,36 +617,34 @@
                 const dayEvents = events[dateKey] || [];
                 const isToday = isSameDay(day, new Date());
                 
-                if (dayEvents.length === 0) return;
+                // Filtrar turnos - solo contar notas
+                const notesOnly = dayEvents.filter(evt => evt.type !== 'shift');
                 
-                totalEvents += dayEvents.length;
+                if (notesOnly.length === 0) return;
+                
+                totalEvents += notesOnly.length;
                 
                 html += `<div class="agenda-day">
                     <div class="agenda-day-header ${isToday ? 'today' : ''}">
                         ${formatDayHeader(day)}
                     </div>`;
                 
-                dayEvents.forEach(evt => {
-                    const badgeClass = evt.type === 'shift' ? 'badge-shift' : 'badge-note';
+                // Filtrar turnos - solo mostrar notas
+                const notesOnly = dayEvents.filter(evt => evt.type !== 'shift');
+                
+                notesOnly.forEach(evt => {
+                    const badgeClass = 'badge-note';
                     const timeDisplay = evt.time || 'Todo el día';
                     
                     // Buscar nombre completo del turno si existe
                     let title = evt.text?.substring(0, 50) || 'Evento';
-                    if (evt.type === 'shift' || evt.shiftId) {
-                        const shift = shiftTemplates.find(s => s.id === evt.shiftId);
-                        if (shift && shift.name) {
-                            title = shift.name;
-                        } else if (evt.shiftName) {
-                            title = evt.shiftName;
-                        }
-                    }
                     
                     html += `<div class="agenda-event">
                         <div class="agenda-time">${timeDisplay}</div>
                         <div class="agenda-content">
                             <div class="agenda-title">${title}</div>
                             ${evt.text ? `<div class="agenda-description">${evt.text.substring(0, 100)}</div>` : ''}
-                            <span class="agenda-badge ${badgeClass}">${evt.type === 'shift' ? 'Turno' : 'Nota'}</span>
+                            <span class="agenda-badge ${badgeClass}">Nota</span>
                         </div>
                     </div>`;
                 });
@@ -597,6 +743,184 @@
 
         function goBack() {
             window.location.href = 'calendar.html';
+        }
+
+        function showPdfPreview() {
+            const weekDays = getWeekDays(currentWeek);
+            const start = weekDays[0];
+            const end = weekDays[6];
+            
+            // Generar contenido del resumen (solo notas, sin turnos)
+            let summaryContent = '';
+            let totalNotes = 0;
+            
+            weekDays.forEach(day => {
+                const dateKey = formatDateKey(day);
+                const dayEvents = events[dateKey] || [];
+                const notesOnly = dayEvents.filter(evt => evt.type !== 'shift');
+                
+                if (notesOnly.length > 0) {
+                    totalNotes += notesOnly.length;
+                    const dayHeader = formatDayHeader(day);
+                    summaryContent += `\n${dayHeader}\n${'='.repeat(50)}\n\n`;
+                    
+                    notesOnly.forEach(note => {
+                        const timeDisplay = note.time || 'Todo el día';
+                        const title = note.text?.substring(0, 100) || 'Nota sin texto';
+                        summaryContent += `  ${timeDisplay.padEnd(12)} - ${title}\n`;
+                        if (note.text && note.text.length > 100) {
+                            summaryContent += `  ${' '.repeat(12)}   ${note.text.substring(100, 200)}...\n`;
+                        }
+                        summaryContent += '\n';
+                    });
+                }
+            });
+            
+            const previewText = `
+RESUMEN SEMANAL - FamilySync
+${'='.repeat(50)}
+
+Período: ${start.getDate()}/${start.getMonth()+1}/${start.getFullYear()} - ${end.getDate()}/${end.getMonth()+1}/${end.getFullYear()}
+Semana: ${getWeekNumber(currentWeek)}
+Total de notas: ${totalNotes}
+Fecha de generación: ${new Date().toLocaleDateString('es-ES', { 
+    day: '2-digit', 
+    month: '2-digit', 
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+})}
+
+${summaryContent || 'No hay notas en esta semana.'}
+
+${'='.repeat(50)}
+Generado por FamilySync Calendar
+            `.trim();
+            
+            document.getElementById('pdfPreviewContent').textContent = previewText;
+            document.getElementById('pdfPreviewBackdrop').classList.add('show');
+        }
+
+        function closePdfPreview() {
+            document.getElementById('pdfPreviewBackdrop').classList.remove('show');
+        }
+
+        function downloadPdf() {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            
+            const weekDays = getWeekDays(currentWeek);
+            const start = weekDays[0];
+            const end = weekDays[6];
+            
+            // Configuración
+            const margin = 15;
+            const pageWidth = doc.internal.pageSize.getWidth();
+            const pageHeight = doc.internal.pageSize.getHeight();
+            const maxWidth = pageWidth - (margin * 2);
+            let yPos = margin;
+            
+            // Título
+            doc.setFontSize(18);
+            doc.setFont(undefined, 'bold');
+            doc.text('RESUMEN SEMANAL - FamilySync', margin, yPos);
+            yPos += 10;
+            
+            // Línea separadora
+            doc.setLineWidth(0.5);
+            doc.line(margin, yPos, pageWidth - margin, yPos);
+            yPos += 8;
+            
+            // Información del período
+            doc.setFontSize(12);
+            doc.setFont(undefined, 'normal');
+            doc.text(`Período: ${start.getDate()}/${start.getMonth()+1}/${start.getFullYear()} - ${end.getDate()}/${end.getMonth()+1}/${end.getFullYear()}`, margin, yPos);
+            yPos += 6;
+            doc.text(`Semana: ${getWeekNumber(currentWeek)}`, margin, yPos);
+            yPos += 6;
+            doc.text(`Fecha de generación: ${new Date().toLocaleDateString('es-ES')}`, margin, yPos);
+            yPos += 10;
+            
+            // Contenido de notas
+            let totalNotes = 0;
+            weekDays.forEach(day => {
+                const dateKey = formatDateKey(day);
+                const dayEvents = events[dateKey] || [];
+                const notesOnly = dayEvents.filter(evt => evt.type !== 'shift');
+                
+                if (notesOnly.length > 0) {
+                    totalNotes += notesOnly.length;
+                    
+                    // Verificar si necesitamos nueva página
+                    if (yPos > pageHeight - 40) {
+                        doc.addPage();
+                        yPos = margin;
+                    }
+                    
+                    // Encabezado del día
+                    doc.setFontSize(14);
+                    doc.setFont(undefined, 'bold');
+                    const dayHeader = formatDayHeader(day);
+                    doc.text(dayHeader, margin, yPos);
+                    yPos += 6;
+                    
+                    // Línea separadora del día
+                    doc.setLineWidth(0.3);
+                    doc.line(margin, yPos, pageWidth - margin, yPos);
+                    yPos += 6;
+                    
+                    // Notas del día
+                    doc.setFontSize(10);
+                    doc.setFont(undefined, 'normal');
+                    notesOnly.forEach(note => {
+                        // Verificar si necesitamos nueva página
+                        if (yPos > pageHeight - 30) {
+                            doc.addPage();
+                            yPos = margin;
+                        }
+                        
+                        const timeDisplay = note.time || 'Todo el día';
+                        const title = note.text?.substring(0, 80) || 'Nota sin texto';
+                        
+                        doc.setFont(undefined, 'bold');
+                        doc.text(`${timeDisplay}:`, margin + 5, yPos);
+                        doc.setFont(undefined, 'normal');
+                        
+                        // Dividir texto largo en múltiples líneas
+                        const lines = doc.splitTextToSize(title, maxWidth - 20);
+                        doc.text(lines, margin + 15, yPos);
+                        yPos += lines.length * 5 + 3;
+                    });
+                    
+                    yPos += 5; // Espacio entre días
+                }
+            });
+            
+            // Total de notas
+            if (yPos > pageHeight - 30) {
+                doc.addPage();
+                yPos = margin;
+            }
+            yPos += 5;
+            doc.setLineWidth(0.3);
+            doc.line(margin, yPos, pageWidth - margin, yPos);
+            yPos += 8;
+            doc.setFontSize(12);
+            doc.setFont(undefined, 'bold');
+            doc.text(`Total de notas: ${totalNotes}`, margin, yPos);
+            
+            // Pie de página
+            yPos = pageHeight - 15;
+            doc.setFontSize(8);
+            doc.setFont(undefined, 'normal');
+            doc.setTextColor(128, 128, 128);
+            doc.text('Generado por FamilySync Calendar', margin, yPos);
+            
+            // Descargar
+            const fileName = `resumen_semanal_${start.getFullYear()}${String(start.getMonth()+1).padStart(2,'0')}${String(start.getDate()).padStart(2,'0')}.pdf`;
+            doc.save(fileName);
+            
+            closePdfPreview();
         }
 
         init();
