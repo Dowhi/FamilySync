@@ -441,8 +441,8 @@
 
     <!-- View Selector -->
     <div class="view-selector">
-        <button class="view-btn active" onclick="switchView('grid')">📅 Grilla</button>
-        <button class="view-btn" onclick="switchView('agenda')">📋 Agenda</button>
+        <button class="view-btn active" onclick="switchView('grid', event)">📅 Grilla</button>
+        <button class="view-btn" onclick="switchView('agenda', event)">📋 Agenda</button>
     </div>
 
     <!-- Stats Bar -->
@@ -524,12 +524,22 @@
             }
         }
 
-        function switchView(view) {
+        function switchView(view, eventObj) {
             currentView = view;
             document.querySelectorAll('.view-btn').forEach(btn => {
                 btn.classList.remove('active');
             });
-            event.target.classList.add('active');
+            if (eventObj && eventObj.target) {
+                eventObj.target.classList.add('active');
+            } else {
+                // Si no hay event (llamada programática), activar el botón correcto
+                const buttons = document.querySelectorAll('.view-btn');
+                buttons.forEach((btn, index) => {
+                    if ((view === 'grid' && index === 0) || (view === 'agenda' && index === 1)) {
+                        btn.classList.add('active');
+                    }
+                });
+            }
             
             document.getElementById('weekGrid').style.display = view === 'grid' ? 'grid' : 'none';
             document.getElementById('agendaView').classList.toggle('show', view === 'agenda');
@@ -557,10 +567,30 @@
         function renderView() {
             if (currentView === 'grid') {
                 renderGridView();
+                // Contar todos los eventos en grilla
+                updateTotalEvents(true);
             } else {
                 renderAgendaView();
+                // El conteo ya se hace en renderAgendaView (solo notas)
             }
             updateWeekInfo();
+        }
+
+        function updateTotalEvents(includeShifts = false) {
+            const weekDays = getWeekDays(currentWeek);
+            let total = 0;
+            
+            weekDays.forEach(day => {
+                const dateKey = formatDateKey(day);
+                const dayEvents = events[dateKey] || [];
+                if (includeShifts) {
+                    total += dayEvents.length;
+                } else {
+                    total += dayEvents.filter(evt => evt.type !== 'shift').length;
+                }
+            });
+            
+            document.getElementById('totalEvents').textContent = total;
         }
 
         function renderGridView() {
@@ -617,7 +647,7 @@
                 const dayEvents = events[dateKey] || [];
                 const isToday = isSameDay(day, new Date());
                 
-                // Filtrar turnos - solo contar notas
+                // Filtrar turnos - solo mostrar notas en Agenda
                 const notesOnly = dayEvents.filter(evt => evt.type !== 'shift');
                 
                 if (notesOnly.length === 0) return;
@@ -628,9 +658,6 @@
                     <div class="agenda-day-header ${isToday ? 'today' : ''}">
                         ${formatDayHeader(day)}
                     </div>`;
-                
-                // Filtrar turnos - solo mostrar notas
-                const notesOnly = dayEvents.filter(evt => evt.type !== 'shift');
                 
                 notesOnly.forEach(evt => {
                     const badgeClass = 'badge-note';
@@ -655,7 +682,7 @@
             if (html === '') {
                 html = `<div class="empty-state">
                     <div class="empty-state-icon">📭</div>
-                    <div class="empty-state-text">No hay eventos esta semana</div>
+                    <div class="empty-state-text">No hay notas esta semana</div>
                 </div>`;
             }
             
