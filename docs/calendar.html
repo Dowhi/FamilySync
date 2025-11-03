@@ -3487,28 +3487,131 @@
                     if (note.type === 'recurring' && note.title) {
                         // Renderizar evento recurrente
                         const lineUserColor = getUserColor(note.userId);
-                    const noteTextEl = document.createElement('div');
-                    noteTextEl.className = 'note-text';
                         
+                        // Detectar modo oscuro y obtener color de fondo de la celda
+                        const isDarkMode = document.body.classList.contains('dark-theme');
+                        const cellBgColor = window.getComputedStyle(cell).backgroundColor || '';
+                        const rgbMatch = cellBgColor.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/);
+                        let cellBgHex = '#000000'; // Por defecto negro
+                        
+                        if (rgbMatch) {
+                            const r = parseInt(rgbMatch[1]);
+                            const g = parseInt(rgbMatch[2]);
+                            const b = parseInt(rgbMatch[3]);
+                            cellBgHex = '#' + [r, g, b].map(x => {
+                                const hex = x.toString(16);
+                                return hex.length === 1 ? '0' + hex : hex;
+                            }).join('');
+                        }
+                        
+                        // Si no hay fondo de turno o es muy oscuro, usar color de texto con buen contraste
+                        let textColor = lineUserColor;
+                        const cellLuminance = getLuminance(normalizeHex(cellBgHex));
+                        const isDarkBackground = cellLuminance < 0.3 || (isDarkMode && (cellBgColor === 'rgba(0, 0, 0, 0)' || cellBgColor === 'transparent'));
+                        
+                        if (isDarkBackground) {
+                            // En fondo oscuro, usar texto claro con el color del usuario como indicador
+                            textColor = '#FFFFFF';
+                        } else {
+                            // En fondo claro, usar color del usuario con contraste
+                            textColor = getContrastColor(cellBgHex);
+                        }
+                        
+                        // Crear contenedor para el indicador del usuario y el texto
+                        const noteLineContainer = document.createElement('div');
+                        noteLineContainer.style.cssText = `
+                            display: flex;
+                            align-items: center;
+                            gap: 4px;
+                        `;
+                        
+                        // Indicador del usuario (círculo de color)
+                        const userIndicator = document.createElement('span');
+                        userIndicator.style.cssText = `
+                            display: inline-block;
+                            width: 8px;
+                            height: 8px;
+                            border-radius: 50%;
+                            background-color: ${lineUserColor};
+                            flex-shrink: 0;
+                            border: 1px solid ${isDarkBackground ? '#FFFFFF' : '#000000'};
+                        `;
+                        noteLineContainer.appendChild(userIndicator);
+                        
+                        const noteTextEl = document.createElement('div');
+                        noteTextEl.className = 'note-text';
                         noteTextEl.textContent = note.title;
                         const noteFontSize = 11;
-                    noteTextEl.style.cssText = `
-                            color: ${lineUserColor};
-                        font-weight: 700;
-                        font-size: ${noteFontSize}px;
+                        noteTextEl.style.cssText = `
+                            color: ${textColor};
+                            font-weight: 700;
+                            font-size: ${noteFontSize}px;
                             text-decoration: underline;
                             white-space: normal;
                             word-wrap: break-word;
                             overflow-wrap: break-word;
+                            text-shadow: ${isDarkBackground ? '0 1px 2px rgba(0,0,0,0.5)' : 'none'};
                         `;
-                        allNotesContainer.appendChild(noteTextEl);
+                        noteLineContainer.appendChild(noteTextEl);
+                        allNotesContainer.appendChild(noteLineContainer);
                     } else if (note.text && note.text.trim() !== '') {
                         // Dividir el texto por saltos de línea para renderizar cada línea con su color
                         const noteLines = note.text.split('\n').filter(line => line.trim() !== '');
                         
                         noteLines.forEach((line, index) => {
-                            // Usar el color del usuario que creó la nota (ya no necesitamos heurística por contenido)
+                            // Usar el color del usuario que creó la nota
                             const lineUserColor = getUserColor(note.userId);
+                            
+                            // Detectar modo oscuro y obtener color de fondo de la celda
+                            const isDarkMode = document.body.classList.contains('dark-theme');
+                            const cellBgColor = window.getComputedStyle(cell).backgroundColor || '';
+                            const rgbMatch = cellBgColor.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/);
+                            let cellBgHex = '#000000'; // Por defecto negro
+                            
+                            if (rgbMatch) {
+                                const r = parseInt(rgbMatch[1]);
+                                const g = parseInt(rgbMatch[2]);
+                                const b = parseInt(rgbMatch[3]);
+                                cellBgHex = '#' + [r, g, b].map(x => {
+                                    const hex = x.toString(16);
+                                    return hex.length === 1 ? '0' + hex : hex;
+                                }).join('');
+                            }
+                            
+                            // Si no hay fondo de turno o es muy oscuro, usar color de texto con buen contraste
+                            let textColor = lineUserColor;
+                            const cellLuminance = getLuminance(normalizeHex(cellBgHex));
+                            const isDarkBackground = cellLuminance < 0.3 || (isDarkMode && (cellBgColor === 'rgba(0, 0, 0, 0)' || cellBgColor === 'transparent'));
+                            
+                            if (isDarkBackground) {
+                                // En fondo oscuro, usar texto claro con el color del usuario como indicador
+                                textColor = '#FFFFFF';
+                            } else {
+                                // En fondo claro, usar color del usuario con contraste
+                                textColor = getContrastColor(cellBgHex);
+                            }
+                            
+                            // Crear contenedor para el indicador del usuario y el texto
+                            const noteLineContainer = document.createElement('div');
+                            noteLineContainer.style.cssText = `
+                                display: flex;
+                                align-items: center;
+                                gap: 4px;
+                            `;
+                            
+                            // Indicador del usuario (círculo de color)
+                            const userIndicator = document.createElement('span');
+                            userIndicator.style.cssText = `
+                                display: inline-block;
+                                width: 8px;
+                                height: 8px;
+                                border-radius: 50%;
+                                background-color: ${lineUserColor};
+                                flex-shrink: 0;
+                                border: 1px solid ${isDarkBackground ? '#FFFFFF' : '#000000'};
+                            `;
+                            noteLineContainer.appendChild(userIndicator);
+                            
                             const noteTextEl = document.createElement('div');
                             noteTextEl.className = 'note-text';
                             
@@ -3524,14 +3627,16 @@
                             const fontSize = index === 0 ? noteFontSize : noteFontSize * 0.85;
                             const fontWeight = index === 0 ? '700' : 'normal';
                             noteTextEl.style.cssText = `
-                                color: ${lineUserColor};
+                                color: ${textColor};
                                 font-weight: ${fontWeight};
                                 font-size: ${fontSize}px;
                                 white-space: normal;
                                 word-wrap: break-word;
                                 overflow-wrap: break-word;
+                                text-shadow: ${isDarkBackground ? '0 1px 2px rgba(0,0,0,0.5)' : 'none'};
                             `;
-                            allNotesContainer.appendChild(noteTextEl);
+                            noteLineContainer.appendChild(noteTextEl);
+                            allNotesContainer.appendChild(noteLineContainer);
                         });
                     }
                 });
@@ -4089,28 +4194,131 @@
                     if (note.type === 'recurring' && note.title) {
                         // Renderizar evento recurrente
                         const lineUserColor = getUserColor(note.userId);
-                    const noteTextEl = document.createElement('div');
-                    noteTextEl.className = 'note-text';
                         
+                        // Detectar modo oscuro y obtener color de fondo de la celda
+                        const isDarkMode = document.body.classList.contains('dark-theme');
+                        const cellBgColor = window.getComputedStyle(dayEl).backgroundColor || '';
+                        const rgbMatch = cellBgColor.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/);
+                        let cellBgHex = '#000000'; // Por defecto negro
+                        
+                        if (rgbMatch) {
+                            const r = parseInt(rgbMatch[1]);
+                            const g = parseInt(rgbMatch[2]);
+                            const b = parseInt(rgbMatch[3]);
+                            cellBgHex = '#' + [r, g, b].map(x => {
+                                const hex = x.toString(16);
+                                return hex.length === 1 ? '0' + hex : hex;
+                            }).join('');
+                        }
+                        
+                        // Si no hay fondo de turno o es muy oscuro, usar color de texto con buen contraste
+                        let textColor = lineUserColor;
+                        const cellLuminance = getLuminance(normalizeHex(cellBgHex));
+                        const isDarkBackground = cellLuminance < 0.3 || (isDarkMode && (cellBgColor === 'rgba(0, 0, 0, 0)' || cellBgColor === 'transparent'));
+                        
+                        if (isDarkBackground) {
+                            // En fondo oscuro, usar texto claro con el color del usuario como indicador
+                            textColor = '#FFFFFF';
+                        } else {
+                            // En fondo claro, usar color del usuario con contraste
+                            textColor = getContrastColor(cellBgHex);
+                        }
+                        
+                        // Crear contenedor para el indicador del usuario y el texto
+                        const noteLineContainer = document.createElement('div');
+                        noteLineContainer.style.cssText = `
+                            display: flex;
+                            align-items: center;
+                            gap: 4px;
+                        `;
+                        
+                        // Indicador del usuario (círculo de color)
+                        const userIndicator = document.createElement('span');
+                        userIndicator.style.cssText = `
+                            display: inline-block;
+                            width: 8px;
+                            height: 8px;
+                            border-radius: 50%;
+                            background-color: ${lineUserColor};
+                            flex-shrink: 0;
+                            border: 1px solid ${isDarkBackground ? '#FFFFFF' : '#000000'};
+                        `;
+                        noteLineContainer.appendChild(userIndicator);
+                        
+                        const noteTextEl = document.createElement('div');
+                        noteTextEl.className = 'note-text';
                         noteTextEl.textContent = note.title;
                         const noteFontSize = 11;
-                    noteTextEl.style.cssText = `
-                            color: ${lineUserColor};
-                        font-weight: 700;
-                        font-size: ${noteFontSize}px;
+                        noteTextEl.style.cssText = `
+                            color: ${textColor};
+                            font-weight: 700;
+                            font-size: ${noteFontSize}px;
                             text-decoration: underline;
                             white-space: normal;
                             word-wrap: break-word;
                             overflow-wrap: break-word;
+                            text-shadow: ${isDarkBackground ? '0 1px 2px rgba(0,0,0,0.5)' : 'none'};
                         `;
-                        allNotesContainer.appendChild(noteTextEl);
+                        noteLineContainer.appendChild(noteTextEl);
+                        allNotesContainer.appendChild(noteLineContainer);
                     } else if (note.text && note.text.trim() !== '') {
                         // Dividir el texto por saltos de línea para renderizar cada línea con su color
                         const noteLines = note.text.split('\n').filter(line => line.trim() !== '');
                         
                         noteLines.forEach((line, index) => {
-                            // Usar el color del usuario que creó la nota (ya no necesitamos heurística por contenido)
+                            // Usar el color del usuario que creó la nota
                             const lineUserColor = getUserColor(note.userId);
+                            
+                            // Detectar modo oscuro y obtener color de fondo de la celda
+                            const isDarkMode = document.body.classList.contains('dark-theme');
+                            const cellBgColor = window.getComputedStyle(dayEl).backgroundColor || '';
+                            const rgbMatch = cellBgColor.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/);
+                            let cellBgHex = '#000000'; // Por defecto negro
+                            
+                            if (rgbMatch) {
+                                const r = parseInt(rgbMatch[1]);
+                                const g = parseInt(rgbMatch[2]);
+                                const b = parseInt(rgbMatch[3]);
+                                cellBgHex = '#' + [r, g, b].map(x => {
+                                    const hex = x.toString(16);
+                                    return hex.length === 1 ? '0' + hex : hex;
+                                }).join('');
+                            }
+                            
+                            // Si no hay fondo de turno o es muy oscuro, usar color de texto con buen contraste
+                            let textColor = lineUserColor;
+                            const cellLuminance = getLuminance(normalizeHex(cellBgHex));
+                            const isDarkBackground = cellLuminance < 0.3 || (isDarkMode && (cellBgColor === 'rgba(0, 0, 0, 0)' || cellBgColor === 'transparent'));
+                            
+                            if (isDarkBackground) {
+                                // En fondo oscuro, usar texto claro con el color del usuario como indicador
+                                textColor = '#FFFFFF';
+                            } else {
+                                // En fondo claro, usar color del usuario con contraste
+                                textColor = getContrastColor(cellBgHex);
+                            }
+                            
+                            // Crear contenedor para el indicador del usuario y el texto
+                            const noteLineContainer = document.createElement('div');
+                            noteLineContainer.style.cssText = `
+                                display: flex;
+                                align-items: center;
+                                gap: 4px;
+                            `;
+                            
+                            // Indicador del usuario (círculo de color)
+                            const userIndicator = document.createElement('span');
+                            userIndicator.style.cssText = `
+                                display: inline-block;
+                                width: 8px;
+                                height: 8px;
+                                border-radius: 50%;
+                                background-color: ${lineUserColor};
+                                flex-shrink: 0;
+                                border: 1px solid ${isDarkBackground ? '#FFFFFF' : '#000000'};
+                            `;
+                            noteLineContainer.appendChild(userIndicator);
+                            
                             const noteTextEl = document.createElement('div');
                             noteTextEl.className = 'note-text';
                             
@@ -4126,14 +4334,16 @@
                             const fontSize = index === 0 ? noteFontSize : noteFontSize * 0.85;
                             const fontWeight = index === 0 ? '700' : 'normal';
                             noteTextEl.style.cssText = `
-                                color: ${lineUserColor};
+                                color: ${textColor};
                                 font-weight: ${fontWeight};
                                 font-size: ${fontSize}px;
                                 white-space: normal;
                                 word-wrap: break-word;
                                 overflow-wrap: break-word;
+                                text-shadow: ${isDarkBackground ? '0 1px 2px rgba(0,0,0,0.5)' : 'none'};
                             `;
-                            allNotesContainer.appendChild(noteTextEl);
+                            noteLineContainer.appendChild(noteTextEl);
+                            allNotesContainer.appendChild(noteLineContainer);
                         });
                     }
                 });
