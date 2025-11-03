@@ -455,13 +455,13 @@
         }
 
         .pdf-preview-page-footer {
-            position: absolute;
-            bottom: 10mm;
+            margin-top: 5mm;
             font-size: 7pt;
             color: #999;
+            text-align: right;
         }
 
-        .pdf-preview-footer {
+        .pdf-preview-modal-footer {
             padding: 16px;
             border-top: 1px solid #eee;
             display: flex;
@@ -543,7 +543,7 @@
                 <button class="pdf-preview-close" onclick="closePdfPreview()">×</button>
             </div>
             <div class="pdf-preview-content" id="pdfPreviewContent"></div>
-            <div class="pdf-preview-footer">
+            <div class="pdf-preview-modal-footer">
                 <button class="pdf-preview-btn cancel" onclick="closePdfPreview()">Cancelar</button>
                 <button class="pdf-preview-btn download" onclick="downloadPdf()">Descargar PDF</button>
             </div>
@@ -654,9 +654,14 @@
                 const dateKey = formatDateKey(day);
                 const dayEvents = events[dateKey] || [];
                 if (includeShifts) {
-                    total += dayEvents.length;
+                    // En grilla, contar solo eventos con hora que sean notas
+                    total += dayEvents.filter(evt => {
+                        if (!evt.time) return false;
+                        if (evt.type === 'shift' || evt.shiftId || evt.shiftName) return false;
+                        return evt.type === 'note';
+                    }).length;
                 } else {
-                    total += dayEvents.filter(evt => evt.type !== 'shift').length;
+                    total += dayEvents.filter(evt => evt.type !== 'shift' && !evt.shiftId && !evt.shiftName).length;
                 }
             });
             
@@ -723,8 +728,18 @@
                 const dayEvents = events[dateKey] || [];
                 const isToday = isSameDay(day, new Date());
                 
-                // Filtrar turnos - solo mostrar notas en Agenda
-                const notesOnly = dayEvents.filter(evt => evt.type !== 'shift');
+                // Filtrar turnos - solo mostrar notas con hora en Agenda
+                // Excluir: turnos por tipo, shiftId, shiftName, o eventos sin hora que sean muy cortos (probablemente turnos)
+                const notesOnly = dayEvents.filter(evt => {
+                    // Excluir turnos explícitos
+                    if (evt.type === 'shift' || evt.shiftId || evt.shiftName) return false;
+                    // Solo mostrar notas
+                    if (evt.type !== 'note') return false;
+                    // Excluir eventos sin hora que sean muy cortos (probablemente abreviaciones de turnos)
+                    const text = evt.text?.trim() || '';
+                    if (!evt.time && text.length <= 3) return false;
+                    return true;
+                });
                 
                 if (notesOnly.length === 0) return;
                 
@@ -854,34 +869,23 @@
             const start = weekDays[0];
             const end = weekDays[6];
             
-            // Generar contenido del resumen (solo notas, sin turnos)
-            let summaryContent = '';
+            // Generar contenido del resumen - usar la misma lógica de filtrado
             let totalNotes = 0;
             
             weekDays.forEach(day => {
                 const dateKey = formatDateKey(day);
                 const dayEvents = events[dateKey] || [];
-                const notesOnly = dayEvents.filter(evt => evt.type !== 'shift');
+                // Mismo filtro que en renderAgendaView
+                const notesOnly = dayEvents.filter(evt => {
+                    if (evt.type === 'shift' || evt.shiftId || evt.shiftName) return false;
+                    if (evt.type !== 'note') return false;
+                    const text = evt.text?.trim() || '';
+                    if (!evt.time && text.length <= 3) return false;
+                    return true;
+                });
                 
                 if (notesOnly.length > 0) {
                     totalNotes += notesOnly.length;
-                    const dayHeader = formatDayHeader(day);
-                    summaryContent += `\n${dayHeader}\n${'='.repeat(50)}\n\n`;
-                    
-                    notesOnly.forEach(note => {
-                        const timeDisplay = note.time || '';
-                        const title = note.text?.substring(0, 100) || 'Nota sin texto';
-                        if (timeDisplay) {
-                            summaryContent += `  ${timeDisplay.padEnd(12)} - ${title}\n`;
-                        } else {
-                            summaryContent += `  ${title}\n`;
-                        }
-                        if (note.text && note.text.length > 100) {
-                            const indent = timeDisplay ? ' '.repeat(12) : '  ';
-                            summaryContent += `  ${indent}   ${note.text.substring(100, 200)}...\n`;
-                        }
-                        summaryContent += '\n';
-                    });
                 }
             });
             
@@ -897,36 +901,43 @@
             // Línea separadora
             previewHtml += '<div class="pdf-preview-divider"></div>';
             
-            // Contenido de notas
-            if (summaryContent) {
-                weekDays.forEach(day => {
-                    const dateKey = formatDateKey(day);
-                    const dayEvents = events[dateKey] || [];
-                    const notesOnly = dayEvents.filter(evt => evt.type !== 'shift' && !evt.shiftId && !evt.shiftName);
-                    
-                    if (notesOnly.length > 0) {
-                        const dayHeader = formatDayHeader(day);
-                        previewHtml += `<div class="pdf-preview-day">`;
-                        previewHtml += `<div class="pdf-preview-day-header">${dayHeader}</div>`;
-                        
-                        notesOnly.forEach(note => {
-                            const timeDisplay = note.time || '';
-                            const title = note.text?.substring(0, 100) || 'Nota sin texto';
-                            
-                            previewHtml += '<div class="pdf-preview-note">';
-                            if (timeDisplay) {
-                                previewHtml += `<span class="pdf-preview-note-time">${timeDisplay}</span>`;
-                                previewHtml += `<span class="pdf-preview-note-text">${title}</span>`;
-                            } else {
-                                previewHtml += `<span class="pdf-preview-note-text" style="width: 100%;">${title}</span>`;
-                            }
-                            previewHtml += '</div>';
-                        });
-                        
-                        previewHtml += '</div>';
-                    }
+            // Contenido de notas - usar la misma lógica de filtrado que la vista previa
+            weekDays.forEach(day => {
+                const dateKey = formatDateKey(day);
+                const dayEvents = events[dateKey] || [];
+                // Mismo filtro que en renderAgendaView
+                const notesOnly = dayEvents.filter(evt => {
+                    if (evt.type === 'shift' || evt.shiftId || evt.shiftName) return false;
+                    if (evt.type !== 'note') return false;
+                    const text = evt.text?.trim() || '';
+                    if (!evt.time && text.length <= 3) return false;
+                    return true;
                 });
-            } else {
+                
+                if (notesOnly.length > 0) {
+                    const dayHeader = formatDayHeader(day);
+                    previewHtml += `<div class="pdf-preview-day">`;
+                    previewHtml += `<div class="pdf-preview-day-header">${dayHeader}</div>`;
+                    
+                    notesOnly.forEach(note => {
+                        const timeDisplay = note.time || '';
+                        const title = note.text?.substring(0, 100) || 'Nota sin texto';
+                        
+                        previewHtml += '<div class="pdf-preview-note">';
+                        if (timeDisplay) {
+                            previewHtml += `<span class="pdf-preview-note-time">${timeDisplay}</span>`;
+                            previewHtml += `<span class="pdf-preview-note-text">${title}</span>`;
+                        } else {
+                            previewHtml += `<span class="pdf-preview-note-text" style="width: 100%;">${title}</span>`;
+                        }
+                        previewHtml += '</div>';
+                    });
+                    
+                    previewHtml += '</div>';
+                }
+            });
+            
+            if (previewHtml === '<div class="pdf-preview-page"><div class="pdf-preview-title">RESUMEN SEMANAL</div><div class="pdf-preview-meta">Semana ' + getWeekNumber(currentWeek) + ' | ' + start.getDate() + '/' + (start.getMonth()+1) + '/' + start.getFullYear() + ' - ' + end.getDate() + '/' + (end.getMonth()+1) + '/' + end.getFullYear() + '</div><div class="pdf-preview-divider"></div>') {
                 previewHtml += '<div style="padding: 20mm 0; text-align: center; color: #999;">No hay notas en esta semana.</div>';
             }
             
@@ -982,21 +993,22 @@
             doc.line(margin, yPos, pageWidth - margin, yPos);
             yPos += 4;
             
-            // Contenido de notas
+            // Contenido de notas - usar la misma lógica de filtrado que la vista previa
             let totalNotes = 0;
             weekDays.forEach(day => {
                 const dateKey = formatDateKey(day);
                 const dayEvents = events[dateKey] || [];
-                const notesOnly = dayEvents.filter(evt => evt.type !== 'shift');
+                // Mismo filtro que en renderAgendaView y vista previa
+                const notesOnly = dayEvents.filter(evt => {
+                    if (evt.type === 'shift' || evt.shiftId || evt.shiftName) return false;
+                    if (evt.type !== 'note') return false;
+                    const text = evt.text?.trim() || '';
+                    if (!evt.time && text.length <= 3) return false;
+                    return true;
+                });
                 
                 if (notesOnly.length > 0) {
                     totalNotes += notesOnly.length;
-                    
-                    // Verificar si necesitamos nueva página
-                    if (yPos > pageHeight - 40) {
-                        doc.addPage();
-                        yPos = margin;
-                    }
                     
                     // Verificar si necesitamos nueva página
                     if (yPos > pageHeight - 25) {
@@ -1012,7 +1024,7 @@
                     doc.text(dayHeader, margin, yPos);
                     yPos += 4;
                     
-                    // Notas del día con diseño compacto
+                    // Notas del día con diseño compacto - exactamente como en la vista previa
                     doc.setFontSize(8);
                     doc.setFont(undefined, 'normal');
                     doc.setTextColor(0, 0, 0);
