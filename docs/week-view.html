@@ -598,7 +598,8 @@
             
             // Calcular días de la semana
             const weekDays = getWeekDays(currentWeek);
-            const hours = Array.from({ length: 24 }, (_, i) => i);
+            // Mostrar horas desde las 6:00 hasta las 23:00
+            const hours = Array.from({ length: 18 }, (_, i) => i + 6);
             
             let html = '<div class="week-grid-header"></div>';
             
@@ -611,7 +612,7 @@
                 </div>`;
             });
             
-            // Filas de horas
+            // Filas de horas (desde las 6:00)
             hours.forEach(hour => {
                 html += `<div class="time-column">${hour}:00</div>`;
                 
@@ -661,7 +662,8 @@
                 
                 notesOnly.forEach(evt => {
                     const badgeClass = 'badge-note';
-                    const timeDisplay = evt.time || 'Todo el día';
+                    // Solo mostrar hora si existe, no mostrar "Todo el día"
+                    const timeDisplay = evt.time || '';
                     
                     // Buscar nombre completo del turno si existe
                     let title = evt.text?.substring(0, 50) || 'Evento';
@@ -792,11 +794,16 @@
                     summaryContent += `\n${dayHeader}\n${'='.repeat(50)}\n\n`;
                     
                     notesOnly.forEach(note => {
-                        const timeDisplay = note.time || 'Todo el día';
+                        const timeDisplay = note.time || '';
                         const title = note.text?.substring(0, 100) || 'Nota sin texto';
-                        summaryContent += `  ${timeDisplay.padEnd(12)} - ${title}\n`;
+                        if (timeDisplay) {
+                            summaryContent += `  ${timeDisplay.padEnd(12)} - ${title}\n`;
+                        } else {
+                            summaryContent += `  ${title}\n`;
+                        }
                         if (note.text && note.text.length > 100) {
-                            summaryContent += `  ${' '.repeat(12)}   ${note.text.substring(100, 200)}...\n`;
+                            const indent = timeDisplay ? ' '.repeat(12) : '  ';
+                            summaryContent += `  ${indent}   ${note.text.substring(100, 200)}...\n`;
                         }
                         summaryContent += '\n';
                     });
@@ -834,7 +841,12 @@ Generado por FamilySync Calendar
 
         function downloadPdf() {
             const { jsPDF } = window.jspdf;
-            const doc = new jsPDF();
+            // Configurar PDF en formato A4
+            const doc = new jsPDF({
+                orientation: 'portrait',
+                unit: 'mm',
+                format: 'a4'
+            });
             
             const weekDays = getWeekDays(currentWeek);
             const start = weekDays[0];
@@ -906,12 +918,16 @@ Generado por FamilySync Calendar
                             yPos = margin;
                         }
                         
-                        const timeDisplay = note.time || 'Todo el día';
+                        const timeDisplay = note.time || '';
                         const title = note.text?.substring(0, 80) || 'Nota sin texto';
                         
-                        doc.setFont(undefined, 'bold');
-                        doc.text(`${timeDisplay}:`, margin + 5, yPos);
-                        doc.setFont(undefined, 'normal');
+                        if (timeDisplay) {
+                            doc.setFont(undefined, 'bold');
+                            doc.text(`${timeDisplay}:`, margin + 5, yPos);
+                            doc.setFont(undefined, 'normal');
+                        } else {
+                            doc.setFont(undefined, 'normal');
+                        }
                         
                         // Dividir texto largo en múltiples líneas
                         const lines = doc.splitTextToSize(title, maxWidth - 20);
