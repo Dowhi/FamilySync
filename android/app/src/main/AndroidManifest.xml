@@ -5,17 +5,6 @@
     <!-- Permisos necesarios -->
     <uses-permission android:name="android.permission.INTERNET" />
     
-    <!-- Configuración del widget -->
-    <receiver android:name=".widget.CalendarWidgetProvider"
-        android:exported="true">
-        <intent-filter>
-            <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
-        </intent-filter>
-        <meta-data
-            android:name="android.appwidget.provider"
-            android:resource="@xml/calendar_widget_info" />
-    </receiver>
-    
     <!-- Actividad principal -->
     <activity
         android:name=".MainActivity"
@@ -31,14 +20,6 @@
         <intent-filter>
             <action android:name="android.intent.action.MAIN"/>
             <category android:name="android.intent.category.LAUNCHER"/>
-        </intent-filter>
-        <!-- Deep link para widget -->
-        <intent-filter>
-            <action android:name="android.intent.action.VIEW" />
-            <category android:name="android.intent.category.DEFAULT" />
-            <category android:name="android.intent.category.BROWSABLE" />
-            <data android:scheme="calendariofamiliar"
-                  android:host="calendar" />
         </intent-filter>
     </activity>
     

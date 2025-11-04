@@ -68,20 +68,5 @@
 	<!-- Configuración para notificaciones críticas -->
 	<key>UNNotificationExtensionCategory</key>
 	<string>ALARM_CATEGORY</string>
-	
-	<!-- URL Scheme para deep linking desde widgets -->
-	<key>CFBundleURLTypes</key>
-	<array>
-		<dict>
-			<key>CFBundleTypeRole</key>
-			<string>Editor</string>
-			<key>CFBundleURLName</key>
-			<string>com.calendariofamiliar</string>
-			<key>CFBundleURLSchemes</key>
-			<array>
-				<string>calendariofamiliar</string>
-			</array>
-		</dict>
-	</array>
 </dict>
 </plist>
